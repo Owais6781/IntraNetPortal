@@ -16,7 +16,7 @@ import { GraphFI } from "@pnp/graph";
 
 interface RoutingIPROPS{
     sp: SPFI;
-      graph: GraphFI;
+    graph: GraphFI;
 }
 
 
