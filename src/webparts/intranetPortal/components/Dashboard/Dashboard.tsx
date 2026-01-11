@@ -308,14 +308,14 @@ const Dashboard: React.FC = () => {
                 <p className="text-sm text-slate-500 mt-1">
                   10:00 AM – 12:00 PM
                 </p>
-                <div className="mt-3 flex items-center gap-2">
+                {/* <div className="mt-3 flex items-center gap-2">
                   <span className="w-6 h-6 rounded-full bg-indigo-200" />
                   <span className="w-6 h-6 rounded-full bg-violet-200 -ml-2" />
                   <span className="w-6 h-6 rounded-full bg-purple-200 -ml-2" />
                   <span className="text-xs text-slate-500 ml-1">
                     +120 attending
                   </span>
-                </div>
+                </div> */}
               </div>
 
               <div className="flex-1 group rounded-2xl bg-gradient-to-br from-rose-50 via-orange-50 to-amber-50 border border-rose-100 p-5 hover:border-rose-300 hover:shadow-xl hover:shadow-rose-100 hover:-translate-y-1 transition-all duration-300 cursor-pointer">
@@ -336,14 +336,14 @@ const Dashboard: React.FC = () => {
                 <p className="text-sm text-slate-500 mt-1">
                   5:30 PM Onwards
                 </p>
-                <div className="mt-3 flex items-center gap-2">
+                {/* <div className="mt-3 flex items-center gap-2">
                   <span className="w-6 h-6 rounded-full bg-rose-200" />
                   <span className="w-6 h-6 rounded-full bg-orange-200 -ml-2" />
                   <span className="w-6 h-6 rounded-full bg-amber-200 -ml-2" />
                   <span className="text-xs text-slate-500 ml-1">
                     +85 attending
                   </span>
-                </div>
+                </div> */}
               </div>
             </div>
           </div>
