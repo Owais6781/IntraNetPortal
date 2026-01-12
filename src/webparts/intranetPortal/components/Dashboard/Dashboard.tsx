@@ -42,7 +42,7 @@ const Dashboard: React.FC = () => {
 
             <p className="mt-4 text-base sm:text-lg text-white/80 max-w-md">
               Welcome back,{" "}
-              <span className="text-violet-300 font-semibold">Shiva</span>. Your
+              <span className="text-violet-300 font-semibold">SAIF</span>. Your
               day is looking productive.
             </p>
 
