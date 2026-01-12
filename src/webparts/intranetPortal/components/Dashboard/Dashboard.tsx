@@ -2,7 +2,43 @@
 
 import * as React from "react";
 
-const Dashboard: React.FC = () => {
+import { SPFI } from "@pnp/sp";
+
+
+import "@pnp/sp/webs";
+import "@pnp/sp/site-users/web";
+import "@pnp/graph/users";
+import "@pnp/graph/photos";
+
+interface DashboardProps {
+  sp: SPFI;
+
+}
+
+
+const Dashboard: React.FC <DashboardProps> = ({sp}) => {
+
+const [userName, setUserName] = React.useState("");
+  const [loading, setLoading] = React.useState(true);
+  React.useEffect(() => {
+    const loadUser = async () => {
+      try {
+        const spUser = await sp.web.currentUser();
+        setUserName(spUser.Title);
+      
+      } catch (error) {
+        console.error("User Load Error:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    void loadUser();
+  }, [sp]);
+
+
+
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-indigo-50/50 to-violet-100/50 p-6">
       {/* Decorative blobs */}
@@ -42,7 +78,7 @@ const Dashboard: React.FC = () => {
 
             <p className="mt-4 text-base sm:text-lg text-white/80 max-w-md">
               Welcome back,{" "}
-              <span className="text-violet-300 font-semibold">Shiva</span>. Your
+              <span className="text-violet-300 font-semibold"> {loading ? "Loading..." : userName}</span>. Your
               day is looking productive.
             </p>
 
