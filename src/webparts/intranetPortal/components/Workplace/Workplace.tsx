@@ -80,7 +80,6 @@ const Workplace: React.FC<WorkplaceProps> = ({ sp }) => {
     const init = async (): Promise<void> => {
       await fetchLeaveList();
     };
-
     void init();
   }, []);
 
@@ -108,8 +107,7 @@ const Workplace: React.FC<WorkplaceProps> = ({ sp }) => {
   };
 
   const handleSubmit = async (
-    e: React.FormEvent<HTMLFormElement>
-  ): Promise<void> => {
+    e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
     if (isSubmitting) return;
@@ -377,5 +375,4 @@ const Workplace: React.FC<WorkplaceProps> = ({ sp }) => {
     </div>
   );
 };
-
 export default Workplace;
