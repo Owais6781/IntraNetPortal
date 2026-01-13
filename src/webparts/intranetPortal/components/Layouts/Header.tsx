@@ -1,5 +1,6 @@
 
 
+
 import * as React from "react";
 import { NavLink } from "react-router-dom";
 import { SPFI } from "@pnp/sp";
@@ -26,6 +27,7 @@ const Header: React.FC<IHeaderProps> = ({ sp, graph }) => {
     const loadUser = async () => {
       try {
    
+      
         const spUser = await sp.web.currentUser();
 
         setUserName(spUser.Title);
@@ -34,6 +36,7 @@ const Header: React.FC<IHeaderProps> = ({ sp, graph }) => {
         );
 
   
+      
         const graphUser = await graph.me();
         setJobTitle(graphUser.jobTitle || ""); 
 
