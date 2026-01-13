@@ -20,22 +20,22 @@ interface RoutingIPROPS{
 }
 
 
-const Routing: React.FC <RoutingIPROPS>= ({sp , graph }) => {
+const Routing: React.FC <RoutingIPROPS>= ({sp , graph,    }) => {
   return (
    <HashRouter>
   <Routes>
     <Route path="/" element={<Layouts sp={sp} graph={graph} />}>
-    
       <Route index element={<Navigate to="/dashboard" replace />} />
 
-      <Route path="dashboard" element={<Dashboard />} />
+      <Route path="dashboard" element={<Dashboard  sp={sp} graph={graph} />} />
+      <Route path="dashboard" element={<Dashboard sp={sp} />} />
       <Route path="organization" element={<Organization />} />
       <Route path="news" element={<News />} />
       <Route path="knowledge" element={<Knowledge />} />
       <Route path="directory" element={<Directory />} />
       <Route path="workplace" element={<WorkPlace  sp={sp}/>} />
       <Route path="it-support" element={<ITSupport />} />
-      <Route path="engineering" element={<Engineering />} />
+      <Route path="engineering" element={<Engineering sp={sp} />} />
     </Route>
   </Routes>
 </HashRouter>
