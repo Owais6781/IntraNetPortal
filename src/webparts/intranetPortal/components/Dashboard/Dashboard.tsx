@@ -442,14 +442,7 @@ const [userName, setUserName] = React.useState("");
         {/* RIGHT */}
         <div className="flex-[1] flex flex-col gap-6">
           <EmployeeOfTheMonth />
-
-          {/* ✅ FIXED */}
-          <NewJoiners
-        
-          
-      
-          />
-
+          <NewJoiners />
           <HRPolicies />
           <NewOpenings />
         </div>
