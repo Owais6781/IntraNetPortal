@@ -1,3 +1,47 @@
+// {
+//   "$schema": "https://developer.microsoft.com/json-schemas/spfx-build/package-solution.schema.json",
+//   "solution": {
+//     "name": "intranet-portal-client-side-solution",
+//     "id": "73e34b13-58b1-403a-b80b-6a3be85ddc6c",
+//     "version": "1.0.0.0",
+//     "includeClientSideAssets": true,
+//     "skipFeatureDeployment": true,
+//     "isDomainIsolated": false,
+//     "developer": {
+//       "name": "",
+//       "websiteUrl": "",
+//       "privacyUrl": "",
+//       "termsOfUseUrl": "",
+//       "mpnId": "Undefined-1.21.1"
+//     },
+//     "metadata": {
+//       "shortDescription": {
+//         "default": "Intranet Portal description"
+//       },
+//       "longDescription": {
+//         "default": "Intranet Portal description"
+//       },
+//       "screenshotPaths": [],
+//       "videoUrl": "",
+//       "categories": []
+//     },
+//     "features": [
+//       {
+//         "title": "intranet-portal Feature",
+//         "description": "The feature that activates elements of the intranet-portal solution.",
+//         "id": "4df7fef7-ef95-4564-806e-77da3849bee3",
+//         "version": "1.0.0.0"
+//       }
+//     ]
+//   },
+  
+//   "paths": {
+//     "zippedPackage": "solution/intranet-portal.sppkg"
+//   }
+// }
+
+
+
 {
   "$schema": "https://developer.microsoft.com/json-schemas/spfx-build/package-solution.schema.json",
   "solution": {
@@ -7,6 +51,14 @@
     "includeClientSideAssets": true,
     "skipFeatureDeployment": true,
     "isDomainIsolated": false,
+
+    "webApiPermissionRequests": [
+      {
+        "resource": "Microsoft Graph",
+        "scope": "User.Read.All"
+      }
+    ],
+
     "developer": {
       "name": "",
       "websiteUrl": "",
@@ -20,10 +72,7 @@
       },
       "longDescription": {
         "default": "Intranet Portal description"
-      },
-      "screenshotPaths": [],
-      "videoUrl": "",
-      "categories": []
+      }
     },
     "features": [
       {
