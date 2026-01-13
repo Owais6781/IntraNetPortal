@@ -27,6 +27,7 @@ const Header: React.FC<IHeaderProps> = ({ sp, graph }) => {
 
    const loadUser = async () => {
       try {
+       
    
       
         const spUser = await sp.web.currentUser();
@@ -36,6 +37,7 @@ const Header: React.FC<IHeaderProps> = ({ sp, graph }) => {
           `/_layouts/15/userphoto.aspx?size=L&accountname=${spUser.Email}`
         );
 
+    
   
       
         const graphUser = await graph.me();
