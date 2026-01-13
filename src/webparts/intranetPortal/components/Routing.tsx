@@ -33,7 +33,7 @@ const Routing: React.FC <RoutingIPROPS>= ({sp , graph,    }) => {
       <Route path="news" element={<News />} />
       <Route path="knowledge" element={<Knowledge />} />
       <Route path="directory" element={<Directory />} />
-      <Route path="workplace" element={<WorkPlace />} />
+      <Route path="workplace" element={<WorkPlace  sp={sp}/>} />
       <Route path="it-support" element={<ITSupport />} />
       <Route path="engineering" element={<Engineering sp={sp} />} />
     </Route>
