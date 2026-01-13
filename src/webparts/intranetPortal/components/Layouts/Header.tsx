@@ -5,11 +5,11 @@ import * as React from "react";
 import { NavLink } from "react-router-dom";
 import { SPFI } from "@pnp/sp";
 import { GraphFI } from "@pnp/graph";
-
 import "@pnp/sp/webs";
 import "@pnp/sp/site-users/web";
 import "@pnp/graph/users";
 import "@pnp/graph/photos";
+import logo from "../../assets/commItlogo.png"
 
 interface IHeaderProps {
   sp: SPFI;
@@ -26,6 +26,7 @@ const Header: React.FC<IHeaderProps> = ({ sp, graph }) => {
   React.useEffect(() => {
     const loadUser = async () => {
       try {
+   
       
         const spUser = await sp.web.currentUser();
 
@@ -34,6 +35,7 @@ const Header: React.FC<IHeaderProps> = ({ sp, graph }) => {
           `/_layouts/15/userphoto.aspx?size=L&accountname=${spUser.Email}`
         );
 
+  
       
         const graphUser = await graph.me();
         setJobTitle(graphUser.jobTitle || ""); 
@@ -60,22 +62,22 @@ const Header: React.FC<IHeaderProps> = ({ sp, graph }) => {
   ];
 
   return (
-    <div className="w-full bg-white font-sans border-b">
+    <div className="w-full bg-white font-sans border-b ">
 
       {/* TOP BAR */}
-      <div className="flex items-center justify-between px-8 py-5">
+      <div className="flex items-center justify-between px-8 py-2">
 
         {/* LEFT LOGO */}
         <NavLink to="/dashboard" className="flex items-center gap-3 group">
           <div className="flex items-center justify-center w-12 h-12 rounded-xl
-                          bg-gradient-to-br from-indigo-600 to-violet-600
+                         
                           shadow-lg shadow-indigo-200 text-white
                           transition-transform group-hover:scale-105">
-            <span className="font-bold text-xl">G</span>
+         <img src={logo}/>
           </div>
           <div className="flex flex-col">
             <span className="text-base font-bold text-gray-900 leading-tight">
-              Globex
+              Internet
             </span>
             <span className="text-[10px] font-bold text-gray-400 tracking-[0.15em] uppercase">
               Portal
@@ -84,7 +86,7 @@ const Header: React.FC<IHeaderProps> = ({ sp, graph }) => {
         </NavLink>
 
         {/* SEARCH */}
-        <div className="flex-1 max-w-2xl mx-12 hidden md:block">
+        {/* <div className="flex-1 max-w-2xl mx-12 hidden md:block">
           <div className="relative">
             <div className="absolute inset-y-0 left-0 pl-5 flex items-center pointer-events-none">
               <svg
@@ -108,7 +110,7 @@ const Header: React.FC<IHeaderProps> = ({ sp, graph }) => {
               placeholder="Search resources, people, or news..."
             />
           </div>
-        </div>
+        </div> */}
 
         {/* RIGHT ACTIONS */}
         <div className="flex items-center gap-6">
@@ -150,7 +152,7 @@ const Header: React.FC<IHeaderProps> = ({ sp, graph }) => {
       </div>
 
       {/* NAVIGATION */}
-      <div className="px-8 pb-4">
+      <div className="px-8 pb-4 ml-28">
         <nav className="flex items-center gap-2 overflow-x-auto">
           {navItems.map((item) => (
             <NavLink
