@@ -80,6 +80,7 @@ export default class MaintenanceRequestWebPart extends BaseClientSideWebPart<{}>
     const element = React.createElement(Routing, {
       sp: this.sp,
       graph: this.graph,
+      context:this.context
     });
 
     ReactDom.render(element, this.domElement);
