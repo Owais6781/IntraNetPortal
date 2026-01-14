@@ -29,7 +29,7 @@ const Routing: React.FC <RoutingIPROPS>= ({sp , graph }) => {
       <Route index element={<Navigate to="/dashboard" replace />} />
 
       <Route path="dashboard" element={<Dashboard />} />
-      <Route path="organization" element={<Organization />} />
+      <Route path="organization" element={<Organization sp={sp}/>} />
       <Route path="news" element={<News />} />
       <Route path="knowledge" element={<Knowledge />} />
       <Route path="directory" element={<Directory />} />

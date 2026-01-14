@@ -1,0 +1,867 @@
+.heroWrapper {
+    padding: 60px 10% 16px;
+    background: linear-gradient(135deg, #cfd4e6, #eef1f8);
+}
+
+.heroCard {
+    position: relative;
+    height: 340px;
+    border-radius: 28px;
+    overflow: hidden;
+    background-image: url("https://cdn.prod.website-files.com/6442419dcf656a81da76b503/65ac7bcca32da2cb975b2f72_modern-office-with-skyline-zoom-background.webp");
+    background-size: cover;
+    background-position: center;
+    box-shadow: 0 30px 60px rgba(0, 0, 0, 0.25);
+}
+
+.heroOverlay {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    padding: 0 8%;
+    background: linear-gradient(to right, rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.1));
+}
+
+.heroContent {
+    position: relative;
+    z-index: 1;
+    padding: 48px 60px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    color: #fff;
+}
+
+.iconBox {
+    width: 54px;
+    height: 54px;
+    background: #fff;
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 26px;
+    margin-bottom: 18px;
+}
+
+.companyName {
+    font-size: 40px;
+    font-weight: 700;
+    margin-bottom: 10px;
+}
+
+.tagline {
+    font-size: 18px;
+    font-style: italic;
+    opacity: 0.9;
+    max-width: 520px;
+}
+
+
+.profileWrapper {
+    padding: 30px 4%;
+    background: linear-gradient(135deg, #d7dbea, #f2f4fb);
+}
+
+.companyProfile {
+    background: linear-gradient(135deg, #f6f8ff, #ffffff);
+    border-radius: 26px;
+    padding: 32px 36px 36px;
+    max-width: 1400px;
+    margin: auto;
+    border: 2px solid #e3e7f5;
+    cursor: pointer;
+}
+
+.companyProfile:hover {
+    border-color: #bac6fb;
+    transform: none;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+}
+
+.heading {
+    color: #6f85f5;
+    font-size: 21px;
+    font-weight: 700;
+    margin-bottom: 18px;
+    font-style: normal;
+}
+
+.description {
+    color: #2f3445;
+    font-size: 15px;
+    font-weight: 500;
+    font-family: "'Outfit' Segoe UI", sans-serif;
+    line-height: 1.6;
+    margin-bottom: 30px;
+    text-align: left;
+    letter-spacing: 0.1px;
+}
+
+
+
+.infoGrid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 24px;
+}
+
+.infoCard {
+    background: linear-gradient(135deg, #e1e4e8, #d3dcee);
+    border-radius: 20px;
+    padding: 20px 26px;
+    text-align: center;
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.8),
+        0 10px 25px rgba(0, 0, 0, 0.08);
+}
+
+.label {
+    display: block;
+    font-size: 12px;
+    font-weight: 700;
+    color: #6b7280;
+    margin-bottom: 4px;
+}
+
+.value {
+    font-size: 18px;
+    font-weight: 700;
+    color: #1f2937;
+}
+
+
+
+@media (max-width: 1024px) {
+    .infoGrid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .companyName {
+        font-size: 34px;
+    }
+}
+
+@media (max-width: 600px) {
+    .infoGrid {
+        grid-template-columns: 1fr;
+    }
+
+    .heroContent {
+        padding: 30px;
+    }
+
+    .companyName {
+        font-size: 28px;
+    }
+}
+
+
+
+.executiveTitle {
+    font-size: 24px;
+    font-style: "Outfit, Segoe UI , sans-serif";
+    font-weight: 700;
+    color: #1f2937;
+    margin-bottom: 28px;
+    margin-top: 34px;
+}
+
+.executiveSlider {
+    position: relative;
+    width: 100%;
+    margin-bottom: 48px;
+    background: transparent;
+}
+
+.sliderViewport {
+    overflow: hidden;
+    width: 100%;
+}
+
+.executiveGrid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 24px;
+    overflow: visible;
+    padding-top: 8px;
+
+}
+
+.executiveCard {
+    background: #ffffff;
+    border-radius: 28px;
+    padding: 16px 18px 16px;
+    text-align: center;
+    border: 2px solid #e3e7f5;
+    cursor: pointer;
+}
+
+
+.executiveCard:hover {
+    border-color: #bac6fb;
+    transform: none;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+}
+
+.executiveAvatar {
+    width: 75px;
+    height: 75px;
+    border-radius: 50%;
+    background: #e6eaf1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 18px;
+}
+
+.executiveAvatar svg,
+.executiveAvatar i {
+    font-size: 36px;
+    color: #5b2d8b;
+}
+
+.executiveName {
+    font-size: 17px;
+    font-weight: 700;
+    font-style: "Outfit,Segoe UI, sans-serif";
+    color: #111827;
+    margin-bottom: 6px;
+}
+
+.executiveRole {
+    font-size: 14px;
+    font-weight: 700;
+    color: #2563eb;
+    margin-bottom: 3px;
+
+}
+
+.executiveDept {
+    font-size: 14px;
+    font-weight: 500;
+    color: #6b7280;
+    margin-bottom: 3px;
+}
+
+
+.arrowLeft,
+.arrowRight {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: #fff;
+    border: none;
+    cursor: pointer;
+    font-size: 26px;
+    font-weight: bold;
+    box-shadow: 0 12px 30px rgba(0, 0, 0, .18);
+    z-index: 10;
+}
+
+.arrowLeft {
+    left: -22px;
+}
+
+.arrowRight {
+    right: -22px;
+}
+
+.arrowLeft:hover,
+.arrowRight:hover {
+    background: #f1f5f9;
+}
+
+
+.deptRow {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 24px;
+    margin-bottom: 28px;
+}
+
+.deptCard {
+    background: #f9fbff;
+    border-radius: 14px;
+    padding: 10px;
+    text-align: center;
+    border: 1px solid #dde4ff;
+}
+
+
+
+.arrowLeft,
+.arrowRight {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: #fff;
+    border: none;
+    cursor: pointer;
+    font-size: 26px;
+    font-weight: bold;
+    box-shadow: 0 12px 30px rgba(0, 0, 0, .18);
+    z-index: 10;
+}
+
+.arrowLeft {
+    left: -34px;
+}
+
+.arrowRight {
+    right: -34px;
+}
+
+
+.arrowLeft:hover,
+.arrowRight:hover {
+    background: #f1f5f9;
+}
+
+
+.deptRow {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 24px;
+    margin-bottom: 20px;
+}
+
+.deptCard {
+    background: #f9fbff;
+    border-radius: 14px;
+    padding: 10px;
+    text-align: center;
+    border: 1px solid #dde4ff;
+}
+
+.orgWrapper {
+    background-color: #ffffff;
+    border-radius: 32px;
+    padding: 20px 22px;
+    border: 2px solid #e3e7f5;
+    cursor: pointer;
+}
+
+.orgWrapper:hover {
+    border-color: #bac6fb;
+    transform: none;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+}
+
+.orgTitle {
+    text-align: center;
+    font-size: 20px;
+    font-style: "Outfit, Segoe UI, sans-serif";
+    font-weight: 700;
+    color: #6f63d2;
+    margin-bottom: 40px;
+    margin-top: 20px;
+}
+
+/* CEO */
+.ceoWrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: relative;
+
+}
+
+.ceoCard {
+    background: linear-gradient(135deg, #7b7fe8, #6b4bbf);
+    color: #fff;
+    padding: 20px 8px;
+    border-radius: 14px;
+    text-align: center;
+    min-width: 160px;
+    box-shadow: 0 10px 22px rgba(0, 0, 0, 0.25);
+
+}
+
+
+.ceoCard h3 {
+    margin: 0;
+    font-size: 15px;
+    font-weight: 700;
+}
+
+.ceoCard p {
+    margin-top: 4px;
+    font-size: 12px;
+    opacity: 0.9;
+}
+
+
+.verticalLine {
+    width: 2px;
+    height: 40px;
+    border-left: 2px dashed #cfd6f7;
+    margin-top: 10px;
+}
+
+
+.horizontalLine {
+    width: 85%;
+    margin: 0 auto 40px;
+    border-top: 2px dashed #cfd6f7;
+}
+
+
+.deptRow {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 24px;
+    padding: 0 20px;
+}
+
+.deptCard {
+    background: #f9fbff;
+    border-radius: 14px;
+    padding: 8px 10px;
+    text-align: center;
+    border: 1px solid #dde4ff;
+    margin-bottom: 10px;
+}
+
+.deptCard h4 {
+    margin: 0;
+    font-size: 14px;
+    line-height: 1.2;
+}
+
+
+.deptCard p {
+    margin-top: 6px;
+    font-size: 14px;
+    color: #4b5563;
+}
+
+
+@media (max-width: 900px) {
+    .deptRow {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 480px) {
+    .deptRow {
+        grid-template-columns: 1fr;
+    }
+}
+
+
+.vmvWrapper {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 28px;
+    margin: 60px 0;
+    border: 2px solid #e3e7f5;
+    cursor: pointer;
+}
+
+
+
+
+.typesCard {
+    background: #ffffff;
+    border-radius: 22px;
+    padding: 26px 16px 20px;
+    border: 2px solid #e3e7f5;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+}
+
+.typesCard:hover {
+    border-color: #bac6fb;
+    transform: none;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+}
+
+.typesCard::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 6px;
+}
+
+.vision::before {
+    background: linear-gradient(90deg, #0d6efd, #5c8cff);
+}
+
+.mission::before {
+    background: linear-gradient(90deg, #6cc070, #4caf50);
+}
+
+.values::before {
+    background: linear-gradient(90deg, #ffa000, #ffb74d);
+}
+
+
+
+.typesTitle {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 18px;
+    font-weight: 600;
+    color: #5b6ef5;
+    margin-bottom: 20px;
+
+}
+
+
+.TypesIcon {
+    width: 25px;
+    height: 25px;
+    border-radius: 50%;
+    background: currentColor;
+}
+
+
+.TypesText {
+    font-size: 15px;
+    line-height: 1.7;
+    font-weight: 500;
+    color: #2d2f45;
+}
+
+
+.valuesList {
+    margin: 0;
+    padding-left: 18px;
+
+    li {
+        font-size: 15px;
+        color: #2d2f45;
+        margin-bottom: 10px;
+    }
+}
+
+
+@media (max-width: 992px) {
+    .vmvWrapper {
+        grid-template-columns: 1fr;
+    }
+}
+
+
+.policyWrapper {
+    margin-top: 60px;
+    padding: 24px 28px;
+    border-radius: 24px;
+    background: #fff;
+    border: 2px solid #e3e7f5;
+    cursor: pointer;
+}
+
+.policyWrapper:hover {
+    border-color: #bac6fb;
+    transform: none;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+}
+
+.policyTitle {
+    text-align: start;
+    font-size: 20px;
+    font-style: "Outfit, Segoe UI, sans-serif";
+    font-weight: 700;
+    color: #6f63d2;
+    margin-bottom: 20px;
+    
+}
+
+
+
+.policyCard {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 24px;
+
+}
+
+.policyItem {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    height: 80px;
+    background: #f0f0f6;
+    border-radius: 18px;
+    padding: 20px 24px;
+    box-shadow: 0 10px 28px rgba(0, 0, 0, .06);
+    gap: 2px;
+}
+
+.policyIcon {
+    width: 50px;
+    height: 50px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    font-size: 26px;
+}
+
+.policyContent {
+    display: flex;
+    flex-direction: column;
+    margin: 0;
+    padding: 0;
+    font-family: Outfit, Segoe UI, sans-serif;
+    font-weight: 500;
+
+
+}
+
+.shortcutWrapper {
+    margin-top: 50px;
+}
+
+
+.shortcutGrid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 36px;
+}
+
+.shortcutCard {
+    height: 130px;
+    background: #ffffff;
+    border-radius: 20px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 16px;
+     border: 2px solid #e3e7f5;
+    cursor: pointer;
+}
+
+.shortcutCard:hover {
+    border-color: #bac6fb;
+    transform: none;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+}
+
+.cardItem {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    font-size: 16px;
+    font-family: Outfit, Segoe UI, sans-serif;
+    margin-bottom: 20px;
+    font-weight: bold;
+    gap: 4px;
+}
+
+.CardIcon {
+    width: 50px;
+    height: 50px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 32px;
+    margin-top: 10px;
+}
+
+.shortcutCard img {
+    width: 30px;
+    height: 30px;
+}
+
+.shortcutCard p {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 600;
+    color: #1e1f3b;
+}
+
+
+.shortcutCard:hover {
+    box-shadow:
+        0 24px 50px rgba(0, 0, 0, 0.12),
+        inset 0 1px 0 rgba(255, 255, 255, 0.9);
+}
+
+
+@media (max-width: 900px) {
+    .shortcutGrid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+.newsWrapper {
+    background: #fff;
+    border-radius: 16px;
+    padding: 32px;
+    width: 100%;
+    max-width: 650px;
+    margin: 20px 0 20px 0;
+    font-family: 'Segoe UI', sans-serif;
+    margin-top: 60px;
+    max-width: 1500px;
+    border: 2px solid #e3e7f5;
+    cursor: pointer;
+}
+
+
+.newsWrapper:hover {
+    border-color: #bac6fb;
+    transform: none;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+}
+
+
+.newsHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+
+    h2 {
+        color: #6674f4;
+        font-size: 20px;
+        font-weight: 700;
+        margin: 0;
+    }
+
+    .viewAllBtn {
+        background: #f0f0f0;
+        border: none;
+        border-radius: 20px;
+        padding: 6px 16px;
+        font-weight: 600;
+        font-size: 13px;
+        cursor: pointer;
+    }
+}
+
+.newsItem {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 0;
+    border-bottom: 1px solid #eef0f6;
+
+    &:last-child {
+        border-bottom: none;
+    }
+
+    .newsText {
+        max-width: 85%;
+
+        h3 {
+            margin: 0;
+            font-size: 17px;
+            font-weight: 700;
+            line-height: 1.4;
+            color: #1e1e1e;
+        }
+
+        span {
+            display: block;
+            margin-top: 4px;
+            font-size: 12px;
+            color: #7a7a7a;
+        }
+    }
+
+    .newsTag {
+        font-size: 12px;
+        font-weight: 600;
+        padding: 6px 16px;
+        border-radius: 20px;
+        color: #fff;
+        min-width: 70px;
+        text-align: center;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+
+        &.update {
+            background: linear-gradient(90deg, #4facfe 0%, #00f2fe 100%);
+        }
+
+        &.policy {
+            background: linear-gradient(90deg, #f83600 0%, #f9d423 100%);
+        }
+    }
+}
+
+
+.contactsection {
+    background-color: #1f2740;
+    color: #ffffff;
+    text-align: center;
+    padding: 40px 20px;
+    border-radius: 16px;
+    max-width: 1500px;
+    font-family: 'Segoe UI', sans-serif;
+    margin-top: 50px;
+    height: 180px;
+    border: 2px solid #e3e7f5;
+    cursor: pointer;
+}
+
+.contactsection:hover {
+    border-color: #bac6fb;
+    transform: none;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+}
+
+.contactsection h2 {
+    color: #7f7fed;
+    font-size: 20px;
+    margin-top: 0;
+    //   margin-Top: 10px;
+    font-weight: 600;
+    font-family: 'Segoe UI', sans-serif;
+}
+
+.contactcards {
+    display: flex;
+    justify-content: space-around;
+    flex-wrap: wrap;
+    gap: 20px;
+}
+
+.contactcard {
+    flex: 1 1 200px;
+    min-width: 200px;
+    color: #ffffff;
+    font-weight: 500;
+    font-family: outfit 'Segoe UI', sans-serif;
+    font-size: 8px;
+}
+
+.contactcard h3 {
+    color: #1580ff;
+    font-size: 16px;
+    margin-top: 20px;
+    margin-bottom: 10px;
+    font-family: outfit, 'Segoe UI', sans-serif;
+    font-weight: 600;
+}
+
+.contactcard p {
+    margin: 5px 0;
+    font-size: 13px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 500;
+    font-family: outfit, 'Segoe UI', sans-serif;
+
+}
+
+.contactcard p span {
+    margin-right: 6px;
+}
