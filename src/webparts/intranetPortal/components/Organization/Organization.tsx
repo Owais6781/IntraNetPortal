@@ -62,10 +62,14 @@ const Organization: React.FC<IOrgProps> = ({ sp }) => {
   const [orgH, setOrgH] = useState<HItem[]>([]);
   const [policy, setPolicy] = useState<PolicyDoc[]>([]);
   const [news, setNews] = useState<NewsItem[]>([]);
+
   const [currentIndex, setCurrentIndex] = useState(0);
+
+
+
   const navigate = useNavigate();
 
-  const cardsPerPage = 4;
+  const VISIBLE_CARDS = 4;
 
   useEffect(() => {
     const fetchData = async () => {
@@ -129,15 +133,18 @@ const Organization: React.FC<IOrgProps> = ({ sp }) => {
     void fetchData();
   }, [sp]);
 
-  const handlePrev = () => {
-    setCurrentIndex(prev => Math.max(prev - cardsPerPage, 0));
+  const handleNext = () => {
+    if (currentIndex < executives.length - VISIBLE_CARDS) {
+      setCurrentIndex(prev => prev + 1);
+    }
   };
 
-  const handleNext = () => {
-    setCurrentIndex(prev =>
-      Math.min(prev + cardsPerPage, executives.length - cardsPerPage)
-    );
+  const handlePrev = () => {
+    if (currentIndex > 0) {
+      setCurrentIndex(prev => prev - 1);
+    }
   };
+
 
 
   const stripHTML = (html: string): string => html.replace(/<[^>]+>/g, "");
@@ -207,8 +214,9 @@ const Organization: React.FC<IOrgProps> = ({ sp }) => {
           <div className={styles.sliderViewport}>
             <div className={styles.executiveGrid}>
               {executives
-                .slice(currentIndex, currentIndex + cardsPerPage)
+                .slice(currentIndex, currentIndex + VISIBLE_CARDS)
                 .map(exec => (
+
                   <div className={styles.executiveCard} key={exec.ID}>
                     <div className={styles.executiveAvatar}>
                       <PersonFill size={34} />
@@ -228,7 +236,7 @@ const Organization: React.FC<IOrgProps> = ({ sp }) => {
             </div>
           </div>
 
-          {currentIndex + cardsPerPage < executives.length && (
+          {currentIndex < executives.length - VISIBLE_CARDS && (
             <button
               className={styles.arrowRight}
               onClick={handleNext}
@@ -246,7 +254,7 @@ const Organization: React.FC<IOrgProps> = ({ sp }) => {
             {orgH.find(e => e.Degination?.toLowerCase() === "ceo") && (
               <div className={styles.ceoCard}>
                 <h3>CEO</h3>
-                <p style={{fontWeight:"500", fontSize:"16px"}}>
+                <p style={{ fontWeight: "500", fontSize: "16px" }}>
                   {orgH.find(e => e.Degination?.toLowerCase() === "ceo")?.Email?.Title}
                 </p>
               </div>
@@ -266,7 +274,7 @@ const Organization: React.FC<IOrgProps> = ({ sp }) => {
                     {dept.Department}
                   </h4>
 
-                  <p style={{ fontWeight: "400", fontSize: "14px", color:"black" }}>
+                  <p style={{ fontWeight: "400", fontSize: "14px", color: "black" }}>
                     {dept.Email?.Title}
                   </p>
                 </div>
