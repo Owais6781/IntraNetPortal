@@ -23,33 +23,26 @@ const Header: React.FC<IHeaderProps> = ({ sp, graph }) => {
 
 
 
-   const loadUser = async () => {
-      try {
-       
-   
-      
-        const spUser = await sp.web.currentUser();
+  const loadUser = async () => {
+    try {
+      const spUser = await sp.web.currentUser();
 
-        setUserName(spUser.Title);
-        setUserPhoto(
-          `/_layouts/15/userphoto.aspx?size=L&accountname=${spUser.Email}`
-        );
+      setUserName(spUser.Title);
+      setUserPhoto(
+        `/_layouts/15/userphoto.aspx?size=L&accountname=${spUser.Email}`
+      );
+      const graphUser = await graph.me();
+      setJobTitle(graphUser.jobTitle || "");
 
-    
-  
-      
-        const graphUser = await graph.me();
-        setJobTitle(graphUser.jobTitle || ""); 
-
-      } catch (error) {
-        console.error("User Load Error:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
+    } catch (error) {
+      console.error("User Load Error:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   React.useEffect(() => {
-   
+
     void loadUser();
   }, [sp, graph]);
 
@@ -72,48 +65,17 @@ const Header: React.FC<IHeaderProps> = ({ sp, graph }) => {
 
         {/* LEFT LOGO */}
         <NavLink to="/dashboard" className="flex items-center gap-3 group">
-          <div className="flex items-center justify-center w-12 h-12 rounded-xl
-                         
-                          shadow-lg shadow-indigo-200 text-white
-                          transition-transform group-hover:scale-105">
-         <img src={logo}/>
-          </div>
-          <div className="flex flex-col">
-            <span className="text-base font-bold text-gray-900 leading-tight">
-              Internet
-            </span>
-            <span className="text-[10px] font-bold text-gray-400 tracking-[0.15em] uppercase">
-              Portal
-            </span>
-          </div>
+
+
+          <img
+            src={logo}
+            alt="Logo"
+            className="h-10 w-auto object-contain"
+          />
+
         </NavLink>
 
-        {/* SEARCH */}
-        {/* <div className="flex-1 max-w-2xl mx-12 hidden md:block">
-          <div className="relative">
-            <div className="absolute inset-y-0 left-0 pl-5 flex items-center pointer-events-none">
-              <svg
-                className="h-5 w-5 text-indigo-400"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                strokeWidth={2.5}
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                />
-              </svg>
-            </div>
-            <input
-              readOnly
-              className="block w-full pl-12 pr-4 py-3.5 bg-indigo-50/50
-                         rounded-full text-sm font-medium text-gray-900"
-              placeholder="Search resources, people, or news..."
-            />
-          </div>
-        </div> */}
+
 
         {/* RIGHT ACTIONS */}
         <div className="flex items-center gap-6">

@@ -64,6 +64,7 @@ const Workplace: React.FC<WorkplaceProps> = ({ sp }) => {
           "Reason",
           "Created"
         )
+        
         .orderBy("Id", false)
         ();
 
