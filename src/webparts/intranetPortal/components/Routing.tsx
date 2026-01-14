@@ -28,9 +28,9 @@ const Routing: React.FC <RoutingIPROPS>= ({sp , graph,    }) => {
       <Route index element={<Navigate to="/dashboard" replace />} />
       <Route path="dashboard" element={<Dashboard  sp={sp} graph={graph} />} />
       <Route path="organization" element={<Organization />} />
-      <Route path="news" element={<News />} />
+      <Route path="news" element={<News sp={sp} />} />
       <Route path="knowledge" element={<Knowledge />} />
-      <Route path="directory" element={<Directory />} />
+      <Route path="directory" element={<Directory sp={sp} />} />
       <Route path="workplace" element={<WorkPlace  sp={sp}/>} />
       <Route path="it-support" element={<ITSupport />} />
       <Route path="engineering" element={<Engineering sp={sp} />} />
