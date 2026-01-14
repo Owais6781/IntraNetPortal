@@ -73,6 +73,7 @@ export default class MaintenanceRequestWebPart extends BaseClientSideWebPart<{}>
   protected onInit(): Promise<void> {
     this.sp = spfi().using(SPFx(this.context));
     this.graph = graphfi().using(SPFx(this.context));
+    
     return Promise.resolve();
   }
 
@@ -81,6 +82,7 @@ export default class MaintenanceRequestWebPart extends BaseClientSideWebPart<{}>
       sp: this.sp,
       graph: this.graph,
       context:this.context
+
     });
 
     ReactDom.render(element, this.domElement);
