@@ -34,7 +34,9 @@
       }
     ]
   },
+  
   "paths": {
     "zippedPackage": "solution/intranet-portal.sppkg"
   }
 }
+
