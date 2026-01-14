@@ -12,31 +12,33 @@ import WorkPlace from "./Workplace/Workplace";
 import { SPFI } from "@pnp/sp";
 import { GraphFI } from "@pnp/graph";
 
-interface RoutingIPROPS {
-  sp: SPFI;
-  graph: GraphFI;
+
+
+interface RoutingIPROPS{
+    sp: SPFI;
+    graph: GraphFI;
 }
 
-const Routing: React.FC<RoutingIPROPS> = ({ sp, graph }) => {
+
+const Routing: React.FC <RoutingIPROPS>= ({sp , graph,    }) => {
   return (
-    <HashRouter>
-      <Routes>
-        <Route path="/" element={<Layouts sp={sp} graph={graph} />}>
+   <HashRouter>
+  <Routes>
+    <Route path="/" element={<Layouts sp={sp} graph={graph} />}>
+      <Route index element={<Navigate to="/dashboard" replace />} />
 
-          <Route index element={<Navigate to="/dashboard" replace />} />
+      <Route path="dashboard" element={<Dashboard  sp={sp} graph={graph} />} />
 
-          <Route path="dashboard" element={<Dashboard />} />
-          <Route path="organization" element={<Organization />} />
-         <Route path="news" element={<News sp={sp} />} />
-          <Route path="knowledge" element={<Knowledge />} />
-          <Route path="directory" element={<Directory sp={sp} />} />
-          <Route path="workplace" element={<WorkPlace />} />
-          <Route path="it-support" element={<ITSupport />} />
-          <Route path="engineering" element={<Engineering />} />
-
-        </Route>
-      </Routes>
-    </HashRouter>
+      <Route path="organization" element={<Organization />} />
+      <Route path="news" element={<News />} />
+      <Route path="knowledge" element={<Knowledge />} />
+      <Route path="directory" element={<Directory />} />
+      <Route path="workplace" element={<WorkPlace  sp={sp}/>} />
+      <Route path="it-support" element={<ITSupport />} />
+      <Route path="engineering" element={<Engineering sp={sp} />} />
+    </Route>
+  </Routes>
+</HashRouter>
   );
 };
 
