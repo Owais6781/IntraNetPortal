@@ -6,6 +6,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import "@pnp/sp/lists";
 import "@pnp/sp/items";
+// import { size } from "lodash";
 
 interface IOrgProps {
   sp: SPFI;
@@ -21,10 +22,31 @@ interface ExecutiveItem {
   Status: string;
 }
 
+
 interface OrgItems {
   Title: string;
   Description: string;
 }
+
+interface HItem {
+  Department: string;
+  Degination: string;
+  Email: {
+    Title: string;
+  };
+}
+
+
+interface PolicyDoc {
+  ID: number;
+  Name: string;
+  Descriptions: string;
+  FileRef: string;
+  Status: string;
+  FileLeafRef: string;
+}
+
+
 
 interface NewsItem {
   SubTitle: string;
@@ -37,6 +59,8 @@ const Organization: React.FC<IOrgProps> = ({ sp }) => {
   const [vision, setVision] = useState<OrgItems | null>(null);
   const [mission, setMission] = useState<OrgItems | null>(null);
   const [values, setValues] = useState<OrgItems | null>(null);
+  const [orgH, setOrgH] = useState<HItem[]>([]);
+  const [policy, setPolicy] = useState<PolicyDoc[]>([]);
   const [news, setNews] = useState<NewsItem[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const navigate = useNavigate();
@@ -54,6 +78,19 @@ const Organization: React.FC<IOrgProps> = ({ sp }) => {
 
         setExecutives(executiveData);
 
+        const data = await sp.web.lists
+          .getByTitle("EmployeeDirectory")
+          .items
+          .select(
+            "Department",
+            "Degination",
+            "Email/Title",
+            "Status"
+          )
+          .expand("Email").filter("Status eq 'Active'")();
+
+        setOrgH(data);
+
         const orgItems: OrgItems[] = await sp.web.lists
           .getByTitle("OrganizationTypes")
           .items.select("Title", "Description")();
@@ -61,6 +98,23 @@ const Organization: React.FC<IOrgProps> = ({ sp }) => {
         setVision(orgItems.find(i => i.Title === "Vision") ?? null);
         setMission(orgItems.find(i => i.Title === "Mission") ?? null);
         setValues(orgItems.find(i => i.Title === "Values") ?? null);
+
+        const policyItem = await sp.web.lists
+          .getByTitle("OrganizationPolicies")
+          .items
+          .select("ID", "FileLeafRef", "FileRef", "Descriptions", "Status")
+          .filter("Status eq 'Active'")();
+
+        const formattedPolicy: PolicyDoc[] = policyItem.map(p => ({
+          ID: p.ID,
+          Name: p.FileLeafRef,
+          Descriptions: p.Descriptions,
+          FileRef: p.FileRef,
+          Status: p.Status,
+          FileLeafRef: p.FileLeafRef
+        }));
+
+        setPolicy(formattedPolicy);
 
         const NewsData: NewsItem[] = await sp.web.lists
           .getByTitle("News")
@@ -85,7 +139,9 @@ const Organization: React.FC<IOrgProps> = ({ sp }) => {
     );
   };
 
+
   const stripHTML = (html: string): string => html.replace(/<[^>]+>/g, "");
+
 
   return (
     <>
@@ -183,41 +239,41 @@ const Organization: React.FC<IOrgProps> = ({ sp }) => {
           )}
         </div>
 
-        <section className={styles.orgWrapper}> 
+        <section className={styles.orgWrapper}>
           <h2 className={styles.orgTitle}>Organization Hierarchy</h2>
 
           <div className={styles.ceoWrapper}>
-            <div className={styles.ceoCard}>
-              <h3>CEO</h3>
-              <p>Dr. Alan Vance</p>
-            </div>
+            {orgH.find(e => e.Degination?.toLowerCase() === "ceo") && (
+              <div className={styles.ceoCard}>
+                <h3>CEO</h3>
+                <p style={{fontWeight:"500", fontSize:"16px"}}>
+                  {orgH.find(e => e.Degination?.toLowerCase() === "ceo")?.Email?.Title}
+                </p>
+              </div>
+            )}
             <span className={styles.verticalLine}></span>
           </div>
+
 
           <div className={styles.horizontalLine}></div>
 
           <div className={styles.deptRow}>
-            <div className={styles.deptCard}>
-              <h4 style={{ fontWeight: "bold", fontSize: "14px" }}>HR</h4>
-              <p style={{ fontWeight: "500", fontSize: "14px" }}>Linda Wu</p>
-            </div>
+            {orgH
+              .slice(-4)
+              .map((dept, index) => (
+                <div className={styles.deptCard} key={index}>
+                  <h4 style={{ fontWeight: "bold", fontSize: "15px" }}>
+                    {dept.Department}
+                  </h4>
 
-            <div className={styles.deptCard}>
-              <h4 style={{ fontWeight: "bold", fontSize: "14px" }}>IT</h4>
-              <p style={{ fontWeight: "500", fontSize: "14px" }}>Sarah Jenkins</p>
-            </div>
-
-            <div className={styles.deptCard}>
-              <h4 style={{ fontWeight: "bold", fontSize: "14px" }}>Finance</h4>
-              <p style={{ fontWeight: "500", fontSize: "14px" }}>Mark Spencer</p>
-            </div>
-
-            <div className={styles.deptCard}>
-              <h4 style={{ fontWeight: "bold", fontSize: "14px" }}>Sales</h4>
-              <p style={{ fontWeight: "500", fontSize: "14px" }}>David Kim</p>
-            </div>
+                  <p style={{ fontWeight: "400", fontSize: "14px", color:"black" }}>
+                    {dept.Email?.Title}
+                  </p>
+                </div>
+              ))}
           </div>
         </section>
+
 
         <div className={styles.vmvWrapper}>
           {vision && (
@@ -258,30 +314,42 @@ const Organization: React.FC<IOrgProps> = ({ sp }) => {
           )}
         </div>
 
-         <section className={styles.policyWrapper}> 
+        <section className={styles.policyWrapper}>
           <h2 className={styles.policyTitle}>Policies & Governance</h2>
-          <div className={styles.policyCard}>
-            <div className={styles.policyItem}>
-              <div className={styles.policyIcon}>📄</div>
-              <div className={styles.policyContent}>
-                <h5 style={{ fontWeight: "bold" }}>HR Policies</h5>
-                <p style={{ fontSize: "14px", marginTop: "3px", color: "grey" }}>
-                  Guidelines for attendance, leave, and workplace conduct.
-                </p>
-              </div>
-            </div>
 
-            <div className={styles.policyItem}>
-              <div className={styles.policyIcon}>🛡️</div>
-              <div className={styles.policyContent}>
-                <h5 style={{ fontWeight: "bold" }}>IT & Security</h5>
-                <p style={{ fontSize: "14px", marginTop: "3px", color: "grey" }}>
-                  Protocols for data protection and system usage.
-                </p>
-              </div>
-            </div>
+          <div className={styles.policyCard}>
+            {policy
+              .filter(p => p.Status === "Active")
+              .map((doc) => (
+                <div
+                  className={styles.policyItem}
+                  onClick={() => window.open(doc.FileRef, "_blank")}
+                  style={{ cursor: "pointer" }}
+                >
+                  <div
+                    className={`${styles.policyIcon} ${/\bIT\b/.test(doc.Name) ? styles.itIcon : styles.formIcon
+                      }`}
+                  >
+                    {/\bIT\b/.test(doc.Name) ? "🛡️" : "📄"}
+                  </div>
+
+
+                  <div className={styles.policyContent}>
+                    <h5 style={{ fontWeight: "bold" }}>
+                      {doc.Name}
+                    </h5>
+                    <p style={{ fontSize: "14px", marginTop: "3px", color: "grey" }}>
+                      {doc.Descriptions}
+                    </p>
+                  </div>
+
+
+                </div>
+              ))}
           </div>
-       </section> 
+        </section>
+
+
 
         <div className={styles.shortcutWrapper}>
           <div className={styles.shortcutGrid}>
@@ -342,7 +410,7 @@ const Organization: React.FC<IOrgProps> = ({ sp }) => {
         </div>
 
         <div className={styles.contactsection}>
-          <h2 style={{marginTop:"-15px"}}> Contact & Support Information</h2>
+          <h2 style={{ marginTop: "-15px" }}> Contact & Support Information</h2>
           <div className={styles.contactcards}>
             <div className={styles.contactcard}>
               <h3>Human Resources</h3>
