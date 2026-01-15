@@ -6,10 +6,12 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import "@pnp/sp/lists";
 import "@pnp/sp/items";
-// import { size } from "lodash";
+import { Link } from "react-router-dom";
+
 
 interface IOrgProps {
   sp: SPFI;
+  context: any
 }
 
 interface ExecutiveItem {
@@ -29,9 +31,8 @@ interface OrgItems {
 }
 
 interface HItem {
-  Department: string;
-  Degination: string;
-  Email: {
+  Designation: string;
+  UserName: {
     Title: string;
   };
 }
@@ -39,7 +40,7 @@ interface HItem {
 
 interface PolicyDoc {
   ID: number;
-  Name: string;
+  FilesName: string;
   Descriptions: string;
   FileRef: string;
   Status: string;
@@ -54,7 +55,7 @@ interface NewsItem {
   RecordType: string;
 }
 
-const Organization: React.FC<IOrgProps> = ({ sp }) => {
+const Organization: React.FC<IOrgProps> = ({ sp, context }) => {
   const [executives, setExecutives] = useState<ExecutiveItem[]>([]);
   const [vision, setVision] = useState<OrgItems | null>(null);
   const [mission, setMission] = useState<OrgItems | null>(null);
@@ -83,15 +84,14 @@ const Organization: React.FC<IOrgProps> = ({ sp }) => {
         setExecutives(executiveData);
 
         const data = await sp.web.lists
-          .getByTitle("EmployeeDirectory")
+          .getByTitle("OrganizationHierarchy")
           .items
           .select(
-            "Department",
-            "Degination",
-            "Email/Title",
+            "Designation",
+            "UserName/Title",
             "Status"
           )
-          .expand("Email").filter("Status eq 'Active'")();
+          .expand("UserName").filter("Status eq 'Active'")();
 
         setOrgH(data);
 
@@ -106,12 +106,12 @@ const Organization: React.FC<IOrgProps> = ({ sp }) => {
         const policyItem = await sp.web.lists
           .getByTitle("OrganizationPolicies")
           .items
-          .select("ID", "FileLeafRef", "FileRef", "Descriptions", "Status")
+          .select("ID", "FileLeafRef", "FileRef", "Descriptions", "Status","FilesName")
           .filter("Status eq 'Active'")();
 
         const formattedPolicy: PolicyDoc[] = policyItem.map(p => ({
           ID: p.ID,
-          Name: p.FileLeafRef,
+          FilesName: p.FilesName,
           Descriptions: p.Descriptions,
           FileRef: p.FileRef,
           Status: p.Status,
@@ -147,7 +147,7 @@ const Organization: React.FC<IOrgProps> = ({ sp }) => {
 
 
 
-  const stripHTML = (html: string): string => html.replace(/<[^>]+>/g, "");
+  // const stripHTML = (html: string): string => html.replace(/<[^>]+>/g, "");
 
 
   return (
@@ -201,61 +201,46 @@ const Organization: React.FC<IOrgProps> = ({ sp }) => {
         <h2 className={styles.executiveTitle}>Executive Leadership</h2>
 
         <div className={styles.executiveSlider}>
+
           {currentIndex > 0 && (
-            <button
-              className={styles.arrowLeft}
-              onClick={handlePrev}
-              aria-label="Previous"
-            >
-              ‹
-            </button>
+            <button className={styles.arrowLeft} onClick={handlePrev}>‹</button>
           )}
 
           <div className={styles.sliderViewport}>
-            <div className={styles.executiveGrid}>
-              {executives
-                .slice(currentIndex, currentIndex + VISIBLE_CARDS)
-                .map(exec => (
-
-                  <div className={styles.executiveCard} key={exec.ID}>
-                    <div className={styles.executiveAvatar}>
-                      <PersonFill size={34} />
+            <div className={styles.sliderInner}>
+              <div className={styles.executiveGrid}>
+                {executives
+                  .slice(currentIndex, currentIndex + VISIBLE_CARDS)
+                  .map(exec => (
+                    <div className={styles.executiveCard} key={exec.ID}>
+                      <div className={styles.executiveAvatar}>
+                        <PersonFill size={34} />
+                      </div>
+                      <div className={styles.executiveName}>{exec.UserName?.Title}</div>
+                      <div className={styles.executiveRole}>{exec.Role}</div>
+                      <div className={styles.executiveDept}>{exec.UserName?.Department}</div>
                     </div>
-
-                    <div className={styles.executiveName}>
-                      {exec.UserName?.Title}
-                    </div>
-
-                    <div className={styles.executiveRole}>{exec.Role}</div>
-
-                    <div className={styles.executiveDept}>
-                      {exec.UserName?.Department}
-                    </div>
-                  </div>
-                ))}
+                  ))}
+              </div>
             </div>
           </div>
 
           {currentIndex < executives.length - VISIBLE_CARDS && (
-            <button
-              className={styles.arrowRight}
-              onClick={handleNext}
-              aria-label="Next"
-            >
-              ›
-            </button>
+            <button className={styles.arrowRight} onClick={handleNext}>›</button>
           )}
+
         </div>
+
 
         <section className={styles.orgWrapper}>
           <h2 className={styles.orgTitle}>Organization Hierarchy</h2>
 
           <div className={styles.ceoWrapper}>
-            {orgH.find(e => e.Degination?.toLowerCase() === "ceo") && (
+            {orgH.find(e => e.Designation?.toLowerCase() === "ceo") && (
               <div className={styles.ceoCard}>
                 <h3>CEO</h3>
                 <p style={{ fontWeight: "500", fontSize: "16px" }}>
-                  {orgH.find(e => e.Degination?.toLowerCase() === "ceo")?.Email?.Title}
+                  {orgH.find(e => e.Designation?.toLowerCase() === "ceo")?.UserName?.Title}
                 </p>
               </div>
             )}
@@ -267,19 +252,17 @@ const Organization: React.FC<IOrgProps> = ({ sp }) => {
 
           <div className={styles.deptRow}>
             {orgH
-              .slice(-4)
+              .filter(o => o.Designation && o.Designation.toLowerCase().includes("head"))
               .map((dept, index) => (
                 <div className={styles.deptCard} key={index}>
-                  <h4 style={{ fontWeight: "bold", fontSize: "15px" }}>
-                    {dept.Department}
+                  <h4 style={{ fontWeight: 700, fontSize: "13px", marginBottom: "2px", marginTop: "5px" }}>
+                    {dept.Designation}
                   </h4>
-
-                  <p style={{ fontWeight: "400", fontSize: "14px", color: "black" }}>
-                    {dept.Email?.Title}
-                  </p>
+                  <p style={{ fontSize: "14px", marginBottom: "10px" }}>{dept.UserName?.Title}</p>
                 </div>
               ))}
           </div>
+
         </section>
 
 
@@ -290,7 +273,12 @@ const Organization: React.FC<IOrgProps> = ({ sp }) => {
                 <Eye className={styles.TypesIcon} size={22} color="white" /> Vision
               </h3>
               <p className={styles.TypesText} style={{ whiteSpace: "pre-line" }}>
-                {stripHTML(vision.Description)}
+                {/* {stripHTML(mission.Description)} */}
+                <div
+                  dangerouslySetInnerHTML={{
+                    __html: vision.Description
+                  }}
+                />
               </p>
             </div>
           )}
@@ -301,7 +289,13 @@ const Organization: React.FC<IOrgProps> = ({ sp }) => {
                 <Airplane className={styles.TypesIcon} size={22} color="white" /> Mission
               </h3>
               <p className={styles.TypesText} style={{ whiteSpace: "pre-line" }}>
-                {stripHTML(mission.Description)}
+                {/* {stripHTML(mission.Description)} */}
+                <div
+                  dangerouslySetInnerHTML={{
+                    __html: mission.Description
+                  }}
+                />
+
               </p>
             </div>
           )}
@@ -311,15 +305,15 @@ const Organization: React.FC<IOrgProps> = ({ sp }) => {
               <h3 className={styles.typesTitle}>
                 <Diamond className={styles.TypesIcon} size={22} color="white" /> Values
               </h3>
-              <ul className={styles.valuesList} style={{ fontSize: "12px", fontWeight: 500 }}>
-                {stripHTML(values.Description)
-                  .split("\n")
-                  .map((v, i) => (
-                    <li key={i}>• {v.trim()}</li>
-                  ))}
-              </ul>
+              <div
+                className={styles.valuesList}
+                dangerouslySetInnerHTML={{
+                  __html: values.Description
+                }}
+              />
             </div>
           )}
+
         </div>
 
         <section className={styles.policyWrapper}>
@@ -329,31 +323,29 @@ const Organization: React.FC<IOrgProps> = ({ sp }) => {
             {policy
               .filter(p => p.Status === "Active")
               .map((doc) => (
-                <div
+                <a
+                  key={doc.ID}
+                  href={doc.FileRef}
+
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className={styles.policyItem}
-                  onClick={() => window.open(doc.FileRef, "_blank")}
-                  style={{ cursor: "pointer" }}
                 >
                   <div
-                    className={`${styles.policyIcon} ${/\bIT\b/.test(doc.Name) ? styles.itIcon : styles.formIcon
+                    className={`${styles.policyIcon} ${/\bIT\b/.test(doc.FilesName) ? styles.itIcon : styles.formIcon
                       }`}
                   >
-                    {/\bIT\b/.test(doc.Name) ? "🛡️" : "📄"}
+                    {/\bIT\b/.test(doc.FilesName) ? "🛡️" : "📄"}
                   </div>
-
 
                   <div className={styles.policyContent}>
-                    <h5 style={{ fontWeight: "bold" }}>
-                      {doc.Name}
-                    </h5>
-                    <p style={{ fontSize: "14px", marginTop: "3px", color: "grey" }}>
-                      {doc.Descriptions}
-                    </p>
+                    <h5 style={{ fontWeight: "700" }}>{doc.FilesName}</h5>
+                    <p style={{ color: "grey", marginTop: "3px" }}>{doc.Descriptions}</p>
                   </div>
-
-
-                </div>
+                </a>
               ))}
+
+
           </div>
         </section>
 
@@ -361,25 +353,33 @@ const Organization: React.FC<IOrgProps> = ({ sp }) => {
 
         <div className={styles.shortcutWrapper}>
           <div className={styles.shortcutGrid}>
-            <div className={styles.shortcutCard}>
-              <div className={styles.CardIcon}>📖</div>
-              <span className={styles.cardItem}>Handbook</span>
-            </div>
+            <Link to="#" className={styles.shortcutLink}>
+              <div className={styles.shortcutCard}>
+                <div className={styles.CardIcon}>📖</div>
+                <span className={styles.cardItem}>Handbook</span>
+              </div>
+            </Link>
 
-            <div className={styles.shortcutCard}>
-              <div className={styles.CardIcon}>📅</div>
-              <span className={styles.cardItem}>Holidays</span>
-            </div>
+            <Link to="#" className={styles.shortcutLink}>
+              <div className={styles.shortcutCard}>
+                <div className={styles.CardIcon}>📅</div>
+                <span className={styles.cardItem}>Holidays</span>
+              </div>
+            </Link>
 
-            <div className={styles.shortcutCard}>
-              <div className={styles.CardIcon}>📝</div>
-              <span className={styles.cardItem}>Forms</span>
-            </div>
+            <Link to="#" className={styles.shortcutLink}>
+              <div className={styles.shortcutCard}>
+                <div className={styles.CardIcon}>📝</div>
+                <span className={styles.cardItem}>Forms</span>
+              </div>
+            </Link>
 
-            <div className={styles.shortcutCard}>
-              <div className={styles.CardIcon}>🛠️</div>
-              <span className={styles.cardItem}>Tools</span>
-            </div>
+            <Link to="#" className={styles.shortcutLink}>
+              <div className={styles.shortcutCard}>
+                <div className={styles.CardIcon}>🛠️</div>
+                <span className={styles.cardItem}>Tools</span>
+              </div>
+            </Link>
           </div>
         </div>
 
@@ -441,7 +441,7 @@ const Organization: React.FC<IOrgProps> = ({ sp }) => {
           </div>
         </div>
 
-      </div>
+      </div >
     </>
   );
 };

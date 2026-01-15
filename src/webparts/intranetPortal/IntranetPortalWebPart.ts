@@ -11,7 +11,7 @@
 // //   public render(): void {
 // //     const element= React.createElement(
 // //      Routing
-      
+
 // //     );
 
 // //     ReactDom.render(element, this.domElement);
@@ -33,7 +33,7 @@
 // export default class MaintenanceRequestWebPart extends BaseClientSideWebPart<{}> {
 
 //     private sp: any;
-  
+
 //     protected onInit(): Promise<void> {
 //       this.sp = spfi().using(SPFx(this.context));  
 //       return Promise.resolve();
@@ -45,7 +45,7 @@
 //          sp: this.sp,
 //         // context: this.context 
 //       }
-      
+
 //     );
 
 //     ReactDom.render(element, this.domElement);
@@ -80,6 +80,8 @@ export default class MaintenanceRequestWebPart extends BaseClientSideWebPart<{}>
     const element = React.createElement(Routing, {
       sp: this.sp,
       graph: this.graph,
+      context: this.context,
+      
     });
 
     ReactDom.render(element, this.domElement);

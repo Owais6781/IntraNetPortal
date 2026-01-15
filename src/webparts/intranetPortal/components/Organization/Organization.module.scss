@@ -244,36 +244,43 @@
     color: #6b7280;
     margin-bottom: 3px;
 }
+.sliderInner{
+position: relative;
+}
 
 
 .arrowLeft,
 .arrowRight {
     position: absolute;
-    top: 50%;
+    top: 100px;
     transform: translateY(-50%);
     width: 44px;
     height: 44px;
-    border-radius: 50%;
-    background: #fff;
-    border: none;
+    border-radius:none;
+    background:none;
+    border:none;
     cursor: pointer;
-    font-size: 26px;
+    font-size: 42px;
     font-weight: bold;
-    box-shadow: 0 12px 30px rgba(0, 0, 0, .18);
-    z-index: 10;
+    z-index: 20;
+    color: #9d53eb;
+    display:flex;
+    align-items:center;
+    justify-content:center;
 }
 
+
 .arrowLeft {
-    left: -22px;
+    left: -45px;
 }
 
 .arrowRight {
-    right: -22px;
+    right: -40px;
 }
 
 .arrowLeft:hover,
 .arrowRight:hover {
-    background: #f1f5f9;
+    color: #9d53eb;
 }
 
 
@@ -284,62 +291,6 @@
     margin-bottom: 28px;
 }
 
-.deptCard {
-    background: #f9fbff;
-    border-radius: 14px;
-    padding: 10px;
-    text-align: center;
-    border: 1px solid #dde4ff;
-}
-
-
-
-.arrowLeft,
-.arrowRight {
-    position: absolute;
-    top: 50%;
-    transform: translateY(-50%);
-    width: 44px;
-    height: 44px;
-    border-radius: 50%;
-    background: #fff;
-    border: none;
-    cursor: pointer;
-    font-size: 26px;
-    font-weight: bold;
-    box-shadow: 0 12px 30px rgba(0, 0, 0, .18);
-    z-index: 10;
-}
-
-.arrowLeft {
-    left: -34px;
-}
-
-.arrowRight {
-    right: -34px;
-}
-
-
-.arrowLeft:hover,
-.arrowRight:hover {
-    background: #f1f5f9;
-}
-
-
-.deptRow {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 24px;
-    margin-bottom: 20px;
-}
-
-.deptCard {
-    background: #f9fbff;
-    border-radius: 14px;
-    padding: 10px;
-    text-align: center;
-    border: 1px solid #dde4ff;
-}
 
 .orgWrapper {
     background-color: #ffffff;
@@ -421,13 +372,14 @@
     padding: 0 20px;
 }
 
-.deptCard {
+.deptCard{
     background: #f9fbff;
     border-radius: 14px;
     padding: 8px 10px;
     text-align: center;
     border: 1px solid #dde4ff;
     margin-bottom: 10px;
+    height: 70px;
 }
 
 .deptCard h4 {
@@ -462,8 +414,6 @@
     grid-template-columns: repeat(3, 1fr);
     gap: 28px;
     margin: 60px 0;
-    border: 2px solid #e3e7f5;
-    cursor: pointer;
 }
 
 
@@ -539,14 +489,8 @@
 .valuesList {
     margin: 0;
     padding-left: 18px;
-
-    li {
-        font-size: 15px;
-        color: #2d2f45;
-        margin-bottom: 10px;
-    }
+    font-weight: 500;
 }
-
 
 @media (max-width: 992px) {
     .vmvWrapper {
@@ -577,7 +521,7 @@
     font-weight: 700;
     color: #6f63d2;
     margin-bottom: 20px;
-    
+
 }
 
 
@@ -612,11 +556,11 @@
 }
 
 .itIcon {
-  color: #1e90ff;
+    color: #1e90ff;
 }
 
 .formIcon {
-  color: #666;
+    color: #666;
 }
 
 
@@ -651,7 +595,7 @@
     justify-content: center;
     align-items: center;
     gap: 16px;
-     border: 2px solid #e3e7f5;
+    border: 2px solid #e3e7f5;
     cursor: pointer;
 }
 
@@ -671,6 +615,13 @@
     font-weight: bold;
     gap: 4px;
 }
+
+.shortcutLink {
+    text-decoration: none;
+    color: inherit;
+    display: block;
+}
+
 
 .CardIcon {
     width: 50px;
