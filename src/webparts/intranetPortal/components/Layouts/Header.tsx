@@ -1,12 +1,13 @@
 
-
 import * as React from "react";
 import { NavLink } from "react-router-dom";
 import { SPFI } from "@pnp/sp";
 import { GraphFI } from "@pnp/graph";
-import "@pnp/sp/site-users/web";
 import "@pnp/sp/webs";
+import "@pnp/sp/site-users/web";
 import "@pnp/graph/users";
+import "@pnp/graph/photos";
+import logo from "../../assets/commItlogo.png"
 
 interface IHeaderProps {
   sp: SPFI;
@@ -15,11 +16,35 @@ interface IHeaderProps {
 
 const Header: React.FC<IHeaderProps> = ({ sp, graph }) => {
 
-  const [user, setUser] = React.useState({
-    name: "",
-    initials: "",
-    department: "",
-  });
+  const [userName, setUserName] = React.useState("");
+  const [jobTitle, setJobTitle] = React.useState("");
+  const [userPhoto, setUserPhoto] = React.useState("");
+  const [loading, setLoading] = React.useState(true);
+
+
+
+  const loadUser = async () => {
+    try {
+      const spUser = await sp.web.currentUser();
+
+      setUserName(spUser.Title);
+      setUserPhoto(
+        `/_layouts/15/userphoto.aspx?size=L&accountname=${spUser.Email}`
+      );
+      const graphUser = await graph.me();
+      setJobTitle(graphUser.jobTitle || "");
+
+    } catch (error) {
+      console.error("User Load Error:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  React.useEffect(() => {
+
+    void loadUser();
+  }, [sp, graph]);
 
   const navItems = [
     { label: "Dashboard", path: "/dashboard" },
@@ -32,133 +57,77 @@ const Header: React.FC<IHeaderProps> = ({ sp, graph }) => {
     { label: "Engineering", path: "/engineering" },
   ];
 
-  React.useEffect(() => {
-    const loadUser = async () => {
-      try {
-        // 1️⃣ Always works (SharePoint)
-        const me = await sp.web.currentUser();
-
-        const initials = me.Title.split(" ")
-          .map((n: string) => n.charAt(0))
-          .join("")
-          .substring(0, 2)
-          .toUpperCase();
-
-        let department = "Employee";
-
-        // 2️⃣ Try Graph (may fail if not approved)
-        try {
-          const profile = await graph.me();
-          department = profile.department || profile.jobTitle || department;
-        } catch (graphError) {
-          console.warn("Graph not available, using fallback");
-        }
-
-        setUser({
-          name: me.Title,
-          initials,
-          department,
-        });
-      } catch (err) {
-        console.error("User load failed", err);
-        setUser({
-          name: "User",
-          initials: "U",
-          department: "",
-        });
-      }
-    };
-
-    void loadUser();
-  }, [sp, graph]);
-
- 
   return (
-    <div className="w-full bg-white font-sans">
-      
+    <div className="w-full bg-white font-sans border-b ">
 
-      <div className="flex items-center justify-between px-8 py-5">
-        
-        {/* LEFT: Logo */}
+      {/* TOP BAR */}
+      <div className="flex items-center justify-between px-8 py-2">
+
+        {/* LEFT LOGO */}
         <NavLink to="/dashboard" className="flex items-center gap-3 group">
-          {/* Logo Box with Gradient */}
-          <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-gradient-to-br from-indigo-600 to-violet-600 shadow-lg shadow-indigo-200 text-white transition-transform group-hover:scale-105">
-            <span className="font-bold text-xl">G</span>
-          </div>
-          {/* Logo Text */}
-          <div className="flex flex-col">
-            <span className="text-base font-bold text-gray-900 leading-tight">
-              Globex
-            </span>
-            <span className="text-[10px] font-bold text-gray-400 tracking-[0.15em] uppercase">
-              Portal
-            </span>
-          </div>
+
+
+          <img
+            src={logo}
+            alt="Logo"
+            className="h-10 w-auto object-contain"
+          />
+
         </NavLink>
 
-        {/* CENTER: Search Bar (Added purely for visuals to match image) */}
-        <div className="flex-1 max-w-2xl mx-12 hidden md:block">
-          <div className="relative group">
-            <div className="absolute inset-y-0 left-0 pl-5 flex items-center pointer-events-none">
-              <svg 
-                className="h-5 w-5 text-indigo-400" 
-                fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}
-              >
-                <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-              </svg>
-            </div>
-            <input
-              type="text"
-              readOnly // Visual only since no logic required
-              className="block w-full pl-12 pr-4 py-3.5 bg-indigo-50/50 border border-transparent rounded-full text-sm font-medium text-gray-900 placeholder-gray-500 focus:outline-none focus:bg-white focus:ring-2 focus:ring-indigo-100 transition-all shadow-sm cursor-text"
-              placeholder="Search resources, people, or news..."
-            />
-          </div>
-        </div>
 
-        {/* RIGHT: Actions */}
+
+        {/* RIGHT ACTIONS */}
         <div className="flex items-center gap-6">
-          
-          {/* Bell Icon (Yellow) */}
-          <button className="relative p-1 transition-transform hover:scale-110">
-            <svg className="w-7 h-7 text-yellow-400 fill-current drop-shadow-sm" viewBox="0 0 24 24">
-               <path d="M12 2C10.34 2 9 3.34 9 5V6.28C7.06 7.02 5.5 8.95 5.5 11.25V16.5L4 18V19H20V18L18.5 16.5V11.25C18.5 8.95 16.94 7.02 15 6.28V5C15 3.34 13.66 2 12 2ZM10 20C10 21.1 10.9 22 12 22C13.1 22 14 21.1 14 20H10Z" />
+
+          {/* NOTIFICATION */}
+          <button className="relative p-1 hover:scale-110 transition-transform">
+            <svg className="w-7 h-7 text-yellow-400 fill-current" viewBox="0 0 24 24">
+              <path d="M12 2C10.34 2 9 3.34 9 5V6.28C7.06 7.02 5.5 8.95 5.5 11.25V16.5L4 18V19H20V18L18.5 16.5V11.25C18.5 8.95 16.94 7.02 15 6.28V5C15 3.34 13.66 2 12 2ZM10 20C10 21.1 10.9 22 12 22C13.1 22 14 21.1 14 20H10Z" />
             </svg>
-            <span className="absolute top-1 right-1 h-2.5 w-2.5 bg-red-500 rounded-full ring-2 ring-white"></span>
+            <span className="absolute top-1 right-1 h-2.5 w-2.5 bg-red-500 rounded-full ring-2 ring-white" />
           </button>
 
-          {/* Profile Pill (Using State Data) */}
-          <div className="flex items-center pl-1.5 pr-4 py-1.5 rounded-full border border-gray-200 bg-white hover:border-indigo-200 hover:shadow-md transition-all cursor-pointer">
-            <div className="w-9 h-9 rounded-full bg-indigo-600 flex items-center justify-center text-white text-xs font-bold mr-3 shadow-sm">
-              {user.initials || "U"}
-            </div>
-            <div className="text-left hidden lg:block">
-              <p className="text-sm font-bold text-gray-800 leading-none">
-                {user.name || "Loading..."}
-              </p>
-              <p className="text-[10px] font-bold text-gray-400 uppercase mt-0.5 tracking-wide">
-                {user.department}
-              </p>
-            </div>
-          </div>
+          {/* PROFILE */}
+          <div className="flex items-center pl-1.5 pr-4 py-1.5 rounded-full
+                          border border-gray-200 hover:shadow-md transition-all">
 
+            <div className="w-9 h-9 rounded-full bg-indigo-600 flex items-center
+                            justify-center overflow-hidden mr-3">
+              {userPhoto && (
+                <img
+                  src={userPhoto}
+                  alt="User"
+                  className="w-full h-full object-cover"
+                />
+              )}
+            </div>
+
+            <div className="hidden lg:block">
+              <p className="text-sm font-bold text-gray-800 leading-none">
+                {loading ? "Loading..." : userName}
+              </p>
+              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wide">
+                {jobTitle}
+              </p>
+            </div>
+
+          </div>
         </div>
       </div>
 
-      {/* ================= BOTTOM ROW: Navigation ================= */}
-      <div className="px-8 pb-4 pt-2">
-        <nav className="flex items-center gap-2 overflow-x-auto no-scrollbar">
+      {/* NAVIGATION */}
+      <div className="px-8 pb-4 ml-28">
+        <nav className="flex items-center gap-2 overflow-x-auto">
           {navItems.map((item) => (
             <NavLink
               key={item.label}
               to={item.path}
               className={({ isActive }) =>
-                `whitespace-nowrap px-6 py-2.5 rounded-lg text-sm font-bold transition-all duration-200 ease-out
-                ${
-                  isActive
-                    ? "bg-gradient-to-r from-indigo-600 to-violet-600 text-white shadow-lg shadow-indigo-200 transform scale-[1.02]" 
-                    : "text-gray-500 hover:text-gray-900 hover:bg-gray-50"
-                }`
+                `px-6 py-2.5 rounded-lg text-sm font-bold transition-all
+                ${isActive
+                  ? "bg-gradient-to-r from-indigo-600 to-violet-600 text-white shadow-lg"
+                  : "text-gray-500 hover:text-gray-900 hover:bg-gray-50"}`
               }
             >
               {item.label}

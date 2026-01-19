@@ -1,0 +1,482 @@
+/* ---------- MAIN CONTAINER & HEADER ---------- */
+
+.directory-container {
+    max-width: 1300px;
+    margin: 0 auto;
+    padding: 32px 28px 40px;
+    font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+    background: radial-gradient(circle at top left, #e5edff 0, #f3f4f6 45%, #e5e7eb 100%);
+}
+
+.directory-header {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 28px;
+    gap: 14px;
+}
+
+.title {
+    font-size: 2.1rem;
+    margin: 0;
+    color: #0f172a;
+    letter-spacing: 0.02em;
+}
+
+.search-wrapper {
+    flex: 1;
+    max-width: 380px;
+}
+
+.search-input {
+    width: 100%;
+    padding: 10px 16px;
+    border-radius: 999px;
+    border: 1px solid #d1d5db;
+    font-size: 0.95rem;
+    outline: none;
+    background: #ffffff;
+    color: #111827;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+}
+
+.search-input::placeholder {
+    color: #9ca3af;
+}
+
+.search-input:focus {
+    border-color: #2563eb;
+    box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.25);
+    background: #f9fafb;
+}
+
+
+/* ---------- LOADING / EMPTY ---------- */
+
+.loading-state,
+.no-results {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-top: 60px;
+    color: #6b7280;
+}
+
+.spinner {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    border: 3px solid #d1d5db;
+    border-top-color: #2563eb;
+    animation: spin 0.7s linear infinite;
+    margin-bottom: 12px;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+
+/* ---------- CARD GRID (FIRST PAGE – SAME CONTENT, BETTER LOOK) ---------- */
+
+.card-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 26px;
+}
+
+.user-card {
+    background: linear-gradient(145deg, #ffffff, #f3f4f6);
+    border-radius: 20px;
+    box-shadow: 0 10px 30px rgba(15, 23, 42, 0.14);
+    padding: 24px 20px 20px;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    transition: transform 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
+    border: 1px solid rgba(148, 163, 184, 0.18);
+}
+
+.user-card:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 20px 40px rgba(15, 23, 42, 0.22);
+    background: linear-gradient(145deg, #ffffff, #e5edff);
+}
+
+.card-header {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 10px;
+}
+
+.avatar {
+    width: 82px;
+    height: 82px;
+    border-radius: 999px;
+    object-fit: cover;
+    box-shadow: 0 0 0 4px #ffffff, 0 6px 18px rgba(15, 23, 42, 0.4);
+}
+
+.card-body {
+    text-align: center;
+}
+
+.user-name {
+    font-size: 1.05rem;
+    margin: 10px 0 4px;
+    color: #0f172a;
+    font-weight: 600;
+}
+
+.user-role {
+    font-size: 0.9rem;
+    color: #6b7280;
+    margin: 0;
+}
+
+.card-footer {
+    margin-top: 10px;
+}
+
+
+/* Make "View Profile" feel more like an interactive element */
+
+.contact-link {
+    display: inline-block;
+    font-size: 0.9rem;
+    color: #2563eb;
+    font-weight: 600;
+    padding: 4px 10px;
+    border-radius: 999px;
+    transition: background 0.15s ease, color 0.15s ease;
+}
+
+.user-card:hover .contact-link {
+    background: rgba(37, 99, 235, 0.1);
+    color: #1d4ed8;
+}
+
+
+/* =========================================
+   MODAL OVERLAY (Backdrop)
+   ========================================= */
+
+.modal-overlay {
+    position: fixed;
+    inset: 0;
+    /* Darker background with blur for focus */
+    background: rgba(15, 23, 42, 0.6);
+    backdrop-filter: blur(8px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    animation: fadeIn 0.2s ease-out;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+
+/* =========================================
+   MODAL CONTAINER
+   ========================================= */
+
+.modal-content {
+    /* Subtle gradient for a premium feel */
+    background: linear-gradient(145deg, #ffffff 0%, #f8fafc 100%);
+    border-radius: 24px;
+    width: 100%;
+    max-width: 700px;
+    /* Wider for better spacing */
+    padding: 40px;
+    position: relative;
+    /* Deep shadow to make it pop */
+    box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.5) inset, 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+    animation: scaleIn 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes scaleIn {
+    from {
+        opacity: 0;
+        transform: scale(0.95) translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+}
+
+
+/* Close (X) Icon - Top Right */
+
+.close-btn {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    background: transparent;
+    border: none;
+    font-size: 1.5rem;
+    color: #94a3b8;
+    cursor: pointer;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+}
+
+.close-btn:hover {
+    background: #f1f5f9;
+    color: #ef4444;
+    /* Red on hover */
+}
+
+
+/* =========================================
+   MODAL HEADER (Avatar + Info + Status)
+   ========================================= */
+
+.modal-header {
+    display: flex;
+    align-items: flex-start;
+    /* Align to top */
+    gap: 24px;
+    margin-bottom: 35px;
+    position: relative;
+}
+
+
+/* Avatar Styling */
+
+.modal-avatar {
+    width: 90px;
+    height: 90px;
+    border-radius: 50%;
+    object-fit: cover;
+    /* White ring + shadow */
+    border: 4px solid #ffffff;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+}
+
+
+/* Text Container next to Avatar */
+
+.header-text {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding-top: 4px;
+}
+
+.modal-name {
+    margin: 0;
+    font-size: 1.8rem;
+    /* Large and bold */
+    font-weight: 700;
+    color: #1e293b;
+    line-height: 1.2;
+}
+
+.modal-designation {
+    margin: 4px 0 0;
+    font-size: 1rem;
+    color: #475569;
+    font-weight: 500;
+}
+
+.modal-empcode {
+    margin: 4px 0 0;
+    font-size: 0.85rem;
+    color: #94a3b8;
+    letter-spacing: 0.5px;
+}
+
+
+/* Status Pill - Top Right of Header */
+
+.status-pill {
+    padding: 6px 16px;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    text-transform: capitalize;
+    background: #f1f5f9;
+    color: #64748b;
+    border: 1px solid #e2e8f0;
+    margin-top: 4px;
+    /* Align with name */
+}
+
+
+/* Active Status Color */
+
+.status-pill.active {
+    background: #ecfdf5;
+    /* Light Green Bg */
+    color: #059669;
+    /* Green Text */
+    border-color: #a7f3d0;
+    box-shadow: 0 2px 5px rgba(5, 150, 105, 0.1);
+}
+
+
+/* =========================================
+   MODAL BODY (Grid Layout)
+   ========================================= */
+
+.modal-body {
+    width: 100%;
+}
+
+.modal-details-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    /* Two equal columns */
+    column-gap: 40px;
+    row-gap: 24px;
+    margin-bottom: 30px;
+}
+
+
+/* Individual Data Points */
+
+.detail-item {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+
+/* Labels (e.g., EMAIL ID) */
+
+.detail-label {
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: #94a3b8;
+    /* Light gray */
+    letter-spacing: 0.05em;
+}
+
+
+/* Values (e.g., name@email.com) */
+
+.detail-value {
+    font-size: 1rem;
+    color: #334155;
+    /* Dark gray */
+    font-weight: 500;
+    word-break: break-word;
+}
+
+
+/* =========================================
+   MODAL FOOTER (Actions)
+   ========================================= */
+
+.modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    border-top: 1px solid #f1f5f9;
+    /* Subtle separator */
+    padding-top: 20px;
+}
+
+.action-btn {
+    background: #f1f5f9;
+    color: #475569;
+    border: 1px solid transparent;
+    padding: 10px 24px;
+    border-radius: 30px;
+    /* Pill shape */
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.action-btn:hover {
+    background: #e2e8f0;
+    color: #1e293b;
+    transform: translateY(-1px);
+}
+
+
+/* =========================================
+   RESPONSIVE DESIGN
+   ========================================= */
+
+@media (max-width: 600px) {
+    .modal-content {
+        padding: 24px;
+        width: 90%;
+        max-height: 90vh;
+        overflow-y: auto;
+    }
+    .modal-header {
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        gap: 15px;
+    }
+    .status-pill {
+        position: absolute;
+        top: 0;
+        right: 0;
+    }
+    .modal-details-grid {
+        grid-template-columns: 1fr;
+        /* Single column on mobile */
+        gap: 20px;
+    }
+    .modal-actions {
+        justify-content: center;
+    }
+}
+
+
+/* ---------- RESPONSIVE ---------- */
+
+@media (max-width: 768px) {
+    .directory-container {
+        padding: 20px 16px 28px;
+    }
+    .card-grid {
+        grid-template-columns: 1fr 1fr;
+        gap: 18px;
+    }
+    .modal-content {
+        max-width: 94%;
+        padding: 20px 18px 18px;
+    }
+    .modal-details-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 520px) {
+    .card-grid {
+        grid-template-columns: 1fr;
+    }
+    .modal-header {
+        grid-template-columns: auto 1fr;
+        grid-template-rows: auto auto;
+        row-gap: 12px;
+    }
+    .status-pill {
+        justify-self: flex-start;
+    }
+}
