@@ -1,5 +1,9 @@
+import { GraphFI } from "@pnp/graph";
 import { SPFI } from "@pnp/sp";
 
 export interface IIntranetPortalProps {
-sp:SPFI,
+    sp: SPFI;
+    context: any;
+    graph: GraphFI;
+
 }
