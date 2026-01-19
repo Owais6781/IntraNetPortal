@@ -1,5 +1,5 @@
 import * as React from "react";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { SPFI } from "@pnp/sp";
 import "@pnp/sp/lists";
 import "@pnp/sp/items";
@@ -22,23 +22,21 @@ type ViewMode = "list" | "detail";
 
 const News: React.FC<IProps> = ({ sp }) => {
   const [news, setNews] = useState<INewsItem[]>([]);
-  const [selectedNews, setSelectedNews] = useState<INewsItem | null>(null);// currently open news
+  const [selectedNews, setSelectedNews] = useState<INewsItem | null>(null);
   const [loading, setLoading] = useState(true);
   const [mode, setMode] = useState<ViewMode>("list");
+
+  // ref for whole left card 
+  const leftCardRef = useRef<HTMLDivElement | null>(null);
+  const [cardHeight, setCardHeight] = useState<number | null>(null);
 
   const fetchNews = async () => {
     try {
       const items: any[] = await sp.web.lists
         .getByTitle("News")
-        .items.select(
-          "ID",
-          "Title",
-          "SubTitle",
-          "Description",
-          "AttachmentFiles"
-        )
+        .items.select("ID", "Title", "SubTitle", "Description", "AttachmentFiles")
         .expand("AttachmentFiles")
-        .orderBy("Created", false)(); // latest first
+        .orderBy("Created", false)();
 
       const mapped: INewsItem[] = items.map((item) => {
         const fullDescription: string =
@@ -49,16 +47,18 @@ const News: React.FC<IProps> = ({ sp }) => {
             ? `${fullDescription.substring(0, 150)}...`
             : fullDescription || "No preview available.";
 
+        const imageFile = (item.AttachmentFiles || []).find((file: any) => {
+          const name = (file.FileName || "").toLowerCase();
+          return /\.(jpg|jpeg|png|gif|webp|svg)$/.test(name);
+        });
+
         return {
           id: item.ID,
           category: item.Title || "UPDATE",
           title: item.SubTitle || "No Title",
           description: short,
           fullDescription,
-          imageUrl:
-            item.AttachmentFiles?.length > 0
-              ? item.AttachmentFiles[0].ServerRelativeUrl
-              : "",
+          imageUrl: imageFile ? imageFile.ServerRelativeUrl : "",
         };
       });
 
@@ -70,12 +70,13 @@ const News: React.FC<IProps> = ({ sp }) => {
     }
   };
 
-  // Fetch news from SharePoint
   useEffect(() => {
-    fetchNews().catch((e) => console.error(e));
+    fetchNews().catch(console.error);
   }, []);
+
+  // restore previous selection
   useEffect(() => {
-    if (news.length === 0) return;
+    if (!news.length) return;
 
     const savedMode = localStorage.getItem("newsMode");
     const savedId = localStorage.getItem("selectedNewsId");
@@ -90,13 +91,11 @@ const News: React.FC<IProps> = ({ sp }) => {
   }, [news]);
 
   const openDetailPage = (item?: INewsItem) => {
-    // If no item passed, but we have news, default to first item
     const target = item || news[0] || null;
     if (!target) return;
 
     setSelectedNews(target);
     setMode("detail");
-
     localStorage.setItem("newsMode", "detail");
     localStorage.setItem("selectedNewsId", target.id.toString());
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -110,7 +109,32 @@ const News: React.FC<IProps> = ({ sp }) => {
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
-  /* ----------------- PAGE 1: NEWS GRID ----------------- */
+  // Measure left card height and  left & right equal okay
+  useEffect(() => {
+    if (!leftCardRef.current) {
+      setCardHeight(null);
+      return;
+    }
+
+    const measure = () => {
+      if (leftCardRef.current) {
+        setCardHeight(leftCardRef.current.offsetHeight);
+      }
+    };
+
+    measure();
+
+    const ro = new ResizeObserver(measure);
+    ro.observe(leftCardRef.current);
+    window.addEventListener("resize", measure);
+
+    return () => {
+      ro.disconnect();
+      window.removeEventListener("resize", measure);
+    };
+  }, [selectedNews]);
+
+  /* ---------- LIST VIEW ---------- */
   if (mode === "list") {
     return (
       <div className="news-container">
@@ -132,16 +156,12 @@ const News: React.FC<IProps> = ({ sp }) => {
                       : "linear-gradient(135deg,#dbeafe,#c7d2fe)",
                   }}
                 />
-
                 <div className="news-content">
                   <span className="news-category">
                     {item.category.toUpperCase()}
                   </span>
-
                   <h3 className="news-heading">{item.title}</h3>
-
                   <p className="news-desc">{item.description}</p>
-
                   <button
                     className="read-more"
                     onClick={() => openDetailPage(item)}
@@ -157,7 +177,7 @@ const News: React.FC<IProps> = ({ sp }) => {
     );
   }
 
-  /* ----------------- PAGE 2: DETAIL + RIGHT SIDEBAR ----------------- */
+  /* ---------- DETAIL VIEW ---------- */
   return (
     <div className="news-master-layout">
       <button onClick={backNews} className="back-button">
@@ -165,10 +185,10 @@ const News: React.FC<IProps> = ({ sp }) => {
       </button>
 
       <div className="news-split-view">
-        {/* LEFT: full selected news */}
+        {/* LEFT CONTAINER */}
         <section className="news-detail-pane">
           {selectedNews ? (
-            <article className="single-news-card">
+            <article className="single-news-card" ref={leftCardRef}>
               <div
                 className="single-news-image"
                 style={{
@@ -177,7 +197,6 @@ const News: React.FC<IProps> = ({ sp }) => {
                     : "linear-gradient(135deg,#dbeafe,#c7d2fe)",
                 }}
               />
-
               <div className="single-news-content">
                 <span className="single-news-category">
                   {selectedNews.category.toUpperCase()}
@@ -198,10 +217,28 @@ const News: React.FC<IProps> = ({ sp }) => {
           )}
         </section>
 
-        {/* RIGHT: all news as clickable cards */}
-        <aside className="news-sidebar-pane">
+        {/* RIGHT CONTAINER same height as a left*/}
+        <section
+          className="news-sidebar-pane"
+          style={
+            cardHeight
+              ? {
+                  height: `${cardHeight}px`,
+                }
+              : {}
+          }
+        >
           <h2 className="sidebar-title">All News</h2>
-          <div className="sidebar-cards">
+
+          <div
+            className="sidebar-cards"
+            style={{
+              // take full height minus title area
+              height: cardHeight ? `calc(${cardHeight}px - 56px)` : "auto",
+              overflowY: cardHeight ? "auto" : "visible",
+              overflowX: "hidden",
+            }}
+          >
             {news.map((item) => (
               <div
                 key={item.id}
@@ -230,7 +267,7 @@ const News: React.FC<IProps> = ({ sp }) => {
               </div>
             ))}
           </div>
-        </aside>
+        </section>
       </div>
     </div>
   );
