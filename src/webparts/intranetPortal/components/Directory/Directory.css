@@ -187,9 +187,7 @@
 }
 
 
-/* =========================================
-   MODAL CONTAINER
-   ========================================= */
+/*MODAL CONTAINER*/
 
 .modal-content {
     /* Subtle gradient for a premium feel */
@@ -244,9 +242,58 @@
 }
 
 
-/* =========================================
-   MODAL HEADER (Avatar + Info + Status)
-   ========================================= */
+/* Header Layout */
+
+.directory-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    /* Vertically aligns text group and search bar */
+    margin-bottom: 40px;
+    flex-wrap: wrap;
+    gap: 20px;
+}
+
+
+/* New Wrapper to stack Title & Subtitle vertically */
+
+.header-text-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    /* Space between title and paragraph */
+}
+
+.title {
+    font-size: 2.2rem;
+    font-weight: 800;
+    /* Bold like screenshot */
+    color: #0f172a;
+    margin: 0;
+    line-height: 1.1;
+}
+
+
+/* New Subtitle Style */
+
+.subtitle {
+    font-size: 1.05rem;
+    color: #64748b;
+    /* Gray text */
+    margin: 0;
+    font-weight: 500;
+}
+
+
+/* Search Bar Wrapper (Existing) */
+
+.search-wrapper {
+    flex: 1;
+    max-width: 400px;
+}
+
+
+/* MODAL HEADER (Avatar + Info + Status)*/
 
 .modal-header {
     display: flex;
@@ -321,6 +368,102 @@
 }
 
 
+/* Initials Avatar Container (Card View) */
+
+.initials-avatar {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 24px;
+    font-weight: bold;
+    border: 3px solid white;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    margin: 0 auto 10px auto;
+    /* Center it */
+}
+
+
+/* Initials Avatar (Modal View) */
+
+.modal-avatar-circle {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 32px;
+    font-weight: bold;
+    flex-shrink: 0;
+    margin-right: 20px;
+    border: 4px solid #f0f0f0;
+}
+
+
+/* Email Preview on Card */
+
+.user-email-preview {
+    font-size: 0.8rem;
+    color: #555;
+    margin: 2px 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+}
+
+
+/* Manager Preview on Card */
+
+.user-manager-preview {
+    font-size: 0.75rem;
+    color: #777;
+    margin: 0 0 10px 0;
+    font-style: italic;
+}
+
+
+/* Modal Header Layout */
+
+.modal-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 20px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid #eee;
+}
+
+.header-text {
+    flex-grow: 1;
+}
+
+.modal-name {
+    margin: 0 0 5px 0;
+    font-size: 1.5rem;
+    color: #333;
+}
+
+.modal-designation {
+    margin: 0 0 5px 0;
+    color: #666;
+    font-weight: 500;
+}
+
+.modal-empcode {
+    margin: 0;
+    color: #999;
+    font-size: 0.9rem;
+}
+
+
 /* Active Status Color */
 
 .status-pill.active {
@@ -333,9 +476,7 @@
 }
 
 
-/* =========================================
-   MODAL BODY (Grid Layout)
-   ========================================= */
+/*MODAL BODY (Grid Layout)*/
 
 .modal-body {
     width: 100%;
@@ -383,9 +524,7 @@
 }
 
 
-/* =========================================
-   MODAL FOOTER (Actions)
-   ========================================= */
+/*MODAL FOOTER (Actions)*/
 
 .modal-actions {
     display: flex;
@@ -415,9 +554,7 @@
 }
 
 
-/* =========================================
-   RESPONSIVE DESIGN
-   ========================================= */
+/*RESPONSIVE DESIGN*/
 
 @media (max-width: 600px) {
     .modal-content {
