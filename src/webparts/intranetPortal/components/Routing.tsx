@@ -11,7 +11,6 @@ import News from "./News/News";
 import WorkPlace from "./Workplace/Workplace";
 import { SPFI } from "@pnp/sp";
 import { GraphFI } from "@pnp/graph";
-import { WebPartContext } from "@microsoft/sp-webpart-base";
 // import ItRequest from "./IT Support/Request";
 
 
@@ -34,10 +33,10 @@ const Routing: React.FC<RoutingIPROPS> = ({ sp, graph, context }) => {
           <Route path="dashboard" element={<Dashboard sp={sp} graph={graph} />} />
           <Route path="organization" element={<Organization sp={sp} context={context} />} />
           <Route path="news" element={<News sp={sp} />} />
-          <Route path="knowledge" element={<Knowledge sp={sp} />} />
+          <Route path="knowledge" element={<Knowledge sp={sp} context={context} graph={graph} />} />
           <Route path="directory" element={<Directory sp={sp} />} />
           <Route path="workplace" element={<WorkPlace sp={sp} />} />
-          <Route path="it-support" element={<ITSupport sp={sp} context={context} />} />
+          <Route path="it-support" element={<ITSupport sp={sp} context={context} graph={graph} />} />
           <Route path="engineering" element={<Engineering sp={sp} />} />
         </Route>
       </Routes>
