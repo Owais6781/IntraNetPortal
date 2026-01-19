@@ -1113,7 +1113,7 @@ interface DocFile {
   name: string;
   fileUrl: string;
   documentType: "Corporate" | "Technical" | "HR Policies";
-  status?: string;
+  status?: "Active" | "Inactive";
 }
 
 const Knowledge: React.FC<IIntranetPortalProps> = ({ sp }) => {
@@ -1135,7 +1135,8 @@ const Knowledge: React.FC<IIntranetPortalProps> = ({ sp }) => {
         name: i.FileLeafRef,
         fileUrl: i.FileRef,
         documentType: i.DocumentType,
-        status: i.Status,
+         status: i.Status
+        
       }));
 
       setKnowledge(mapped);
@@ -1150,9 +1151,9 @@ const Knowledge: React.FC<IIntranetPortalProps> = ({ sp }) => {
     void fetchDocuments();
   }, [sp]);
 
-  const corporateDocs = knowledge.filter((d) => d.documentType === "Corporate");
-  const TechnicalDoc = knowledge.filter((d) => d.documentType === "Technical");
-  const HR = knowledge.filter((d) => d.documentType === "HR Policies");
+  const corporateDocs = knowledge.filter((d) => d.documentType === "Corporate" && d.status==="Active");
+  const TechnicalDoc = knowledge.filter((d) => d.documentType === "Technical" && d.status==="Active");
+  const HR = knowledge.filter((d) => d.documentType === "HR Policies" && d.status==="Active");
 
   const getFileIcon = (fileType?: string) => {
     const type = fileType?.toLowerCase();
