@@ -140,7 +140,7 @@ const Dashboard: React.FC<DashboardProps> = ({ sp,graph  }) => {
         {/* LEFT */}
         <div className="flex-[3] flex flex-col gap-6">
           <PersonalQuickAccess />
-          <LatestCompanyNews />
+          <LatestCompanyNews sp={sp} />
           <GlobalCompanyEvents />
         </div>
 

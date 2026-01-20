@@ -168,12 +168,12 @@ const HeroSection: React.FC<HeroSectionProps> = ({ userName, loading }) => {
 
         {/* Content */}
         <div className="relative z-10 p-6 sm:p-8 text-white h-full flex flex-col justify-end " style={{marginTop:"-60px"}}>
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/10 backdrop-blur-sm border border-white/20 w-fit mb-4">
+          {/* <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/10 backdrop-blur-sm border border-white/20 w-fit mb-4">
             <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
             <span className="text-xs font-medium tracking-wide">
               Live Dashboard
             </span>
-          </div>
+          </div> */}
 
           <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold leading-tight">
             Innovation Starts <br /> with You.
