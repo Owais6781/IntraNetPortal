@@ -11,16 +11,20 @@ import News from "./News/News";
 import WorkPlace from "./Workplace/Workplace";
 import { SPFI } from "@pnp/sp";
 import { GraphFI } from "@pnp/graph";
+import { WebPartContext } from "@microsoft/sp-webpart-base";
+
+
 
 
 
 interface RoutingIPROPS{
     sp: SPFI;
     graph: GraphFI;
+    context: WebPartContext;
 }
 
 
-const Routing: React.FC <RoutingIPROPS>= ({sp , graph,    }) => {
+const Routing: React.FC <RoutingIPROPS>= ({sp , graph, context   }) => {
   return (
    <HashRouter>
   <Routes>
@@ -29,10 +33,18 @@ const Routing: React.FC <RoutingIPROPS>= ({sp , graph,    }) => {
       <Route path="dashboard" element={<Dashboard  sp={sp} graph={graph} />} />
       <Route path="organization" element={<Organization />} />
       <Route path="news" element={<News sp={sp} />} />
-      <Route path="knowledge" element={<Knowledge />} />
+      <Route path="knowledge" element={<Knowledge sp={sp}  context={context} />} />
+      <Route path="directory" element={<Directory  sp={sp}/>} />
+      <Route path="workplace" element={<WorkPlace sp={sp} />} />
+      <Route path="it-support" element={<ITSupport  sp={sp} context={context}  />} />
+
+   
+      <Route path="engineering" element={<Engineering  sp={sp}/>} />
+      <Route path="news" element={<News sp={sp} />} />
+      <Route path="knowledge" element={<Knowledge sp={sp} context={context}  />} />
       <Route path="directory" element={<Directory sp={sp} />} />
       <Route path="workplace" element={<WorkPlace  sp={sp}/>} />
-      <Route path="it-support" element={<ITSupport />} />
+      <Route path="it-support" element={<ITSupport  sp={sp} context={context} />} />
       <Route path="engineering" element={<Engineering sp={sp} />} />
     </Route>
   </Routes>
@@ -41,3 +53,6 @@ const Routing: React.FC <RoutingIPROPS>= ({sp , graph,    }) => {
 };
 
 export default Routing;
+
+
+
