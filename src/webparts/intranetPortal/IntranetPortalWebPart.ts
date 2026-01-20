@@ -6,9 +6,10 @@ import { BaseClientSideWebPart } from "@microsoft/sp-webpart-base";
 import { spfi, SPFx, SPFI } from "@pnp/sp";
 import { graphfi, GraphFI } from "@pnp/graph";
 
-import Routing from "./components/Routing";
+
 import "../../tailwind-generated.css";
 import "./Hide.scss";
+import Routing from "./components/Routing";
 
 export default class MaintenanceRequestWebPart extends BaseClientSideWebPart<{}> {
 
