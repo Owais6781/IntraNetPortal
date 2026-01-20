@@ -5,6 +5,7 @@ npm-debug.log*
 
 # Dependency directories
 node_modules
+tailwind-generated.css
 
 # Build generated files
 dist
