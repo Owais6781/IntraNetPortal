@@ -21,14 +21,11 @@ interface RoutingIPROPS{
     sp: SPFI;
     graph: GraphFI;
     context: WebPartContext;
-interface RoutingIPROPS {
-  sp: SPFI;
-  graph: GraphFI;
-  context : any
+
 }
 
 
-const Routing: React.FC <RoutingIPROPS>= ({sp , graph, context   }) => {
+
 const Routing: React.FC<RoutingIPROPS> = ({ sp, graph , context }) => {
   return (
    <HashRouter>
@@ -36,35 +33,18 @@ const Routing: React.FC<RoutingIPROPS> = ({ sp, graph , context }) => {
     <Route path="/" element={<Layouts sp={sp} graph={graph} />}>
       <Route index element={<Navigate to="/dashboard" replace />} />
       <Route path="dashboard" element={<Dashboard  sp={sp} graph={graph} />} />
-      <Route path="organization" element={<Organization />} />
+        <Route path="organization" element={<Organization sp={sp} context={context} />} />
       <Route path="news" element={<News sp={sp} />} />
-      <Route path="knowledge" element={<Knowledge sp={sp}  context={context} />} />
+      <Route path="knowledge" element={<Knowledge  graph={graph}   sp={sp}  context={context} />} />
       <Route path="directory" element={<Directory  sp={sp}/>} />
       <Route path="workplace" element={<WorkPlace sp={sp} />} />
-      <Route path="it-support" element={<ITSupport  sp={sp} context={context}  />} />
+      <Route path="it-support" element={<ITSupport graph={graph}   sp={sp} context={context}  />} />
       <Route path="engineering" element={<Engineering  sp={sp}/>} />
      
-
     </Route>
   </Routes>
 </HashRouter>
-    <HashRouter>
-      <Routes>
-        <Route path="/" element={<Layouts sp={sp} graph={graph} />}>
 
-          <Route index element={<Navigate to="/dashboard" replace />} />
-
-          <Route path="dashboard" element={<Dashboard />} />
-          <Route path="organization" element={<Organization sp={sp} context={context} />} />
-          <Route path="news" element={<News />} />
-          <Route path="knowledge" element={<Knowledge />} />
-          <Route path="directory" element={<Directory />} />
-          <Route path="workplace" element={<WorkPlace />} />
-          <Route path="it-support" element={<ITSupport />} />
-          <Route path="engineering" element={<Engineering />} />
-        </Route>
-      </Routes>
-    </HashRouter>
   );
 };
 
