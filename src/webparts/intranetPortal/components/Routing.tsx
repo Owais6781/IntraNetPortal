@@ -37,15 +37,9 @@ const Routing: React.FC <RoutingIPROPS>= ({sp , graph, context   }) => {
       <Route path="directory" element={<Directory  sp={sp}/>} />
       <Route path="workplace" element={<WorkPlace sp={sp} />} />
       <Route path="it-support" element={<ITSupport  sp={sp} context={context}  />} />
-
-   
       <Route path="engineering" element={<Engineering  sp={sp}/>} />
-      <Route path="news" element={<News sp={sp} />} />
-      <Route path="knowledge" element={<Knowledge sp={sp} context={context}  />} />
-      <Route path="directory" element={<Directory sp={sp} />} />
-      <Route path="workplace" element={<WorkPlace  sp={sp}/>} />
-      <Route path="it-support" element={<ITSupport  sp={sp} context={context} />} />
-      <Route path="engineering" element={<Engineering sp={sp} />} />
+     
+
     </Route>
   </Routes>
 </HashRouter>
