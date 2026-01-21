@@ -14,6 +14,7 @@ import HRPolicies from "./HRPolicies";
 import NewOpenings from "./NewOpenings";
 import { GraphFI } from "@pnp/graph";
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
 import { WebPartContext } from "@microsoft/sp-webpart-base";
 
 interface DashboardProps {
@@ -23,6 +24,15 @@ interface DashboardProps {
 }
 
 const Dashboard: React.FC<DashboardProps> = ({ sp,graph, context  }) => {
+=======
+
+interface DashboardProps {
+  sp: SPFI;
+  graph: GraphFI;
+}
+
+const Dashboard: React.FC<DashboardProps> = ({ sp, graph }) => {
+>>>>>>> Stashed changes
 =======
 
 interface DashboardProps {
@@ -62,8 +72,13 @@ const Dashboard: React.FC<DashboardProps> = ({ sp, graph }) => {
         <div className="flex-[3] flex flex-col gap-6">
           <PersonalQuickAccess />
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
           <LatestCompanyNews sp={sp} />
           <GlobalCompanyEvents sp={sp} />
+=======
+          <LatestCompanyNews />
+          <GlobalCompanyEvents />
+>>>>>>> Stashed changes
 =======
           <LatestCompanyNews />
           <GlobalCompanyEvents />
@@ -74,10 +89,16 @@ const Dashboard: React.FC<DashboardProps> = ({ sp, graph }) => {
         <div className="flex-[1] flex flex-col gap-6">
           <EmployeeOfTheMonth />
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
           <NewJoiners context={context}  sp={sp}   />
           <HRPolicies sp={sp} />
           <NewOpenings sp={sp}  />
           
+=======
+          <NewJoiners />
+          <HRPolicies />
+          <NewOpenings />
+>>>>>>> Stashed changes
 =======
           <NewJoiners />
           <HRPolicies />

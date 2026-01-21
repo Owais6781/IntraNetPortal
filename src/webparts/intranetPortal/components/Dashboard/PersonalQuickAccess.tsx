@@ -42,8 +42,12 @@ const PersonalQuickAccess: React.FC = () => {
               </button>
             </Link>
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
             <Link to ="/it-support">
             <button className="px-4 py-2 rounded-full bg-slate-50 border border-slate-200 text-sm font-medium hover:bg-indigo-50 hover:border-indigo-200 hover:text-indigo-700 transition-colors">
+=======
+            <button className="px-4 py-2 rounded-full bg-surface-50 border border-surface-200 text-sm font-medium hover:bg-primary-50 hover:border-primary-200 hover:text-primary-700 transition-colors">
+>>>>>>> Stashed changes
 =======
             <button className="px-4 py-2 rounded-full bg-surface-50 border border-surface-200 text-sm font-medium hover:bg-primary-50 hover:border-primary-200 hover:text-primary-700 transition-colors">
 >>>>>>> Stashed changes

@@ -168,9 +168,12 @@ const HeroSection: React.FC<HeroSectionProps> = ({ userName, loading }) => {
 
         {/* Content */}
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
         <div className="relative z-10 p-6 sm:p-8 text-white h-full flex flex-col justify-end " style={{marginTop:"-60px"}}>
           {/* <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/10 backdrop-blur-sm border border-white/20 w-fit mb-4">
 =======
+=======
+>>>>>>> Stashed changes
         <div className="relative z-10 p-6 sm:p-8 text-white h-full flex flex-col justify-end " style={{ marginTop: "-60px" }}>
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/10 backdrop-blur-sm border border-white/20 w-fit mb-4">
 >>>>>>> Stashed changes
