@@ -1,64 +1,226 @@
+// import * as React from "react";
+// import { useEffect, useState } from "react";
+// import { SPFI } from "@pnp/sp";
+// import { MSGraphClientV3 } from "@microsoft/sp-http";
+
+// import "@pnp/sp/webs";
+// import "@pnp/sp/lists";
+// import "@pnp/sp/items";
+
+// interface Props {
+//   sp: SPFI;
+//   context: any;
+// }
+
+// interface INewJoiner {
+//   Id: number;
+//   JoiningDate: string;
+//   Employee: {
+//     Title: string;
+//     EMail: string;
+//   };
+//   photoUrl?: string;
+//   jobTitle?: string;
+// }
+
+// const NewJoiners: React.FC<Props> = ({ sp, context }) => {
+//   const [joiners, setJoiners] = useState<INewJoiner[]>([]);
+
+//   const loadJoiners = async () => {
+//     try {
+//       const items = await sp.web.lists
+//         .getByTitle("NewJoiners")
+//         .items.select(
+//           "Id",
+//           "JoiningDate",
+//           "Employee/Title",
+//           "Employee/EMail"
+//         )
+//         .expand("Employee")
+//         .filter("Status eq 'Active'")
+//         .orderBy("JoiningDate", false)
+//         .top(5)();
+
+//       const graphClient: MSGraphClientV3 =
+//         await context.msGraphClientFactory.getClient("3");
+
+//       const enriched = await Promise.all(
+//         items.map(async (item: any) => {
+//           let jobTitle = "";
+//           let photoUrl = "";
+
+//           try {
+//             const user = await graphClient
+//               .api(`/users/${item.Employee.EMail}`)
+//               .select("jobTitle")
+//               .get();
+
+//             jobTitle = user.jobTitle;
+//           } catch (e) {
+//             console.log("Graph user not found");
+//           }
+
+//           photoUrl = `/_layouts/15/userphoto.aspx?size=M&accountname=${item.Employee.EMail}`;
+
+//           return {
+//             ...item,
+//             jobTitle,
+//             photoUrl
+//           };
+//         })
+//       );
+
+//       setJoiners(enriched);
+//     } catch (error) {
+//       console.error("New Joiners error:", error);
+//     }
+//   };
+
+//   useEffect(() => {
+//     void loadJoiners();
+//   }, []);
+
+//   return (
+//     <div className="rounded-3xl bg-white p-6 shadow-xl">
+//       <h3 className="text-lg font-bold mb-5 flex items-center gap-2">
+//         👋 New Joiners
+//       </h3>
+
+//       <div className="space-y-4">
+//         {joiners.map((item) => (
+//           <div
+//             key={item.Id}
+//             className="flex items-center gap-3 p-3 rounded-xl hover:bg-indigo-50"
+//           >
+//             <img
+//               src={
+//                 item.photoUrl ||
+//                 "https://static.thenounproject.com/png/403588-200.png"
+//               }
+//               className="h-12 w-12 rounded-full border"
+//             />
+
+//             <div className="flex-1">
+//               <p className="font-semibold">
+//                 {item.Employee.Title}
+//               </p>
+
+//               <p className="text-sm text-slate-500">
+//                 {item.jobTitle}
+//               </p>
+
+//               <p className="text-xs text-slate-400">
+//                 Joined on{" "}
+//                 {new Date(
+//                   item.JoiningDate
+//                 ).toLocaleDateString()}
+//               </p>
+//             </div>
+
+//             <span className="text-xs bg-green-100 text-green-600 px-3 py-1 rounded-full">
+//               New
+//             </span>
+//           </div>
+//         ))}
+//       </div>
+//     </div>
+//   );
+// };
+
+// export default NewJoiners;
+
+
 import * as React from "react";
+import { useEffect, useState } from "react";
+import { SPFI } from "@pnp/sp";
+import { WebPartContext } from "@microsoft/sp-webpart-base";
 
-const NewJoiners: React.FC = () => {
+import "@pnp/sp/webs";
+import "@pnp/sp/lists";
+import "@pnp/sp/items";
+
+interface Props {
+  sp: SPFI;
+  context: WebPartContext;
+}
+
+interface INewJoiner {
+  Id: number;
+  JoiningDate: string;
+  Employee: {
+    Title: string;
+    EMail: string;
+  };
+  photoUrl?: string;
+  jobTitle?: string;
+}
+
+const NewJoiners: React.FC<Props> = ({ sp }) => {
+  const [joiners, setJoiners] = useState<INewJoiner[]>([]);
+
+  const loadJoiners = async () => {
+    const items = await sp.web.lists
+      .getByTitle("NewJoiners")
+      .items.select(
+        "Id",
+        "JoiningDate",
+        "Employee/Title",
+        "Employee/EMail"
+      )
+      .expand("Employee")
+      .orderBy("JoiningDate", false)();
+
+    const enriched = items.map((item: any) => ({
+      ...item,
+      photoUrl: `/_layouts/15/userphoto.aspx?size=M&accountname=${item.Employee.EMail}`,
+      jobTitle: "Employee"
+    }));
+
+    setJoiners(enriched);
+  };
+
+  useEffect(() => {
+    void loadJoiners();
+  }, []);
+
   return (
-    <div className="group rounded-3xl bg-white/70 backdrop-blur-xl border border-white/50 shadow-xl shadow-slate-200/50 p-6 hover:shadow-2xl hover:-translate-y-1 transition-all duration-300">
+    <div className="rounded-3xl bg-white p-6 shadow-xl">
+      <h3 className="text-lg font-bold mb-5">👋 New Joiners</h3>
 
-      {/* Header */}
-      <h3 className="text-lg font-bold text-slate-800 mb-5 flex items-center gap-2">
-        <span className="w-8 h-8 rounded-xl bg-gradient-to-br from-emerald-400 to-cyan-400 flex items-center justify-center text-white text-sm shadow-lg shadow-emerald-200">
-          👋
-        </span>
-        New Joiners
-      </h3>
+      {/* ✅ ONLY THIS PART MATTERS */}
+      <div className="space-y-4 max-h-[220px] overflow-y-auto pr-1">
+        {joiners.map((item) => (
+          <div
+            key={item.Id}
+            className="flex items-center gap-3 p-3 rounded-xl hover:bg-indigo-50"
+          >
+            <img
+              src={item.photoUrl}
+              className="h-12 w-12 rounded-full border"
+            />
 
-      {/* Joiners List */}
-      <div className="space-y-4">
+            <div className="flex-1">
+              <p className="font-semibold">
+                {item.Employee.Title}
+              </p>
 
-        {/* Joiner 1 */}
-        <div className="flex items-center gap-3 p-3 rounded-2xl hover:bg-indigo-50 transition-colors cursor-pointer group/item">
-          <div className="relative">
-            <div className="h-12 w-12 rounded-full bg-gradient-to-br from-indigo-400 to-violet-400 flex items-center justify-center text-white font-bold shadow-lg">
-              AM
+              <p className="text-sm text-slate-500">
+                {item.jobTitle}
+              </p>
+
+              <p className="text-xs text-slate-400">
+                Joined{" "}
+                {new Date(
+                  item.JoiningDate
+                ).toLocaleDateString()}
+              </p>
             </div>
-            <span className="absolute -bottom-0.5 -right-0.5 w-4 h-4 bg-emerald-400 rounded-full border-2 border-white" />
           </div>
-
-          <div className="flex-1">
-            <p className="font-semibold text-slate-800 group-hover/item:text-indigo-600 transition-colors">
-              Arjun M.
-            </p>
-            <p className="text-sm text-slate-500">UI Designer</p>
-          </div>
-
-          <span className="text-xs bg-indigo-100 text-indigo-600 px-2 py-1 rounded-full">
-            New
-          </span>
-        </div>
-
-        {/* Joiner 2 */}
-        <div className="flex items-center gap-3 p-3 rounded-2xl hover:bg-violet-50 transition-colors cursor-pointer group/item">
-          <div className="relative">
-            <div className="h-12 w-12 rounded-full bg-gradient-to-br from-violet-400 to-purple-400 flex items-center justify-center text-white font-bold shadow-lg">
-              SR
-            </div>
-            <span className="absolute -bottom-0.5 -right-0.5 w-4 h-4 bg-emerald-400 rounded-full border-2 border-white" />
-          </div>
-
-          <div className="flex-1">
-            <p className="font-semibold text-slate-800 group-hover/item:text-violet-600 transition-colors">
-              Sofia R.
-            </p>
-            <p className="text-sm text-slate-500">HR Lead</p>
-          </div>
-
-          <span className="text-xs bg-violet-100 text-violet-600 px-2 py-1 rounded-full">
-            New
-          </span>
-        </div>
+        ))}
       </div>
     </div>
   );
 };
 
 export default NewJoiners;
+

@@ -24,6 +24,7 @@
     "@microsoft/sp-webpart-base": "1.21.1",
     "@pnp/graph": "^4.17.0",
     "@pnp/logging": "^4.17.0",
+    "@pnp/queryable": "^4.17.0",
     "@pnp/sp": "^4.17.0",
     "bootstrap": "^5.3.8",
     "lucide-react": "^0.562.0",
@@ -31,7 +32,6 @@
     "react-bootstrap-icons": "^1.11.6",
     "react-dom": "17.0.1",
     "react-router-dom": "^6.30.3",
-    "spfx-fast-serve": "^4.0.2",
     "tslib": "2.3.1"
   },
   "devDependencies": {
