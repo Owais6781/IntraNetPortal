@@ -7,16 +7,16 @@ import { GraphFI } from "@pnp/graph";
 
 interface ILayoutsProps {
   sp: SPFI
-   graph: GraphFI
+  graph: GraphFI
 }
 
-const Layouts: React.FC<ILayoutsProps>= ({sp, graph}) => {
+const Layouts: React.FC<ILayoutsProps> = ({ sp, graph }) => {
   return (
     <div className="min-h-screen flex flex-col ">
       <Header sp={sp} graph={graph} />
 
-  
-      <main className="flex-1 bg-gray-50">
+
+      <main className="flex-1 bg-surface-50">
         <Outlet />
       </main>
 

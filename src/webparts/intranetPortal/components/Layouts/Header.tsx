@@ -58,7 +58,7 @@ const Header: React.FC<IHeaderProps> = ({ sp, graph }) => {
   ];
 
   return (
-    <div className="w-full bg-white font-sans border-b ">
+    <div className="w-full bg-white font-sans border-b border-surface-200">
 
       {/* TOP BAR */}
       <div className="flex items-center justify-between px-8 py-2">
@@ -90,9 +90,9 @@ const Header: React.FC<IHeaderProps> = ({ sp, graph }) => {
 
           {/* PROFILE */}
           <div className="flex items-center pl-1.5 pr-4 py-1.5 rounded-full
-                          border border-gray-200 hover:shadow-md transition-all">
+                          border border-surface-200 hover:shadow-md transition-all">
 
-            <div className="w-9 h-9 rounded-full bg-indigo-600 flex items-center
+            <div className="w-9 h-9 rounded-full bg-primary-600 flex items-center
                             justify-center overflow-hidden mr-3">
               {userPhoto && (
                 <img
@@ -104,10 +104,10 @@ const Header: React.FC<IHeaderProps> = ({ sp, graph }) => {
             </div>
 
             <div className="hidden lg:block">
-              <p className="text-sm font-bold text-gray-800 leading-none">
+              <p className="text-sm font-bold text-surface-900 leading-none">
                 {loading ? "Loading..." : userName}
               </p>
-              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wide">
+              <p className="text-[10px] font-bold text-surface-500 uppercase tracking-wide">
                 {jobTitle}
               </p>
             </div>
@@ -126,8 +126,8 @@ const Header: React.FC<IHeaderProps> = ({ sp, graph }) => {
               className={({ isActive }) =>
                 `px-6 py-2.5 rounded-lg text-sm font-bold transition-all
                 ${isActive
-                  ? "bg-gradient-to-r from-indigo-600 to-violet-600 text-white shadow-lg"
-                  : "text-gray-500 hover:text-gray-900 hover:bg-gray-50"}`
+                  ? "bg-gradient-to-r from-primary-600 to-primary-500 text-white shadow-lg"
+                  : "text-surface-500 hover:text-surface-900 hover:bg-surface-50"}`
               }
             >
               {item.label}
