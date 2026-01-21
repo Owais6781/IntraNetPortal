@@ -6,6 +6,5 @@ export interface IIntranetPortalProps {
     sp: SPFI;
     context: WebPartContext;
     graph: GraphFI;
-    
 
 }

@@ -2,15 +2,15 @@ import * as React from "react";
 
 const Footer: React.FC = () => {
   return (
-    <footer className="w-full bg-gradient-to-r from-primary-950 to-primary-900 text-surface-300">
-
+    <footer className="w-full bg-gradient-to-r from-[#15162b] to-[#1b1c35] text-gray-300">
+      
       {/* Top Section */}
       <div className="max-w-7xl mx-auto px-8 py-14 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10">
-
+        
         {/* Brand */}
         <div>
           <h2 className="text-2xl font-bold text-white mb-4">GLOBEX</h2>
-          <p className="text-sm leading-relaxed text-surface-400">
+          <p className="text-sm leading-relaxed text-gray-400">
             Your central hub for collaboration, productivity, and
             organization news. Built for the modern workforce.
           </p>
@@ -39,7 +39,7 @@ const Footer: React.FC = () => {
         {/* Contact */}
         <div>
           <h3 className="text-white font-semibold mb-4">Contact Noida HQ</h3>
-          <p className="text-sm text-surface-400 leading-relaxed">
+          <p className="text-sm text-gray-400 leading-relaxed">
             Sector 126, Noida, UP<br />
             Phone: +91 (120) 456-7890<br />
             Email: support@globex.com
@@ -48,10 +48,10 @@ const Footer: React.FC = () => {
       </div>
 
       {/* Divider */}
-      <div className="border-t border-primary-800"></div>
+      <div className="border-t border-white/10"></div>
 
       {/* Bottom Bar */}
-      <div className="max-w-7xl mx-auto px-8 py-6 flex flex-col md:flex-row items-center justify-between text-sm text-surface-400 gap-4">
+      <div className="max-w-7xl mx-auto px-8 py-6 flex flex-col md:flex-row items-center justify-between text-sm text-gray-400 gap-4">
         <p>© 2026 Globex Corporation. All rights reserved.</p>
 
         <div className="flex gap-6">
