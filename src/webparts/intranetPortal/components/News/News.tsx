@@ -1,5 +1,5 @@
 import * as React from "react";
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useMemo } from "react";
 import { SPFI } from "@pnp/sp";
 import "@pnp/sp/lists";
 import "@pnp/sp/items";
@@ -13,12 +13,24 @@ interface INewsItem {
   id: number;
   category: string;
   title: string;
+
+  // keep if you still use it anywhere
   description: string;
+
   imageUrl: string;
+
+  // keep HTML for detail page
   fullDescription: string;
+
+  // NEW
+  createdDate: string; // DD MMM YYYY
+  createdTime: string; // HH:MM
+  createdBy: string;   // Author Title
 }
 
 type ViewMode = "list" | "detail";
+
+const ITEMS_PER_PAGE = 8;
 
 const News: React.FC<IProps> = ({ sp }) => {
   const [news, setNews] = useState<INewsItem[]>([]);
@@ -26,39 +38,77 @@ const News: React.FC<IProps> = ({ sp }) => {
   const [loading, setLoading] = useState(true);
   const [mode, setMode] = useState<ViewMode>("list");
 
-  // ref for whole left card 
+  const [search, setSearch] = useState("");
+  const [page, setPage] = useState(1);
+
   const leftCardRef = useRef<HTMLDivElement | null>(null);
   const [cardHeight, setCardHeight] = useState<number | null>(null);
+
+  const stripHtml = (html: string) => {
+    return html.replace(/<[^>]*>/g, "").trim();
+  };
+
+  const formatDate = (iso: string) => {
+    // "27 Jan 2026"
+    return new Date(iso).toLocaleDateString("en-GB", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+    });
+  };
+
+  const formatTime = (iso: string) => {
+    // "14:05"
+    return new Date(iso).toLocaleTimeString("en-GB", {
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: false,
+    });
+  };
 
   const fetchNews = async () => {
     try {
       const items: any[] = await sp.web.lists
         .getByTitle("News")
-        .items.select("ID", "Title", "SubTitle", "Description", "AttachmentFiles")
-        .expand("AttachmentFiles")
+        .items.select(
+          "ID",
+          "Title",
+          "SubTitle",
+          "Description",
+          "AttachmentFiles",
+          "Created",
+          "Author/Title"
+        )
+        .expand("AttachmentFiles", "Author")
         .orderBy("Created", false)();
 
       const mapped: INewsItem[] = items.map((item) => {
-        const fullDescription: string =
-          item.Description || "No content available.";
+        const fullDescription = item.Description || "No content available.";
+        const cleanText = stripHtml(fullDescription);
 
+        // keep your old short logic (optional)
         const short =
-          fullDescription && fullDescription.length > 150
-            ? `${fullDescription.substring(0, 150)}...`
-            : fullDescription || "No preview available.";
+          cleanText.length > 150
+            ? `${cleanText.substring(0, 150)}...`
+            : cleanText;
 
-        const imageFile = (item.AttachmentFiles || []).find((file: any) => {
-          const name = (file.FileName || "").toLowerCase();
-          return /\.(jpg|jpeg|png|gif|webp|svg)$/.test(name);
-        });
+        const imageFile = (item.AttachmentFiles || []).find((file: any) =>
+          /\.(jpg|jpeg|png|gif|webp|svg)$/i.test(file.FileName || "")
+        );
+
+        const createdIso = item.Created;
+        const createdBy = item?.Author?.Title || "Unknown";
 
         return {
           id: item.ID,
           category: item.Title || "UPDATE",
           title: item.SubTitle || "No Title",
           description: short,
-          fullDescription,
+          fullDescription, // keep HTML for detail page
           imageUrl: imageFile ? imageFile.ServerRelativeUrl : "",
+          createdDate: createdIso ? formatDate(createdIso) : "",
+          createdTime: createdIso ? formatTime(createdIso) : "",
+          createdBy,
         };
       });
 
@@ -74,7 +124,6 @@ const News: React.FC<IProps> = ({ sp }) => {
     fetchNews().catch(console.error);
   }, []);
 
-  // restore previous selection
   useEffect(() => {
     if (!news.length) return;
 
@@ -109,12 +158,8 @@ const News: React.FC<IProps> = ({ sp }) => {
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
-  // Measure left card height and  left & right equal okay
   useEffect(() => {
-    if (!leftCardRef.current) {
-      setCardHeight(null);
-      return;
-    }
+    if (!leftCardRef.current) return;
 
     const measure = () => {
       if (leftCardRef.current) {
@@ -123,7 +168,6 @@ const News: React.FC<IProps> = ({ sp }) => {
     };
 
     measure();
-
     const ro = new ResizeObserver(measure);
     ro.observe(leftCardRef.current);
     window.addEventListener("resize", measure);
@@ -134,50 +178,114 @@ const News: React.FC<IProps> = ({ sp }) => {
     };
   }, [selectedNews]);
 
-  /* ---------- LIST VIEW ---------- */
+  /* SEARCH ONLY (dropdown removed) */
+  const filteredNews = useMemo(() => {
+    return news.filter((n) => {
+      const text =
+        n.title + " " + n.category + " " + stripHtml(n.fullDescription) + " " + n.createdBy;
+      return text.toLowerCase().includes(search.toLowerCase());
+    });
+  }, [news, search]);
+
+  /* PAGINATION */
+  const totalPages = Math.ceil(filteredNews.length / ITEMS_PER_PAGE);
+
+  const paginatedNews = filteredNews.slice(
+    (page - 1) * ITEMS_PER_PAGE,
+    page * ITEMS_PER_PAGE
+  );
+
+  /* LIST VIEW */
   if (mode === "list") {
     return (
       <div className="news-container">
-        <h1 className="news-title">Company Updates</h1>
+        <h1 className="news-title">Company News</h1>
+
+        {/* SEARCH ONLY (dropdown removed) */}
+        <div className="news-toolbar">
+          <input
+            className="news-search"
+            placeholder="Search news..."
+            value={search}
+            onChange={(e) => {
+              setSearch(e.target.value);
+              setPage(1);
+            }}
+          />
+        </div>
 
         {loading ? (
           <p className="news-loading">Loading news...</p>
-        ) : news.length === 0 ? (
+        ) : filteredNews.length === 0 ? (
           <p className="news-empty">No news found.</p>
         ) : (
-          <div className="news-grid">
-            {news.map((item) => (
-              <article key={item.id} className="news-card">
-                <div
-                  className="news-image"
-                  style={{
-                    backgroundImage: item.imageUrl
-                      ? `url(${item.imageUrl})`
-                      : "linear-gradient(135deg,#dbeafe,#c7d2fe)",
-                  }}
-                />
-                <div className="news-content">
-                  <span className="news-category">
-                    {item.category.toUpperCase()}
-                  </span>
-                  <h3 className="news-heading">{item.title}</h3>
-                  <p className="news-desc">{item.description}</p>
-                  <button
-                    className="read-more"
-                    onClick={() => openDetailPage(item)}
-                  >
-                    Read More →
-                  </button>
-                </div>
-              </article>
-            ))}
-          </div>
+          <>
+            <div className="news-grid">
+              {paginatedNews.map((item) => (
+                <article key={item.id} className="news-card">
+                  <div
+                    className="news-image"
+                    style={{
+                      backgroundImage: item.imageUrl
+                        ? `url(${item.imageUrl})`
+                        : "linear-gradient(135deg,#dbeafe,#c7d2fe)",
+                    }}
+                  />
+
+                  <div className="news-content">
+                    {/* category + created date/time/by */}
+                    <div className="news-meta">
+                      <span className="news-category">
+                        {item.category.toUpperCase()}
+                      </span>
+                      <span className="news-date">
+                        {item.createdDate} {item.createdTime}
+                      </span>
+                    </div>
+
+                 
+
+                    <h3 className="news-heading">{item.title}</h3>
+                    
+
+                    <div className="news-desc-wrapper">
+                      {/* Use text version for card view */}
+                      <p className="news-desc-clamped">
+                        {stripHtml(item.fullDescription)}
+                      </p>
+                    </div>
+
+                    <button className="read-more" onClick={() => openDetailPage(item)}>
+                      Read More →
+                    </button>
+                  </div>
+                </article>
+              ))}
+            </div>
+
+            <div className="news-pagination">
+              <button disabled={page === 1} onClick={() => setPage((p) => p - 1)}>
+                Prev
+              </button>
+
+              <span>
+                Page {page} / {totalPages}
+              </span>
+
+              <button
+                disabled={page === totalPages}
+                onClick={() => setPage((p) => p + 1)}
+              >
+                Next
+              </button>
+            </div>
+          </>
         )}
       </div>
     );
   }
 
-  /* ---------- DETAIL VIEW ---------- */
+  /* DETAIL VIEW */
   return (
     <div className="news-master-layout">
       <button onClick={backNews} className="back-button">
@@ -185,9 +293,8 @@ const News: React.FC<IProps> = ({ sp }) => {
       </button>
 
       <div className="news-split-view">
-        {/* LEFT CONTAINER */}
         <section className="news-detail-pane">
-          {selectedNews ? (
+          {selectedNews && (
             <article className="single-news-card" ref={leftCardRef}>
               <div
                 className="single-news-image"
@@ -201,42 +308,38 @@ const News: React.FC<IProps> = ({ sp }) => {
                 <span className="single-news-category">
                   {selectedNews.category.toUpperCase()}
                 </span>
+
+                <div className="single-news-meta">
+                  <span>
+                    {selectedNews.createdDate} {selectedNews.createdTime}
+                  </span>
+                  <span>• Created by: {selectedNews.createdBy}</span>
+                </div>
+
                 <h1 className="single-news-title">{selectedNews.title}</h1>
+
                 <div
-                  className="single-news-description"
+                  className="single-news-description bordered-desc"
                   dangerouslySetInnerHTML={{
-                    __html: selectedNews.fullDescription,
+                    __html: selectedNews?.fullDescription || "",
                   }}
                 />
               </div>
             </article>
-          ) : (
-            <div className="no-selection">
-              <p>Select a news item from the right to view details.</p>
-            </div>
           )}
         </section>
 
-        {/* RIGHT CONTAINER same height as a left*/}
         <section
           className="news-sidebar-pane"
-          style={
-            cardHeight
-              ? {
-                  height: `${cardHeight}px`,
-                }
-              : {}
-          }
+          style={cardHeight ? { height: `${cardHeight}px` } : {}}
         >
           <h2 className="sidebar-title">All News</h2>
 
           <div
             className="sidebar-cards"
             style={{
-              // take full height minus title area
               height: cardHeight ? `calc(${cardHeight}px - 56px)` : "auto",
-              overflowY: cardHeight ? "auto" : "visible",
-              overflowX: "hidden",
+              overflowY: "auto",
             }}
           >
             {news.map((item) => (
@@ -255,13 +358,23 @@ const News: React.FC<IProps> = ({ sp }) => {
                       : "linear-gradient(135deg,#e0e7ff,#c7d2fe)",
                   }}
                 />
+
                 <div className="sidebar-card-content">
-                  <span className="sidebar-card-category">
-                    {item.category.toUpperCase()}
-                  </span>
+                  <div className="sidebar-meta">
+                    <span className="sidebar-card-category">
+                      {item.category.toUpperCase()}
+                    </span>
+                    <span className="sidebar-date">
+                      {item.createdDate} {item.createdTime}
+                    </span>
+                  </div>
+
+                  <div className="sidebar-by">Created By: {item.createdBy}</div>
+
                   <h3 className="sidebar-card-title">{item.title}</h3>
+
                   <p className="sidebar-card-desc">
-                    {item.description.substring(0, 100)}...
+                    {stripHtml(item.fullDescription)}
                   </p>
                 </div>
               </div>
