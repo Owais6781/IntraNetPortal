@@ -171,10 +171,10 @@ const ITsupport: React.FC<IIntranetPortalProps> = ({ sp, context }) => {
           "Status",
           "Manager/Id",
           "Manager/Title",
-          "Manager/EMail" // Get Manager Email
+          "Manager/EMail" 
         )
         .expand("Manager")
-        // Filter: Show if I created it OR if I am the manager
+        
         .filter(`UserEmail eq '${UserEmail}' or Manager/EMail eq '${UserEmail}'`)
         .orderBy("Id", false)();
 
@@ -189,7 +189,7 @@ const ITsupport: React.FC<IIntranetPortalProps> = ({ sp, context }) => {
         status: i.Status,
         managerId: i.Manager ? i.Manager.Id : null,
         managerName: i.Manager ? i.Manager.Title : "",
-        managerEmail: i.Manager ? i.Manager.EMail : "", // Map the email
+        managerEmail: i.Manager ? i.Manager.EMail : "", 
       }));
       setTickets(mapped);
     } catch (error) {
@@ -237,7 +237,7 @@ const ITsupport: React.FC<IIntranetPortalProps> = ({ sp, context }) => {
             <Headphones size={32} className="text-white" />
           </div>
           <h1 className="text-4xl md:text-5xl font-bold mb-4">Technology Support</h1>
-          <p className="text-lg md:text-xl text-white/90 max-w-2xl">
+          <p className="text-lg md:text-xl text-white/90 max-w-2xl whitespace-nowrap">
             Need help with your hardware, software, or network? We are here to help 24/7.
           </p>
         </div>
