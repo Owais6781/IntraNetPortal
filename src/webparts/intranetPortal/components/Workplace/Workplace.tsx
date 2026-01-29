@@ -601,7 +601,6 @@ const Workplace: React.FC<WorkplaceProps> = ({ sp }) => {
     }
   };
 
-  // ✅ HR Sync: EmployeeDirectory removed.
   // Now HR sync reads employees from IntranetLeaveData itself (EmpName person column).
   const syncAllEmployeesToIntranetLeaveData = async () => {
     setIsSyncing(true);
