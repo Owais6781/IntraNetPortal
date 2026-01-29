@@ -1,13 +1,10 @@
 import * as React from "react";
 
-const Knowledge: React.FC = () => {
-  return (
-    
-        <>
-        <h1>ITSupport</h1>
-        </>
-     
+const ITKnowledge:React.FC = () => {
+  return(
+<>
+<h1>Ayan</h1>
+</>
   );
 };
-
-export default Knowledge;
+export default ITKnowledge;
