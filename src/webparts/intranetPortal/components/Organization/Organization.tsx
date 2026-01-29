@@ -15,7 +15,6 @@ import "@pnp/sp/profiles";
 
 interface IOrgProps {
   sp: SPFI;
-  // context: any
 }
 
 interface ExecutiveItem {
@@ -23,9 +22,7 @@ interface ExecutiveItem {
   Email: {
     Title: string;
     EMail: string;
-    // Department: string;
   };
-  // Role: string;
   Designation: string;
   Department: string;
   Status: string;
@@ -38,19 +35,6 @@ interface OrgItems {
   Logo: string;
   Color: string;
 }
-
-// interface HItem {
-//   Designation: string;
-//   Email: {
-//     Title: string;
-//   };
-//   // Role: string;
-//   UnderOrgHeads: {
-//     Title: string;
-//     Id: number;
-//   //  JobTitle?:string
-//   }[];
-// }
 
 
 interface HItem {
@@ -220,7 +204,6 @@ const Organization: React.FC<IOrgProps> = ({ sp }) => {
       setOrgIndex(prev => prev - 1);
     }
   };
-
 
   return (
     <>
@@ -506,20 +489,24 @@ const Organization: React.FC<IOrgProps> = ({ sp }) => {
                 (a, b) =>
                   new Date(b.Created).getTime() - new Date(a.Created).getTime()
               )
-              .slice(0, 3) 
+              .slice(0, 3)
               .map((item, index) => (
                 <div className={styles.newsItem} key={index}>
                   <div className={styles.newsText}>
-                    <h3>{item.SubTitle}</h3>
+                    <div className={styles.newsMeta}>
+                      <h3 className={styles.newsTitle} title={item.SubTitle}>
+                        {item.SubTitle}
+                      </h3>
 
-                    <span>
-                      <b>Created On:</b>{" "}
-                      {new Date(item.Created).toLocaleDateString("en-IN", {
-                        day: "numeric",
-                        month: "short",
-                        year: "numeric",
-                      })}
-                    </span>
+                      <span className={styles.createdOn}>
+                        <b>Created On:</b>{" "}
+                        {new Date(item.Created).toLocaleDateString("en-IN", {
+                          day: "numeric",
+                          month: "short",
+                          year: "numeric",
+                        })}
+                      </span>
+                    </div>
 
                     <span>
                       <b>Last Modified:</b>{" "}
