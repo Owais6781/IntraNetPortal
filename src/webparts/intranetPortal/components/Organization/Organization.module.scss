@@ -1,3 +1,4 @@
+// Banner
 .heroWrapper {
     padding: 60px 10% 16px;
     background: linear-gradient(135deg, #cfd4e6, #eef1f8);
@@ -58,6 +59,7 @@
     max-width: 520px;
 }
 
+// Company Profile
 
 .profileWrapper {
     padding: 30px 4%;
@@ -158,7 +160,7 @@
 }
 
 
-
+// Executive Leadeship
 .executiveTitle {
     font-size: 24px;
     font-style: "Outfit, Segoe UI , sans-serif";
@@ -214,6 +216,14 @@
     align-items: center;
     justify-content: center;
     margin: 0 auto 18px;
+    overflow: hidden;
+}
+
+.executiveAvatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 50%;
 }
 
 .executiveAvatar svg,
@@ -221,6 +231,7 @@
     font-size: 36px;
     color: #5b2d8b;
 }
+
 
 .executiveName {
     font-size: 17px;
@@ -244,8 +255,9 @@
     color: #6b7280;
     margin-bottom: 3px;
 }
-.sliderInner{
-position: relative;
+
+.sliderInner {
+    position: relative;
 }
 
 
@@ -256,17 +268,17 @@ position: relative;
     transform: translateY(-50%);
     width: 44px;
     height: 44px;
-    border-radius:none;
-    background:none;
-    border:none;
+    border-radius: none;
+    background: none;
+    border: none;
     cursor: pointer;
     font-size: 42px;
     font-weight: bold;
     z-index: 20;
     color: #9d53eb;
-    display:flex;
-    align-items:center;
-    justify-content:center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 
@@ -291,7 +303,8 @@ position: relative;
     margin-bottom: 28px;
 }
 
-
+ 
+// Organization Hierarchy
 .orgWrapper {
     background-color: #ffffff;
     border-radius: 32px;
@@ -365,26 +378,86 @@ position: relative;
 }
 
 
+.deptColumn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: relative;
+}
+
+
+.subVerticalLine {
+    width: 2px;
+    height: 18px;
+    border-left: 2px dashed #cfd6f7;
+    margin: 6px 0;
+}
+
+
+.subDeptWrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+
+.personName {
+    font-size: 14px;
+    font-weight: 400;
+    color: #111827;
+    line-height: 1.2;
+    white-space: nowrap;
+}
+
+
+.personJob {
+    font-size: 14px;
+    font-weight: 600;
+    color: #151616;
+    line-height: 1.3;
+    max-width: 180px;
+    word-break: break-word;
+}
+
+.subDeptCard {
+    background: #ffffff;
+    border: 1px solid #dbe2ff;
+    border-radius: 14px;
+    padding: 12px 16px;
+    min-width: 200px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    gap: 6px;
+    height: 60px;
+    width: 280px;
+}
+
+
 .deptRow {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
-    gap: 24px;
+    gap: 16px;
     padding: 0 20px;
 }
 
-.deptCard{
+.deptCard {
     background: #f9fbff;
     border-radius: 14px;
     padding: 8px 10px;
     text-align: center;
     border: 1px solid #dde4ff;
     margin-bottom: 10px;
-    height: 70px;
+    height: 60px;
+    width: 280px;
 }
 
 .deptCard h4 {
     margin: 0;
     font-size: 14px;
+    font-weight: 500;
     line-height: 1.2;
 }
 
@@ -392,8 +465,10 @@ position: relative;
 .deptCard p {
     margin-top: 6px;
     font-size: 14px;
-    color: #4b5563;
+    color: black;
 }
+
+
 
 
 @media (max-width: 900px) {
@@ -408,16 +483,15 @@ position: relative;
     }
 }
 
-
+// Organization Types
 .vmvWrapper {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
     gap: 28px;
     margin: 60px 0;
+    align-items: center;
+    position: relative;
 }
-
-
-
 
 .typesCard {
     background: #ffffff;
@@ -426,6 +500,15 @@ position: relative;
     border: 2px solid #e3e7f5;
     cursor: pointer;
     position: relative;
+    overflow: hidden;
+    width: 400px;
+    height: 200px;
+    flex-shrink: 0;
+}
+
+.cardsContainer {
+    display: flex;
+    gap: 16px;
     overflow: hidden;
 }
 
@@ -442,18 +525,6 @@ position: relative;
     left: 0;
     right: 0;
     height: 6px;
-}
-
-.vision::before {
-    background: linear-gradient(90deg, #0d6efd, #5c8cff);
-}
-
-.mission::before {
-    background: linear-gradient(90deg, #6cc070, #4caf50);
-}
-
-.values::before {
-    background: linear-gradient(90deg, #ffa000, #ffb74d);
 }
 
 
@@ -499,6 +570,7 @@ position: relative;
 }
 
 
+// Policies & Governance
 .policyWrapper {
     margin-top: 60px;
     padding: 24px 28px;
@@ -517,32 +589,28 @@ position: relative;
 .policyTitle {
     text-align: start;
     font-size: 20px;
-    font-style: "Outfit, Segoe UI, sans-serif";
+    font-family: Outfit, Segoe UI, sans-serif;
     font-weight: 700;
     color: #6f63d2;
     margin-bottom: 20px;
-
 }
-
-
 
 .policyCard {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
     gap: 24px;
-
 }
 
 .policyItem {
     display: flex;
-    align-items: center;
-    gap: 16px;
-    height: 80px;
+    align-items: flex-start;
+    gap: 10px;
+    min-height: 80px;
+    height: auto;
     background: #f0f0f6;
     border-radius: 18px;
-    padding: 20px 24px;
+    padding: 20px 24px 20px 12px;
     box-shadow: 0 10px 28px rgba(0, 0, 0, .06);
-    gap: 2px;
 }
 
 .policyIcon {
@@ -551,8 +619,11 @@ position: relative;
     border-radius: 12px;
     display: flex;
     align-items: center;
-    justify-content: flex-start;
+    justify-content: center;
     font-size: 26px;
+    color: #666;
+    flex-shrink: 0;
+    margin-top: -8px;
 }
 
 .itIcon {
@@ -563,18 +634,30 @@ position: relative;
     color: #666;
 }
 
-
 .policyContent {
     display: flex;
     flex-direction: column;
-    margin: 0;
-    padding: 0;
     font-family: Outfit, Segoe UI, sans-serif;
     font-weight: 500;
-
-
+    margin-top: -8px;
 }
 
+.policyContent h5 {
+    margin: 0 0 2px 0;
+    font-weight: 700;
+    word-break: break-word;
+}
+
+.policyContent p {
+    margin: 0;
+    line-height: 1.4;
+    color: grey;
+    word-break: break-word;
+}
+
+
+
+// Tools
 .shortcutWrapper {
     margin-top: 50px;
 }
@@ -660,6 +743,8 @@ position: relative;
     }
 }
 
+
+// News
 .newsWrapper {
     background: #fff;
     border-radius: 16px;
@@ -703,6 +788,7 @@ position: relative;
         font-weight: 600;
         font-size: 13px;
         cursor: pointer;
+        transform: translateX(-12px);
     }
 }
 
@@ -719,6 +805,7 @@ position: relative;
 
     .newsText {
         max-width: 85%;
+        min-width: 0;
 
         h3 {
             margin: 0;
@@ -746,17 +833,41 @@ position: relative;
         text-align: center;
         box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
 
-        &.update {
-            background: linear-gradient(90deg, #4facfe 0%, #00f2fe 100%);
-        }
+        // &.update {
+        //     background: linear-gradient(90deg, #4facfe 0%, #00f2fe 100%);
+        // }
 
-        &.policy {
-            background: linear-gradient(90deg, #f83600 0%, #f9d423 100%);
-        }
+        // &.policy {
+        //     background: linear-gradient(90deg, #f83600 0%, #f9d423 100%);
+        // }
     }
 }
 
 
+.newsList {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.newsMeta {
+  display: flex;
+  flex-direction: column;
+  gap: 6px; 
+}
+
+.newsTitle {
+  margin: 0;
+}
+
+.createdOn {
+  font-size: 12px;
+  color: #6b7280;
+}
+
+
+
+// Contact & Support Information 
 .contactsection {
     background-color: #1f2740;
     color: #ffffff;
