@@ -12,38 +12,45 @@ import WorkPlace from "./Workplace/Workplace";
 import { SPFI } from "@pnp/sp";
 import { GraphFI } from "@pnp/graph";
 import { WebPartContext } from "@microsoft/sp-webpart-base";
+import "bootstrap/dist/css/bootstrap.min.css";
+import RecruitmentPortal from "./RecruitmentPortal/RecruitmentPortal";
+import ExpenseClaim from "./ExpenseClaim/ExpenseClaim";
+import OnboardingPortal from "./OnboardingPortal/OnboardingPortal";
+import MeetingRoom from "./MeetingRoom/MeetingRoom";
 
 
 
-
-
-interface RoutingIPROPS{
-    sp: SPFI;
-    graph: GraphFI;
-    context: WebPartContext;
+interface RoutingIPROPS {
+  sp: SPFI;
+  graph: GraphFI;
+  context: WebPartContext;
 
 }
 
 
 
-const Routing: React.FC<RoutingIPROPS> = ({ sp, graph , context }) => {
+const Routing: React.FC<RoutingIPROPS> = ({ sp, graph, context }) => {
   return (
-   <HashRouter>
-  <Routes>
-    <Route path="/" element={<Layouts sp={sp} graph={graph} />}>
-      <Route index element={<Navigate to="/dashboard" replace />} />
-      <Route path="dashboard" element={<Dashboard  sp={sp} graph={graph} context={context} />} />
-        <Route path="organization" element={<Organization sp={sp} />} />
-      <Route path="news" element={<News sp={sp} />} />
-      <Route path="knowledge" element={<Knowledge  graph={graph}   sp={sp}  context={context} />} />
-      <Route path="directory" element={<Directory  sp={sp}/>} />
-      <Route path="workplace" element={<WorkPlace sp={sp} />} />
-      <Route path="it-support" element={<ITSupport graph={graph}   sp={sp} context={context}  />} />
-      <Route path="engineering" element={<Engineering  sp={sp}/>} />
-     
-    </Route>
-  </Routes>
-</HashRouter>
+    <HashRouter>
+      <Routes>
+        <Route path="/" element={<Layouts sp={sp} graph={graph} />}>
+          <Route index element={<Navigate to="/dashboard" replace />} />
+          <Route path="dashboard" element={<Dashboard sp={sp} graph={graph} context={context} />} />
+          <Route path="organization" element={<Organization sp={sp} />} />
+          <Route path="news" element={<News sp={sp} />} />
+          <Route path="knowledge" element={<Knowledge graph={graph} sp={sp} context={context} />} />
+          <Route path="directory" element={<Directory sp={sp} />} />
+          <Route path="workplace" element={<WorkPlace sp={sp} />} />
+          <Route path="it-support" element={<ITSupport graph={graph} sp={sp} context={context} />} />
+          <Route path="engineering" element={<Engineering sp={sp} />} />
+          <Route path="expense-claims" element={<ExpenseClaim />} />
+          <Route path="recruitment-portal" element={<RecruitmentPortal />} />
+          <Route path="onboarding-portal" element={<OnboardingPortal />} />
+          <Route path="meeting-room" element={<MeetingRoom />} />
+
+        </Route>
+      </Routes>
+    </HashRouter>
 
   );
 };

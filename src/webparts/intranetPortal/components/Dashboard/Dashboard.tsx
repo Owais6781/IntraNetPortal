@@ -15,14 +15,15 @@ import HRPolicies from "./HRPolicies";
 import NewOpenings from "./NewOpenings";
 import { GraphFI } from "@pnp/graph";
 import { WebPartContext } from "@microsoft/sp-webpart-base";
+import InternalTools from "./../InternalTools/InternalTools";
 
 interface DashboardProps {
   sp: SPFI;
-  graph:GraphFI;
-  context:WebPartContext
+  graph: GraphFI;
+  context: WebPartContext
 }
 
-const Dashboard: React.FC<DashboardProps> = ({ sp,graph, context  }) => {
+const Dashboard: React.FC<DashboardProps> = ({ sp, graph, context }) => {
   const [userName, setUserName] = React.useState("");
   const [loading, setLoading] = React.useState(true);
 
@@ -46,10 +47,14 @@ const Dashboard: React.FC<DashboardProps> = ({ sp,graph, context  }) => {
 
 
       <HeroSection userName={userName} loading={loading} />
+      <div className="max-w-7xl mx-auto w-full mt-6">
+        <InternalTools />
+      </div>
 
       {/* ================= BOTTOM SECTION ================= */}
       <div className="relative max-w-7xl mx-auto mt-10 flex flex-col lg:flex-row gap-6">
         {/* LEFT */}
+
         <div className="flex-[3] flex flex-col gap-6">
           <PersonalQuickAccess />
           <LatestCompanyNews sp={sp} />
@@ -59,10 +64,10 @@ const Dashboard: React.FC<DashboardProps> = ({ sp,graph, context  }) => {
         {/* RIGHT */}
         <div className="flex-[1] flex flex-col gap-6">
           <EmployeeOfTheMonth />
-          <NewJoiners context={context}  sp={sp}   />
+          <NewJoiners context={context} sp={sp} />
           <HRPolicies sp={sp} />
-          <NewOpenings sp={sp}  />
-          
+          <NewOpenings sp={sp} />
+
         </div>
       </div>
     </div>

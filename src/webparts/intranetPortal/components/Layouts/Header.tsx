@@ -46,49 +46,34 @@ const Header: React.FC<IHeaderProps> = ({ sp, graph }) => {
     void loadUser();
   }, [sp, graph]);
 
-  const navItems = [
-    { label: "Dashboard", path: "/dashboard" },
-    { label: "Organization", path: "/organization" },
-    { label: "News", path: "/news" },
-    { label: "Knowledge", path: "/knowledge" },
-    { label: "Directory", path: "/directory" },
-    { label: "Workplace", path: "/workplace" },
-    { label: "IT Support", path: "/it-support" },
-    { label: "Engineering", path: "/engineering" },
-  ];
+  // const navItems = [
+  //   { label: "Dashboard", path: "/dashboard" },
+  //   { label: "Organization", path: "/organization" },
+  //   { label: "News", path: "/news" },
+  //   { label: "Knowledge", path: "/knowledge" },
+  //   { label: "Directory", path: "/directory" },
+  //   { label: "Workplace", path: "/workplace" },
+  //   { label: "IT Support", path: "/it-support" },
+  //   { label: "Engineering", path: "/engineering" },
+  // ];
 
   return (
     <div className="w-full bg-white font-sans border-b ">
-
-      {/* TOP BAR */}
       <div className="flex items-center justify-between px-8 py-2">
-
-        {/* LEFT LOGO */}
         <NavLink to="/dashboard" className="flex items-center gap-3 group">
-
-
           <img
             src={logo}
             alt="Logo"
             className="h-10 w-auto object-contain"
           />
-
         </NavLink>
-
-
-
-        {/* RIGHT ACTIONS */}
         <div className="flex items-center gap-6">
-
-          {/* NOTIFICATION */}
           <button className="relative p-1 hover:scale-110 transition-transform">
             <svg className="w-7 h-7 text-yellow-400 fill-current" viewBox="0 0 24 24">
               <path d="M12 2C10.34 2 9 3.34 9 5V6.28C7.06 7.02 5.5 8.95 5.5 11.25V16.5L4 18V19H20V18L18.5 16.5V11.25C18.5 8.95 16.94 7.02 15 6.28V5C15 3.34 13.66 2 12 2ZM10 20C10 21.1 10.9 22 12 22C13.1 22 14 21.1 14 20H10Z" />
             </svg>
             <span className="absolute top-1 right-1 h-2.5 w-2.5 bg-red-500 rounded-full ring-2 ring-white" />
           </button>
-
-          {/* PROFILE */}
           <div className="flex items-center pl-1.5 pr-4 py-1.5 rounded-full
                           border border-gray-200 hover:shadow-md transition-all">
 
@@ -116,9 +101,8 @@ const Header: React.FC<IHeaderProps> = ({ sp, graph }) => {
         </div>
       </div>
 
-      {/* NAVIGATION */}
       <div className="px-8 pb-4 ml-28">
-        <nav className="flex items-center gap-2 overflow-x-auto">
+        {/* <nav className="flex items-center gap-2 overflow-x-auto">
           {navItems.map((item) => (
             <NavLink
               key={item.label}
@@ -133,9 +117,8 @@ const Header: React.FC<IHeaderProps> = ({ sp, graph }) => {
               {item.label}
             </NavLink>
           ))}
-        </nav>
+        </nav> */}
       </div>
-
     </div>
   );
 };
