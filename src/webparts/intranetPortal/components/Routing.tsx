@@ -20,7 +20,7 @@ import ExpenseDashboard from "./ExpenseClaim/Dashboard";
 import ExpenseClaim from "./ExpenseClaim/ExpenseClaim";
 import ExpenseView from "./ExpenseClaim/ExpenseView";
 import ExpenseEdit from "./ExpenseClaim/ExpenseEdit";
-
+import ViewForm from "./OnboardingPortal/View";
 
 
 interface RoutingIPROPS {
@@ -48,8 +48,9 @@ const Routing: React.FC<RoutingIPROPS> = ({ sp, graph, context }) => {
           <Route path="expense-claims/add" element={<ExpenseClaim context={context} />} />
           <Route path="expense-claims/edit/:id" element={<ExpenseEdit context={context} />} />
           <Route path="recruitment-portal" element={<RecruitmentPortal context={context} />} />
-          <Route path="onboarding-portal" element={<OnboardingPortal />} />
+          <Route path="onboarding-portal" element={<OnboardingPortal sp={sp} context={context} graph={graph} />} />
           <Route path="meeting-room" element={<MeetingRoom />} />
+          <Route path="/view-form/:id" element={<ViewForm sp={sp} context={context} graph={graph} />} />
 
         </Route>
       </Routes>

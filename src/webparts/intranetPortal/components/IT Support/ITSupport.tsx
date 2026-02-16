@@ -44,9 +44,8 @@ const ITsupport: React.FC<IIntranetPortalProps> = ({ sp, context }) => {
     managerName: "",
     managerEmail: "",
   };
-
+ const [list, setList] = React.useState<Support>(initialize);
   const [managers, setManagers] = React.useState<Approver[]>([]);
-  const [list, setList] = React.useState<Support>(initialize);
   const [tickets, setTickets] = React.useState<Support[]>([]);
   const [showpopup, setShowPopup] = React.useState<Support | null>(null);
   const [loading, setLoading] = useState(false);
@@ -158,7 +157,7 @@ const ITsupport: React.FC<IIntranetPortalProps> = ({ sp, context }) => {
   const fetchTickets = async () => {
     try {
     
-      
+
       const items = await sp.web.lists
         .getByTitle("ITsupport")
         .items.select(
@@ -171,10 +170,10 @@ const ITsupport: React.FC<IIntranetPortalProps> = ({ sp, context }) => {
           "Status",
           "Manager/Id",
           "Manager/Title",
-          "Manager/EMail" 
+          "Manager/EMail"
         )
         .expand("Manager")
-        
+
         .filter(`UserEmail eq '${UserEmail}' or Manager/EMail eq '${UserEmail}'`)
         .orderBy("Id", false)();
 
@@ -189,7 +188,7 @@ const ITsupport: React.FC<IIntranetPortalProps> = ({ sp, context }) => {
         status: i.Status,
         managerId: i.Manager ? i.Manager.Id : null,
         managerName: i.Manager ? i.Manager.Title : "",
-        managerEmail: i.Manager ? i.Manager.EMail : "", 
+        managerEmail: i.Manager ? i.Manager.EMail : "",
       }));
       setTickets(mapped);
     } catch (error) {
@@ -328,11 +327,11 @@ const ITsupport: React.FC<IIntranetPortalProps> = ({ sp, context }) => {
                 <button
                   onClick={submitTicket}
                   disabled={loading}
-                  className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-bold py-4 rounded-xl transition-all duration-300 transform hover:scale-[1.02] hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed flex flex-row items-center justify-center gap-3"
+                  className="w-full bg-gradient-to-r  from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-bold py-4 rounded-xl transition-all duration-300 transform hover:scale-[1.02] hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed flex flex-row items-center justify-center gap-3"
                 >
                   {loading ? (
                     <>
-                      <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                      <div className="w-5 h-5  border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
                       <span>Submitting...</span>
                     </>
                   ) : (
@@ -388,7 +387,7 @@ const ITsupport: React.FC<IIntranetPortalProps> = ({ sp, context }) => {
                       <div
                         key={t.id}
                         onClick={() => setShowPopup(t)}
-                        className="bg-gradient-to-br from-gray-50 to-white cursor-pointer rounded-2xl p-5 border-2 border-gray-100 transition-all duration-300 hover:shadow-xl hover:border-indigo-200 hover:-translate-y-1 flex-shrink-0"
+                        className="bg-gradient-to-br from-gray-50 to-white cursor-pointer rounded-2xl p-3 border-2 border-gray-100 transition-all duration-300 hover:shadow-xl hover:border-indigo-200 hover:-translate-y-1 flex-shrink-0"
                       >
                         <div className="flex flex-row items-center justify-between mb-3">
                           <h4 className="text-lg font-bold text-indigo-600">
@@ -433,7 +432,7 @@ const ITsupport: React.FC<IIntranetPortalProps> = ({ sp, context }) => {
                   </div>
 
                   {filterTickets.length > 3 && (
-                    <div className="flex justify-center pt-4 flex-shrink-0">
+                    <div className="flex justify-center  flex-shrink-0">
                       <button
                         onClick={() => setShowAll(!showAll)}
                         className="bg-gradient-to-r from-gray-200 to-gray-300 hover:from-gray-300 hover:to-gray-400 text-gray-700 px-8 py-3 rounded-xl font-semibold transition-all duration-300 hover:shadow-md"
