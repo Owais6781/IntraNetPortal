@@ -386,7 +386,7 @@ const Directory: React.FC<IProps> = ({ sp }) => {
         </div>
       ) : (
         <>
-          <div className="card-grid">
+          <div className="card-flex">
             {currentUsers.map((u, index) => {
               
            
@@ -497,7 +497,7 @@ const Directory: React.FC<IProps> = ({ sp }) => {
             </div>
 
             <div className="modal-body">
-              <div className="modal-details-grid">
+              <div className="modal-details-flex">
 
                 {/* Email Address - Clickable to Copy */}
                 <div
