@@ -16,7 +16,13 @@ import "bootstrap/dist/css/bootstrap.min.css";
 import RecruitmentPortal from "./RecruitmentPortal/RecruitmentPortal";
 import ExpenseClaim from "./ExpenseClaim/ExpenseClaim";
 import OnboardingPortal from "./OnboardingPortal/OnboardingPortal";
-import MeetingRoom from "./MeetingRoom/MeetingRoom";
+// import RoomBooking from "./RoomBooking/RoomBooking";
+import MeetingRoomDashboard from "./MeetingRoom/MeetingRoomDashboard";
+import BookRoom from "./MeetingRoom/BookRoom";
+import AdminPage from "./MeetingRoom/AdminPage";
+import MyBookings from "./MeetingRoom/MyBookings";
+
+
 
 
 
@@ -46,7 +52,11 @@ const Routing: React.FC<RoutingIPROPS> = ({ sp, graph, context }) => {
           <Route path="expense-claims" element={<ExpenseClaim />} />
           <Route path="recruitment-portal" element={<RecruitmentPortal />} />
           <Route path="onboarding-portal" element={<OnboardingPortal />} />
-          <Route path="meeting-room" element={<MeetingRoom />} />
+          {/* <Route path="room-booking" element={<RoomBooking sp={sp} context={context} />} /> */}
+          <Route path="meeting-room" element={<MeetingRoomDashboard sp={sp} graph={graph}/>}/>
+          <Route path="BookRoom" element={<BookRoom sp={sp} />}/>
+          <Route path="MyBookings" element={<MyBookings sp={sp}/>}/>
+          <Route path="AdminPage" element={<AdminPage sp={sp}/>}/>
 
         </Route>
       </Routes>
