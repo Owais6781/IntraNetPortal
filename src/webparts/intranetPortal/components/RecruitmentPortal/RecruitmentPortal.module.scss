@@ -1,0 +1,1749 @@
+// ==================== VARIABLES ====================
+$primary-color: #2563eb;
+$primary-dark: #1d4ed8;
+$primary-light: #3b82f6;
+$secondary-color: #64748b;
+$success-color: #10b981;
+$success-dark: #059669;
+$danger-color: #ef4444;
+$danger-dark: #dc2626;
+$warning-color: #f59e0b;
+$warning-dark: #d97706;
+$purple-color: #8b5cf6;
+// Neutral Colors
+$gray-50: #f8fafc;
+$gray-100: #f1f5f9;
+$gray-200: #e2e8f0;
+$gray-300: #cbd5e1;
+$gray-400: #94a3b8;
+$gray-500: #64748b;
+$gray-600: #475569;
+$gray-700: #334155;
+$gray-800: #1e293b;
+$gray-900: #0f172a;
+// Layout
+$nav-width: 280px;
+$nav-bg: linear-gradient(180deg, #0f172a 0%, #1e293b 50%, #334155 100%);
+$border-radius: 12px;
+$border-radius-sm: 8px;
+$border-radius-lg: 16px;
+// Shadows
+$shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+$shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1),
+0 2px 4px -2px rgba(0, 0, 0, 0.1);
+$shadow-md: 0 10px 15px -3px rgba(0, 0, 0, 0.1),
+0 4px 6px -4px rgba(0, 0, 0, 0.1);
+$shadow-lg: 0 20px 25px -5px rgba(0, 0, 0, 0.1),
+0 8px 10px -6px rgba(0, 0, 0, 0.1);
+// Typography
+$font-family: 'Inter',
+'Segoe UI',
+-apple-system,
+BlinkMacSystemFont,
+sans-serif;
+$font-size-xs: 0.75rem;
+$font-size-sm: 0.875rem;
+$font-size-base: 1rem;
+$font-size-lg: 1.125rem;
+$font-size-xl: 1.25rem;
+$font-size-2xl: 1.5rem;
+$font-size-3xl: 1.875rem;
+// ==================== MAIN LAYOUT ====================
+.portal {
+    display: flex;
+    min-height: 100vh;
+    font-family: $font-family;
+    background: $gray-100;
+    width: 100%;
+    // This makes both nav and main have equal height
+    align-items: stretch;
+    font-size: $font-size-base;
+    color: $gray-700;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+// ==================== NAVIGATION - HEIGHT DEPENDS ON RIGHT CONTENT ====================
+.nav {
+    width: $nav-width;
+    min-width: $nav-width;
+    max-width: $nav-width;
+    background: $nav-bg;
+    color: white;
+    padding: 0;
+    box-shadow: 4px 0 24px rgba(0, 0, 0, 0.15);
+    overflow-y: auto;
+    z-index: 100;
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    // REMOVED: position: sticky;
+    // REMOVED: top: 0;
+    // REMOVED: height: 100vh;
+    // Now the height will be determined by the right content
+    ul {
+        list-style: none;
+        padding: 16px;
+        margin: 0;
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+    li {
+        padding: 14px 20px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        font-size: $font-size-sm;
+        font-weight: 500;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        border-radius: $border-radius-sm;
+        color: rgba(255, 255, 255, 0.7);
+        letter-spacing: 0.01em;
+        position: relative;
+        &:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            transform: translateX(4px);
+        }
+        &.active {
+            background: rgba(255, 255, 255, 0.15);
+            color: white;
+            font-weight: 600;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+            &::before {
+                content: '';
+                position: absolute;
+                left: 0;
+                top: 50%;
+                transform: translateY(-50%);
+                width: 4px;
+                height: 60%;
+                background: $primary-light;
+                border-radius: 0 4px 4px 0;
+            }
+        }
+    }
+}
+
+.logo {
+    padding: 24px;
+    margin: 0;
+    font-size: $font-size-lg;
+    font-weight: 700;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(0, 0, 0, 0.2);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    letter-spacing: -0.02em;
+    flex-shrink: 0;
+    color: white;
+}
+
+// ==================== MAIN CONTENT ====================
+.main {
+    flex: 1;
+    padding: 32px;
+    background: $gray-100;
+    overflow-x: hidden;
+    box-sizing: border-box;
+    // No min-height needed - flexbox handles it
+}
+
+// ==================== LOADING ====================
+.loading {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    min-height: 400px;
+    font-size: $font-size-base;
+    color: $gray-500;
+    gap: 16px;
+    font-weight: 500;
+    &::before {
+        content: "";
+        width: 48px;
+        height: 48px;
+        border: 3px solid $gray-200;
+        border-top-color: $primary-color;
+        border-radius: 50%;
+        animation: spin 0.8s linear infinite;
+    }
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+// ==================== PAGE CONTAINER ====================
+.pageContainer {
+    max-width: 100%;
+    margin: 0 auto;
+    overflow-x: hidden;
+    box-sizing: border-box;
+}
+
+.pageHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+    padding: 24px 28px;
+    background: white;
+    border-radius: $border-radius-lg;
+    box-shadow: $shadow;
+    flex-wrap: wrap;
+    gap: 16px;
+    box-sizing: border-box;
+    border: 1px solid $gray-200;
+    h1 {
+        margin: 0;
+        color: $gray-900;
+        font-size: $font-size-2xl;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        letter-spacing: -0.02em;
+    }
+}
+
+// ==================== BUTTONS ====================
+.addBtn {
+    padding: 12px 24px;
+    border: none;
+    background: $primary-color;
+    color: white;
+    border-radius: $border-radius-sm;
+    cursor: pointer;
+    font-size: $font-size-sm;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.2s ease;
+    box-shadow: 0 1px 3px rgba(37, 99, 235, 0.3);
+    font-family: $font-family;
+    &:hover {
+        background: $primary-dark;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(37, 99, 235, 0.4);
+    }
+    &:active {
+        transform: translateY(0);
+    }
+}
+
+.viewBtn {
+    padding: 8px 16px;
+    background: $gray-100;
+    color: $primary-color;
+    border: 1px solid $gray-200;
+    border-radius: $border-radius-sm;
+    cursor: pointer;
+    font-size: $font-size-xs;
+    font-weight: 600;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-family: $font-family;
+    &:hover {
+        background: $primary-color;
+        color: white;
+        border-color: $primary-color;
+    }
+}
+
+.editBtn {
+    padding: 8px 16px;
+    background: $gray-100;
+    color: $warning-color;
+    border: 1px solid $gray-200;
+    border-radius: $border-radius-sm;
+    cursor: pointer;
+    font-size: $font-size-xs;
+    font-weight: 600;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-family: $font-family;
+    &:hover {
+        background: $warning-color;
+        color: white;
+        border-color: $warning-color;
+    }
+}
+
+.applyBtn {
+    padding: 12px 24px;
+    background: $success-color;
+    color: white;
+    border: none;
+    border-radius: $border-radius-sm;
+    cursor: pointer;
+    font-size: $font-size-sm;
+    font-weight: 600;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-family: $font-family;
+    box-shadow: 0 1px 3px rgba(16, 185, 129, 0.3);
+    &:hover {
+        background: $success-dark;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
+    }
+}
+
+.submitBtn {
+    padding: 12px 28px;
+    background: $success-color;
+    color: white;
+    border: none;
+    border-radius: $border-radius-sm;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: $font-size-sm;
+    transition: all 0.2s ease;
+    box-shadow: 0 1px 3px rgba(16, 185, 129, 0.3);
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-family: $font-family;
+    &:hover {
+        background: $success-dark;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
+    }
+    &:disabled {
+        background: $gray-300;
+        cursor: not-allowed;
+        transform: none;
+        box-shadow: none;
+    }
+}
+
+.cancelBtn {
+    padding: 12px 28px;
+    background: white;
+    color: $gray-600;
+    border: 1px solid $gray-300;
+    border-radius: $border-radius-sm;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: $font-size-sm;
+    transition: all 0.2s ease;
+    font-family: $font-family;
+    &:hover {
+        background: $gray-50;
+        border-color: $gray-400;
+        color: $gray-700;
+    }
+}
+
+.closeBtn {
+    background: $gray-100;
+    border: 1px solid $gray-200;
+    width: 40px;
+    height: 40px;
+    min-width: 40px;
+    min-height: 40px;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: $font-size-lg;
+    color: $gray-500;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    &:hover {
+        background: $danger-color;
+        border-color: $danger-color;
+        color: white;
+        transform: rotate(90deg);
+    }
+}
+
+.backBtn {
+    padding: 12px 24px;
+    background: white;
+    color: $gray-600;
+    border: 1px solid $gray-300;
+    border-radius: $border-radius-sm;
+    cursor: pointer;
+    margin-top: 24px;
+    font-weight: 600;
+    font-size: $font-size-sm;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-family: $font-family;
+    &:hover {
+        background: $gray-50;
+        border-color: $primary-color;
+        color: $primary-color;
+    }
+}
+
+// ==================== ACTION BUTTONS ====================
+.actionButtons {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+// ==================== FORMS ====================
+.formCard {
+    background: white;
+    border-radius: $border-radius-lg;
+    padding: 32px;
+    margin-bottom: 24px;
+    box-shadow: $shadow;
+    border: 1px solid $gray-200;
+    box-sizing: border-box;
+    overflow: visible;
+    width: 100%;
+    max-width: 100%;
+}
+
+.formHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 28px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid $gray-200;
+    gap: 16px;
+    flex-wrap: wrap;
+    h3 {
+        margin: 0;
+        color: $gray-900;
+        font-size: $font-size-xl;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        flex: 1;
+        min-width: 0;
+        letter-spacing: -0.01em;
+    }
+}
+
+.formGroup {
+    margin-bottom: 20px;
+    width: 100%;
+    box-sizing: border-box;
+    label {
+        display: block;
+        margin-bottom: 8px;
+        font-weight: 600;
+        color: $gray-700;
+        font-size: $font-size-sm;
+        letter-spacing: 0.01em;
+    }
+    input,
+    select,
+    textarea {
+        width: 100%;
+        padding: 12px 16px;
+        border: 1px solid $gray-300;
+        border-radius: $border-radius-sm;
+        font-size: $font-size-sm;
+        box-sizing: border-box;
+        transition: all 0.2s ease;
+        background: white;
+        color: $gray-700;
+        font-family: $font-family;
+        &:focus {
+            outline: none;
+            border-color: $primary-color;
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+        &::placeholder {
+            color: $gray-400;
+        }
+    }
+    select {
+        cursor: pointer;
+        appearance: none;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%2364748b' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-position: right 16px center;
+        padding-right: 40px;
+    }
+    textarea {
+        resize: vertical;
+        min-height: 120px;
+        line-height: 1.6;
+    }
+}
+
+.readOnlyInput {
+    background: $gray-50 !important;
+    color: $gray-600 !important;
+    cursor: not-allowed;
+    font-weight: 500;
+    border-style: dashed !important;
+    border-color: $gray-300 !important;
+}
+
+.formRow {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+    width: 100%;
+    box-sizing: border-box;
+    @media (max-width: 768px) {
+        grid-template-columns: 1fr;
+    }
+}
+
+.formActions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    margin-top: 28px;
+    padding-top: 24px;
+    border-top: 1px solid $gray-200;
+    flex-wrap: wrap;
+}
+
+// ==================== TABLE ====================
+.tableContainer {
+    overflow-x: auto;
+    background: white;
+    border-radius: $border-radius-lg;
+    box-shadow: $shadow;
+    border: 1px solid $gray-200;
+    -webkit-overflow-scrolling: touch;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.table {
+    width: 100%;
+    min-width: 900px;
+    border-collapse: collapse;
+    table-layout: auto;
+    th,
+    td {
+        padding: 16px 14px;
+        text-align: left;
+        border-bottom: 1px solid $gray-100;
+        white-space: nowrap;
+        vertical-align: middle;
+        font-size: $font-size-sm;
+    }
+    th {
+        background: $gray-50;
+        font-weight: 600;
+        font-size: $font-size-xs;
+        text-transform: uppercase;
+        color: $gray-500;
+        letter-spacing: 0.05em;
+        position: sticky;
+        top: 0;
+        z-index: 10;
+        border-bottom: 1px solid $gray-200;
+    }
+    tbody tr {
+        transition: all 0.15s ease;
+        &:hover {
+            background: $gray-50;
+        }
+        &:last-child td {
+            border-bottom: none;
+        }
+    }
+    td {
+        color: $gray-600;
+        strong {
+            color: $gray-900;
+            font-weight: 600;
+        }
+    }
+}
+
+.jobIdCell {
+    background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+    color: $primary-color;
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: $font-size-xs;
+    font-weight: 700;
+    font-family: 'SF Mono', 'Consolas', monospace;
+    letter-spacing: 0.02em;
+    display: inline-block;
+    border: 1px solid rgba(37, 99, 235, 0.2);
+}
+
+.openingBadge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+    color: $success-color;
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-weight: 700;
+    font-size: $font-size-xs;
+    min-width: 32px;
+    border: 1px solid rgba(16, 185, 129, 0.2);
+}
+
+.expiredDate {
+    color: $danger-color;
+    font-weight: 600;
+}
+
+.noData {
+    text-align: center;
+    padding: 80px 40px !important;
+    span {
+        font-size: 56px;
+        display: block;
+        margin-bottom: 20px;
+        opacity: 0.6;
+    }
+    p {
+        color: $gray-500;
+        margin: 0 0 24px;
+        font-size: $font-size-base;
+        font-weight: 500;
+    }
+    button {
+        padding: 12px 24px;
+        background: $primary-color;
+        color: white;
+        border: none;
+        border-radius: $border-radius-sm;
+        cursor: pointer;
+        font-weight: 600;
+        font-size: $font-size-sm;
+        transition: all 0.2s ease;
+        font-family: $font-family;
+        &:hover {
+            background: $primary-dark;
+            transform: translateY(-1px);
+        }
+    }
+}
+
+// ==================== STATUS BADGES ====================
+.statusBadge {
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: $font-size-xs;
+    font-weight: 600;
+    text-transform: capitalize;
+    letter-spacing: 0.02em;
+    display: inline-block;
+}
+
+// ==================== ATTACHMENT SECTION ====================
+.attachmentSection {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 20px;
+    background: $gray-50;
+    border-radius: $border-radius;
+    border: 2px dashed $gray-300;
+    transition: all 0.2s ease;
+    &:hover {
+        border-color: $primary-color;
+        background: rgba(37, 99, 235, 0.02);
+    }
+}
+
+.fileInput {
+    padding: 12px;
+    border: 1px solid $gray-300;
+    border-radius: $border-radius-sm;
+    background: white;
+    cursor: pointer;
+    font-size: $font-size-sm;
+    transition: all 0.2s ease;
+    width: 100%;
+    box-sizing: border-box;
+    font-family: $font-family;
+    color: $gray-600;
+    &:hover {
+        border-color: $primary-color;
+    }
+    &:focus {
+        outline: none;
+        border-color: $primary-color;
+        box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+    }
+    &::file-selector-button {
+        padding: 8px 16px;
+        background: $primary-color;
+        color: white;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+        font-weight: 600;
+        font-size: $font-size-xs;
+        margin-right: 12px;
+        transition: all 0.2s ease;
+        font-family: $font-family;
+        &:hover {
+            background: $primary-dark;
+        }
+    }
+}
+
+.fileInfo {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 16px;
+    background: white;
+    border-radius: $border-radius-sm;
+    font-size: $font-size-sm;
+    border: 1px solid $gray-200;
+    box-shadow: $shadow-sm;
+    flex-wrap: wrap;
+    color: $gray-700;
+    font-weight: 500;
+}
+
+.fileSize {
+    color: $gray-500;
+    font-size: $font-size-xs;
+    font-weight: 500;
+}
+
+.removeFileBtn {
+    margin-left: auto;
+    padding: 6px 14px;
+    background: #fef2f2;
+    color: $danger-color;
+    border: 1px solid #fecaca;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: $font-size-xs;
+    font-weight: 600;
+    transition: all 0.2s ease;
+    font-family: $font-family;
+    &:hover {
+        background: $danger-color;
+        color: white;
+        border-color: $danger-color;
+    }
+}
+
+.fileHint {
+    margin: 0;
+    font-size: $font-size-xs;
+    color: $gray-500;
+    font-style: normal;
+}
+
+// ==================== DETAILS CARD ====================
+.detailsCard {
+    background: white;
+    border-radius: $border-radius-lg;
+    box-shadow: $shadow;
+    overflow: hidden;
+    border: 1px solid $gray-200;
+    box-sizing: border-box;
+}
+
+.detailsContent {
+    padding: 32px;
+    box-sizing: border-box;
+}
+
+.detailsHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 28px;
+    padding-bottom: 24px;
+    border-bottom: 1px solid $gray-200;
+    flex-wrap: wrap;
+    gap: 20px;
+    h2 {
+        margin: 12px 0 8px;
+        color: $gray-900;
+        font-size: $font-size-2xl;
+        font-weight: 700;
+        letter-spacing: -0.02em;
+    }
+}
+
+.jobIdBadge {
+    background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+    color: $primary-color;
+    padding: 8px 16px;
+    border-radius: $border-radius-sm;
+    font-size: $font-size-sm;
+    font-weight: 700;
+    font-family: 'SF Mono', 'Consolas', monospace;
+    letter-spacing: 0.02em;
+    display: inline-block;
+    border: 1px solid rgba(37, 99, 235, 0.2);
+}
+
+.metaInfo {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-top: 8px;
+    span {
+        color: $gray-600;
+        font-size: $font-size-sm;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        background: $gray-100;
+        padding: 8px 14px;
+        border-radius: 20px;
+        font-weight: 500;
+    }
+}
+
+.datesRow {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+    margin-bottom: 28px;
+    @media (max-width: 768px) {
+        grid-template-columns: 1fr;
+    }
+}
+
+.dateBox {
+    background: $gray-50;
+    padding: 20px 24px;
+    border-radius: $border-radius;
+    border-left: 4px solid $primary-color;
+    transition: all 0.2s ease;
+    &:hover {
+        transform: translateY(-2px);
+        box-shadow: $shadow-md;
+    }
+    &.expired {
+        border-left-color: $danger-color;
+        background: #fef2f2;
+    }
+}
+
+.dateLabel {
+    display: block;
+    color: $gray-500;
+    font-size: $font-size-xs;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+}
+
+.dateValue {
+    color: $gray-900;
+    font-weight: 700;
+    font-size: $font-size-lg;
+}
+
+.expiredTag {
+    display: inline-block;
+    background: $danger-color;
+    color: white;
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: $font-size-xs;
+    font-weight: 600;
+    margin-left: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+}
+
+.section {
+    margin-bottom: 28px;
+    h4 {
+        color: $gray-900;
+        margin: 0 0 14px;
+        font-size: $font-size-base;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+}
+
+.descriptionBox {
+    background: $gray-50;
+    padding: 24px;
+    border-radius: $border-radius;
+    color: $gray-600;
+    line-height: 1.8;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    font-size: $font-size-sm;
+    border: 1px solid $gray-200;
+}
+
+.attachmentLink {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+    color: $primary-color;
+    padding: 14px 24px;
+    border-radius: $border-radius-sm;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: $font-size-sm;
+    transition: all 0.2s ease;
+    box-shadow: $shadow-sm;
+    border: 1px solid rgba(37, 99, 235, 0.2);
+    &:hover {
+        background: $primary-color;
+        color: white;
+        transform: translateY(-2px);
+        box-shadow: $shadow-md;
+    }
+}
+
+// ==================== STATS ROW ====================
+.statsRow {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 16px;
+    margin-bottom: 24px;
+    @media (max-width: 1200px) {
+        grid-template-columns: repeat(3, 1fr);
+    }
+    @media (max-width: 768px) {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    @media (max-width: 480px) {
+        grid-template-columns: 1fr;
+    }
+}
+
+.miniCard {
+    background: white;
+    padding: 20px;
+    border-radius: $border-radius;
+    text-align: center;
+    box-shadow: $shadow;
+    border: 1px solid $gray-200;
+    border-left: 4px solid;
+    transition: all 0.2s ease;
+    box-sizing: border-box;
+    &:hover {
+        transform: translateY(-2px);
+        box-shadow: $shadow-md;
+    }
+    span {
+        font-size: 28px;
+        font-weight: 800;
+        color: $gray-900;
+        display: block;
+        margin-bottom: 6px;
+        letter-spacing: -0.02em;
+    }
+    p {
+        margin: 0;
+        color: $gray-500;
+        font-size: $font-size-xs;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.03em;
+    }
+}
+
+// ==================== FILTER ====================
+.filterContainer {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    background: white;
+    padding: 14px 20px;
+    border-radius: $border-radius-sm;
+    box-shadow: $shadow-sm;
+    flex-wrap: wrap;
+    border: 1px solid $gray-200;
+    label {
+        color: $gray-600;
+        font-size: $font-size-sm;
+        font-weight: 600;
+    }
+    select {
+        padding: 10px 16px;
+        border: 1px solid $gray-300;
+        border-radius: $border-radius-sm;
+        font-size: $font-size-sm;
+        font-weight: 500;
+        cursor: pointer;
+        background: white;
+        min-width: 140px;
+        transition: all 0.2s ease;
+        font-family: $font-family;
+        color: $gray-700;
+        &:focus {
+            outline: none;
+            border-color: $primary-color;
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+    }
+}
+
+.filterRow {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    margin-bottom: 20px;
+    padding: 20px;
+    background: white;
+    border-radius: $border-radius;
+    box-shadow: $shadow;
+    box-sizing: border-box;
+    border: 1px solid $gray-200;
+}
+
+.filterItem {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    label {
+        font-weight: 600;
+        color: $gray-600;
+        font-size: $font-size-sm;
+        white-space: nowrap;
+    }
+    select,
+    input {
+        padding: 10px 14px;
+        border: 1px solid $gray-300;
+        border-radius: $border-radius-sm;
+        font-size: $font-size-sm;
+        min-width: 140px;
+        transition: all 0.2s ease;
+        font-family: $font-family;
+        color: $gray-700;
+        &:focus {
+            outline: none;
+            border-color: $primary-color;
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+    }
+}
+
+.searchInput {
+    min-width: 220px !important;
+}
+
+// ==================== TODAY HIGHLIGHT ====================
+.todayRow {
+    background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%) !important;
+    border-left: 4px solid $warning-color;
+}
+
+.todayTag {
+    display: inline-block;
+    background: $warning-color;
+    color: white;
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: $font-size-xs;
+    font-weight: 600;
+    margin-left: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0%,
+    100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.7;
+    }
+}
+
+.statusSelect {
+    padding: 8px 12px;
+    border: 1px solid $gray-300;
+    border-radius: 6px;
+    font-size: $font-size-xs;
+    cursor: pointer;
+    font-weight: 500;
+    background: white;
+    transition: all 0.2s ease;
+    min-width: 110px;
+    font-family: $font-family;
+    color: $gray-700;
+    &:focus {
+        outline: none;
+        border-color: $primary-color;
+        box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+    }
+    &:hover {
+        border-color: $primary-color;
+    }
+}
+
+// ==================== PAGINATION ====================
+.pagination {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 20px;
+    padding: 16px 24px;
+    background: white;
+    border-radius: $border-radius;
+    box-shadow: $shadow;
+    border: 1px solid $gray-200;
+    flex-wrap: wrap;
+    gap: 16px;
+}
+
+.paginationInfo {
+    color: $gray-600;
+    font-size: $font-size-sm;
+    font-weight: 500;
+}
+
+.paginationControls {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.paginationBtn {
+    padding: 8px 16px;
+    background: white;
+    color: $gray-700;
+    border: 1px solid $gray-300;
+    border-radius: $border-radius-sm;
+    cursor: pointer;
+    font-size: $font-size-sm;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    font-family: $font-family;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    &:hover:not(:disabled) {
+        background: $primary-color;
+        color: white;
+        border-color: $primary-color;
+    }
+    &:disabled {
+        background: $gray-100;
+        color: $gray-400;
+        cursor: not-allowed;
+        border-color: $gray-200;
+    }
+}
+
+.pageNumbers {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.pageNumber {
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: white;
+    color: $gray-700;
+    border: 1px solid $gray-300;
+    border-radius: $border-radius-sm;
+    cursor: pointer;
+    font-size: $font-size-sm;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    font-family: $font-family;
+    &:hover:not(:disabled):not(.activePage) {
+        background: $gray-100;
+        border-color: $primary-color;
+        color: $primary-color;
+    }
+    &.activePage {
+        background: $primary-color;
+        color: white;
+        border-color: $primary-color;
+    }
+    &.ellipsis {
+        border: none;
+        background: transparent;
+        cursor: default;
+        color: $gray-500;
+        &:hover {
+            background: transparent;
+        }
+    }
+}
+
+// Responsive pagination
+@media (max-width: 768px) {
+    .pagination {
+        flex-direction: column;
+        text-align: center;
+    }
+    .paginationControls {
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+    .paginationBtn {
+        padding: 8px 12px;
+        font-size: $font-size-xs;
+    }
+    .pageNumber {
+        width: 32px;
+        height: 32px;
+        font-size: $font-size-xs;
+    }
+}
+
+@media (max-width: 480px) {
+    .paginationInfo {
+        font-size: $font-size-xs;
+    }
+    .paginationBtn {
+        padding: 6px 10px;
+    }
+    .pageNumbers {
+        gap: 2px;
+    }
+    .pageNumber {
+        width: 28px;
+        height: 28px;
+    }
+}
+
+// ==================== UPLOAD BUTTON ====================
+.uploadBtn {
+    padding: 8px 16px;
+    background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+    color: white;
+    border: none;
+    border-radius: $border-radius-sm;
+    cursor: pointer;
+    font-size: $font-size-xs;
+    font-weight: 600;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-family: $font-family;
+    box-shadow: 0 2px 8px rgba(139, 92, 246, 0.3);
+    &:hover:not(:disabled) {
+        background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%);
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(139, 92, 246, 0.4);
+    }
+    &:disabled {
+        background: $gray-300;
+        cursor: not-allowed;
+        box-shadow: none;
+        opacity: 0.6;
+    }
+}
+
+// ==================== EMPLOYEE INFO SECTION ====================
+.employeeInfoSection {
+    background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+    border: 1px solid #bae6fd;
+    border-radius: $border-radius;
+    padding: 24px;
+    margin-bottom: 24px;
+    h4 {
+        margin: 0 0 20px;
+        color: $primary-color;
+        font-size: $font-size-base;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+}
+
+// ==================== JOB INFO SECTION ====================
+.jobInfoSection {
+    background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+    border: 1px solid $gray-200;
+    border-radius: $border-radius;
+    padding: 24px;
+    margin-bottom: 24px;
+    h4 {
+        margin: 0 0 20px;
+        color: $gray-800;
+        font-size: $font-size-base;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+}
+
+// ==================== UPLOAD SECTION ====================
+.uploadSection {
+    background: linear-gradient(135deg, #faf5ff 0%, #f3e8ff 100%);
+    border: 1px solid #e9d5ff;
+    border-radius: $border-radius;
+    padding: 24px;
+    margin-bottom: 24px;
+    .formGroup {
+        margin-bottom: 0;
+    }
+}
+
+// ==================== ERROR BOX ====================
+.errorBox {
+    background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
+    border: 1px solid #fecaca;
+    border-radius: $border-radius;
+    padding: 32px;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+    .errorIcon {
+        font-size: 48px;
+        display: block;
+    }
+    p {
+        color: $danger-color;
+        font-size: $font-size-base;
+        font-weight: 500;
+        margin: 0;
+        max-width: 400px;
+        line-height: 1.6;
+    }
+    button {
+        margin-top: 8px;
+    }
+}
+
+// ==================== SUCCESS BOX ====================
+.successBox {
+    background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+    border: 1px solid #bbf7d0;
+    border-radius: $border-radius;
+    padding: 32px;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+    .successIcon {
+        font-size: 48px;
+        display: block;
+    }
+    p {
+        color: $success-dark;
+        font-size: $font-size-base;
+        font-weight: 500;
+        margin: 0;
+        max-width: 400px;
+        line-height: 1.6;
+    }
+    .generatedId {
+        background: white;
+        padding: 16px 24px;
+        border-radius: $border-radius-sm;
+        font-family: 'SF Mono', 'Consolas', monospace;
+        font-size: $font-size-lg;
+        font-weight: 700;
+        color: $success-color;
+        border: 2px solid $success-color;
+        letter-spacing: 0.05em;
+    }
+}
+
+// ==================== INFO BOX ====================
+.infoBox {
+    background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+    border: 1px solid #bfdbfe;
+    border-radius: $border-radius;
+    padding: 16px 20px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 20px;
+    .infoIcon {
+        font-size: 24px;
+        flex-shrink: 0;
+    }
+    p {
+        color: $primary-color;
+        font-size: $font-size-sm;
+        font-weight: 500;
+        margin: 0;
+        line-height: 1.5;
+    }
+}
+
+// ==================== WARNING BOX ====================
+.warningBox {
+    background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
+    border: 1px solid #fde68a;
+    border-radius: $border-radius;
+    padding: 16px 20px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 20px;
+    .warningIcon {
+        font-size: 24px;
+        flex-shrink: 0;
+    }
+    p {
+        color: $warning-dark;
+        font-size: $font-size-sm;
+        font-weight: 500;
+        margin: 0;
+        line-height: 1.5;
+    }
+}
+
+// ==================== APPLICANT ID BADGE ====================
+.applicantIdBadge {
+    background: linear-gradient(135deg, #faf5ff 0%, #f3e8ff 100%);
+    color: $purple-color;
+    padding: 8px 16px;
+    border-radius: $border-radius-sm;
+    font-size: $font-size-sm;
+    font-weight: 700;
+    font-family: 'SF Mono', 'Consolas', monospace;
+    letter-spacing: 0.02em;
+    display: inline-block;
+    border: 1px solid rgba(139, 92, 246, 0.2);
+}
+
+// ==================== LOADING SPINNER SMALL ====================
+.loadingSmall {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 16px;
+    color: $gray-500;
+    font-size: $font-size-sm;
+    font-weight: 500;
+    &::before {
+        content: "";
+        width: 20px;
+        height: 20px;
+        border: 2px solid $gray-200;
+        border-top-color: $primary-color;
+        border-radius: 50%;
+        animation: spin 0.8s linear infinite;
+    }
+}
+
+// ==================== SECTION DIVIDER ====================
+.sectionDivider {
+    height: 1px;
+    background: linear-gradient(90deg, transparent 0%, $gray-300 50%, transparent 100%);
+    margin: 24px 0;
+}
+
+// ==================== FORM SECTION TITLE ====================
+.formSectionTitle {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 20px;
+    padding-bottom: 12px;
+    border-bottom: 2px solid $gray-200;
+    h4 {
+        margin: 0;
+        color: $gray-800;
+        font-size: $font-size-base;
+        font-weight: 700;
+    }
+    .icon {
+        font-size: 20px;
+    }
+}
+
+// ==================== DELETE BUTTON ====================
+.deleteBtn {
+    padding: 8px 16px;
+    background: $gray-100;
+    color: $danger-color;
+    border: 1px solid $gray-200;
+    border-radius: $border-radius-sm;
+    cursor: pointer;
+    font-size: $font-size-xs;
+    font-weight: 600;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-family: $font-family;
+    &:hover {
+        background: $danger-color;
+        color: white;
+        border-color: $danger-color;
+    }
+    &:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+}
+
+// ==================== RESPONSIVE ADJUSTMENTS ====================
+@media (max-width: 768px) {
+    .employeeInfoSection,
+    .jobInfoSection,
+    .uploadSection {
+        padding: 16px;
+        h4 {
+            font-size: $font-size-sm;
+        }
+    }
+    .errorBox,
+    .successBox {
+        padding: 24px 16px;
+        .errorIcon,
+        .successIcon {
+            font-size: 36px;
+        }
+        p {
+            font-size: $font-size-sm;
+        }
+    }
+}
+
+@media (max-width: 480px) {
+    .employeeInfoSection,
+    .jobInfoSection,
+    .uploadSection {
+        padding: 12px;
+        margin-bottom: 16px;
+    }
+    .applicantIdBadge {
+        font-size: $font-size-xs;
+        padding: 6px 12px;
+    }
+}
+
+// ==================== RESPONSIVE ====================
+@media (max-width: 1200px) {
+    .nav {
+        width: 240px;
+        min-width: 240px;
+        max-width: 240px;
+    }
+    .main {
+        padding: 24px;
+    }
+    .pageHeader h1 {
+        font-size: $font-size-xl;
+    }
+}
+
+@media (max-width: 992px) {
+    .nav {
+        width: 220px;
+        min-width: 220px;
+        max-width: 220px;
+        li {
+            padding: 12px 18px;
+            font-size: $font-size-sm;
+        }
+    }
+    .main {
+        padding: 20px;
+    }
+    .formCard {
+        padding: 24px;
+    }
+}
+
+@media (max-width: 768px) {
+    .portal {
+        flex-direction: column;
+    }
+    .nav {
+        width: 100%;
+        min-width: 100%;
+        max-width: 100%;
+        height: auto;
+        min-height: auto;
+        position: relative;
+        padding: 12px 0;
+        ul {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 8px;
+            padding: 12px;
+            flex-direction: row;
+        }
+        li {
+            padding: 10px 16px;
+            margin: 0;
+            border-radius: $border-radius-sm;
+            font-size: $font-size-sm;
+            &.active {
+                &::before {
+                    display: none;
+                }
+            }
+        }
+    }
+    .logo {
+        text-align: center;
+        justify-content: center;
+        padding: 16px 20px;
+        font-size: $font-size-base;
+    }
+    .main {
+        width: 100%;
+        max-width: 100%;
+        padding: 16px;
+        min-height: auto;
+    }
+    .pageHeader {
+        flex-direction: column;
+        text-align: center;
+        padding: 20px;
+        h1 {
+            font-size: $font-size-lg;
+            justify-content: center;
+        }
+    }
+    .formCard {
+        padding: 20px;
+    }
+    .formRow {
+        grid-template-columns: 1fr;
+        gap: 16px;
+    }
+    .formActions {
+        flex-direction: column;
+        button {
+            width: 100%;
+            justify-content: center;
+        }
+    }
+    .detailsHeader {
+        flex-direction: column;
+        text-align: center;
+    }
+    .metaInfo {
+        justify-content: center;
+    }
+    .detailsContent {
+        padding: 20px;
+    }
+    .datesRow {
+        grid-template-columns: 1fr;
+    }
+    .filterRow {
+        flex-direction: column;
+        gap: 12px;
+    }
+    .filterItem {
+        width: 100%;
+        select,
+        input {
+            flex: 1;
+            width: 100%;
+        }
+    }
+    .actionButtons {
+        flex-direction: column;
+        width: 100%;
+        button {
+            width: 100%;
+            justify-content: center;
+        }
+    }
+}
+
+// Add consistent row height for tables
+.table {
+    tbody {
+        tr {
+            height: 56px;
+            min-height: 56px;
+            td {
+                vertical-align: middle;
+                padding: 8px 12px;
+                white-space: nowrap;
+            }
+        }
+    }
+}
+
+@media (max-width: 480px) {
+    .main {
+        padding: 12px;
+    }
+    .pageHeader {
+        padding: 16px;
+        h1 {
+            font-size: $font-size-base;
+        }
+    }
+    .miniCard {
+        padding: 16px;
+        span {
+            font-size: 24px;
+        }
+        p {
+            font-size: 10px;
+        }
+    }
+    .table {
+        min-width: 800px;
+        th,
+        td {
+            padding: 12px 10px;
+            font-size: $font-size-xs;
+        }
+    }
+    .addBtn {
+        width: 100%;
+        justify-content: center;
+        padding: 12px 20px;
+    }
+    .formCard {
+        padding: 16px;
+    }
+    .formGroup {
+        margin-bottom: 16px;
+        input,
+        select,
+        textarea {
+            padding: 12px 14px;
+        }
+    }
+    .noData {
+        padding: 48px 20px !important;
+        span {
+            font-size: 40px;
+        }
+        p {
+            font-size: $font-size-sm;
+        }
+    }
+}

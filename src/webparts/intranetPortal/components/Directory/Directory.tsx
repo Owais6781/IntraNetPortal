@@ -36,7 +36,7 @@ const Directory: React.FC<IProps> = ({ sp }) => {
   const [currentPage, setCurrentPage] = useState(1);
   const usersPerPage = 8;
 
-  // Active/Inactive Filter State - Active is checked by default
+  // Active/Inactive Filter State
   const [showActive, setShowActive] = useState(true);
   const [showInactive, setShowInactive] = useState(false);
 
@@ -74,7 +74,7 @@ const Directory: React.FC<IProps> = ({ sp }) => {
     }
   };
 
-  // Function to sort users alphabetically by name (A-Z)
+  // Function to sort users alphabetically by name A to Z
   const sortUsersByName = (usersList: IUserInfo[]): IUserInfo[] => {
     return [...usersList].sort((a, b) => {
       const nameA = a.name.toLowerCase().trim();
@@ -137,7 +137,7 @@ const Directory: React.FC<IProps> = ({ sp }) => {
           };
         });
 
-      // Sort users alphabetically by name (A-Z)
+      // Sort users alphabetically by name A to Z
       const sortedUsers = sortUsersByName(userData);
       setUsers(sortedUsers);
     } catch (err) {
@@ -176,7 +176,7 @@ const Directory: React.FC<IProps> = ({ sp }) => {
         // Only Inactive checked - show inactive users
         matchesStatus = isInactive;
       } else {
-        // NONE checked - DEFAULT to showing Active users
+        // NONE checked  default to showing Active users
         matchesStatus = isActive;
       }
 

@@ -50,9 +50,7 @@
 }
 
 
-/* ------------------------------
-   flex VIEW: SEARCH + FILTER TOOLBAR
------------------------------- */
+/*GRID VIEW: SEARCH + FILTER TOOLBAR */
 
 .news-toolbar {
     display: flex;
@@ -97,9 +95,7 @@
 }
 
 
-/* ------------------------------
-   flex VIEW: NEWS CARDS
------------------------------- */
+/*GRID VIEW: NEWS CARDS */
 
 .news-container {
     width: 96%;
@@ -226,9 +222,7 @@
 }
 
 
-/* ------------------------------
-   LOADING STATE + SKELETONS
------------------------------- */
+/*LOADING STATE + SKELETONS */
 
 .news-loading,
 .news-empty {
@@ -290,9 +284,7 @@
 }
 
 
-/* ------------------------------
-   PAGINATION
------------------------------- */
+/* PAGINATION */
 
 .news-pagination {
     display: flex;
@@ -331,9 +323,7 @@
 }
 
 
-/* ------------------------------
-   DETAIL VIEW
------------------------------- */
+/* DETAIL VIEW */
 
 .news-master-layout {
     width: 96%;
@@ -433,9 +423,7 @@
 }
 
 
-/* ------------------------------
-   SIDEBAR
------------------------------- */
+/* SIDEBAR */
 
 .news-sidebar-pane {
     background: #ffffff;
@@ -555,7 +543,6 @@
 /* 
   DESCRIPTION WRAPPER 
   CRITICAL: flex-grow: 1 makes this div expand to fill ANY empty space.
-  This pushes the "Read More" button to the absolute bottom.
 */
 
 .news-desc-wrapper {
@@ -577,7 +564,6 @@
 .news-desc-clamped {
     display: -webkit-box;
     -webkit-line-clamp: 4;
-    /* Adjust this number to show more/less lines */
     -webkit-box-orient: vertical;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -585,7 +571,6 @@
     font-size: 0.95rem;
     line-height: 1.5;
     height: 100%;
-    /* Ensure it fills the wrapper */
 }
 
 
@@ -606,7 +591,6 @@
     color: var(--neutral-700);
     line-height: 1.2;
     margin-top: -4px;
-    /* pulls date closer to title */
     white-space: nowrap;
 }
 
@@ -618,13 +602,10 @@
     color: var(--neutral-700);
     line-height: 1.2;
     margin: 0;
-    /* no extra height */
     padding: 0;
     white-space: nowrap;
-    /* keep one line */
     overflow: hidden;
     text-overflow: ellipsis;
-    /* if name is long */
 }
 
 
@@ -664,9 +645,7 @@
 }
 
 
-/* ------------------------------
-   RESPONSIVE OVERRIDES
------------------------------- */
+/* RESPONSIVE OVERRIDES */
 
 @media (max-width: 1024px) {
     .news-split-view {
