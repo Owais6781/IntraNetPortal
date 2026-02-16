@@ -44,7 +44,7 @@ const Routing: React.FC<RoutingIPROPS> = ({ sp, graph, context }) => {
           <Route path="it-support" element={<ITSupport graph={graph} sp={sp} context={context} />} />
           <Route path="engineering" element={<Engineering sp={sp} />} />
           <Route path="expense-claims" element={<ExpenseClaim />} />
-          <Route path="recruitment-portal" element={<RecruitmentPortal />} />
+          <Route path="recruitment-portal" element={<RecruitmentPortal  context={context}/>} />
           <Route path="onboarding-portal" element={<OnboardingPortal />} />
           <Route path="meeting-room" element={<MeetingRoom />} />
 
