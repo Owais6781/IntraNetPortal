@@ -17,6 +17,8 @@ import RecruitmentPortal from "./RecruitmentPortal/RecruitmentPortal";
 import ExpenseClaim from "./ExpenseClaim/ExpenseClaim";
 import OnboardingPortal from "./OnboardingPortal/OnboardingPortal";
 import MeetingRoom from "./MeetingRoom/MeetingRoom";
+import RegistationForm from "./OnboardingPortal/RegistationForm";
+import ViewForm from "./OnboardingPortal/View";
 
 
 
@@ -45,7 +47,9 @@ const Routing: React.FC<RoutingIPROPS> = ({ sp, graph, context }) => {
           <Route path="engineering" element={<Engineering sp={sp} />} />
           <Route path="expense-claims" element={<ExpenseClaim />} />
           <Route path="recruitment-portal" element={<RecruitmentPortal />} />
-          <Route path="onboarding-portal" element={<OnboardingPortal />} />
+          <Route path="onboarding-portal" element={<OnboardingPortal sp={sp}  context={context}  graph={graph} />} />
+          <Route path="registration-form" element={<RegistationForm sp={sp} />} />
+          <Route path="/view-form/:id" element={<ViewForm sp={sp} context={context}  graph={graph}/>}/>
           <Route path="meeting-room" element={<MeetingRoom />} />
 
         </Route>
