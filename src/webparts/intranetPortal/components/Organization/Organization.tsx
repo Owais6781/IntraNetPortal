@@ -235,7 +235,7 @@ const Organization: React.FC<IOrgProps> = ({ sp }) => {
             dedicated to solving the world's most complex challenges.
           </p>
 
-          <div className={styles.infoGrid}>
+          <div className={styles.infoflex}>
             <div className={styles.infoCard}>
               <span className={styles.label}>FOUNDED</span>
               <span className={styles.value}>1998</span>
@@ -269,7 +269,7 @@ const Organization: React.FC<IOrgProps> = ({ sp }) => {
 
           <div className={styles.sliderViewport}>
             <div className={styles.sliderInner}>
-              <div className={styles.executiveGrid}>
+              <div className={styles.executiveflex}>
                 {executives
                   .slice(currentIndex, currentIndex + VISIBLE_CARDS)
                   .map(exec => (
@@ -439,7 +439,7 @@ const Organization: React.FC<IOrgProps> = ({ sp }) => {
 
         {/* Tools */}
         <div className={styles.shortcutWrapper}>
-          <div className={styles.shortcutGrid}>
+          <div className={styles.shortcutflex}>
             <Link to="#" className={styles.shortcutLink}>
               <div className={styles.shortcutCard}>
                 <div className={styles.CardIcon}>📖</div>

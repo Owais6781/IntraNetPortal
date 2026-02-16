@@ -14,9 +14,12 @@ import { GraphFI } from "@pnp/graph";
 import { WebPartContext } from "@microsoft/sp-webpart-base";
 import "bootstrap/dist/css/bootstrap.min.css";
 import RecruitmentPortal from "./RecruitmentPortal/RecruitmentPortal";
-import ExpenseClaim from "./ExpenseClaim/ExpenseClaim";
 import OnboardingPortal from "./OnboardingPortal/OnboardingPortal";
 import MeetingRoom from "./MeetingRoom/MeetingRoom";
+import ExpenseDashboard from "./ExpenseClaim/Dashboard";
+import ExpenseClaim from "./ExpenseClaim/ExpenseClaim";
+import ExpenseView from "./ExpenseClaim/ExpenseView";
+import ExpenseEdit from "./ExpenseClaim/ExpenseEdit";
 
 
 
@@ -24,10 +27,7 @@ interface RoutingIPROPS {
   sp: SPFI;
   graph: GraphFI;
   context: WebPartContext;
-
 }
-
-
 
 const Routing: React.FC<RoutingIPROPS> = ({ sp, graph, context }) => {
   return (
@@ -43,7 +43,10 @@ const Routing: React.FC<RoutingIPROPS> = ({ sp, graph, context }) => {
           <Route path="workplace" element={<WorkPlace sp={sp} />} />
           <Route path="it-support" element={<ITSupport graph={graph} sp={sp} context={context} />} />
           <Route path="engineering" element={<Engineering sp={sp} />} />
-          <Route path="expense-claims" element={<ExpenseClaim />} />
+          <Route path="expense-claims" element={<ExpenseDashboard context={context} />} />
+          <Route path="expense-claims/:id" element={<ExpenseView context={context} />} />
+          <Route path="expense-claims/add" element={<ExpenseClaim context={context} />} />
+          <Route path="expense-claims/edit/:id" element={<ExpenseEdit context={context} />} />
           <Route path="recruitment-portal" element={<RecruitmentPortal />} />
           <Route path="onboarding-portal" element={<OnboardingPortal />} />
           <Route path="meeting-room" element={<MeetingRoom />} />

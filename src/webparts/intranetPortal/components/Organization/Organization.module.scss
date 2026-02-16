@@ -103,9 +103,9 @@
 
 
 
-.infoGrid {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
+.infoflex {
+    display: flex;
+    flex-template-columns: repeat(4, 1fr);
     gap: 24px;
 }
 
@@ -136,8 +136,8 @@
 
 
 @media (max-width: 1024px) {
-    .infoGrid {
-        grid-template-columns: repeat(2, 1fr);
+    .infoflex {
+        flex-template-columns: repeat(2, 1fr);
     }
 
     .companyName {
@@ -146,8 +146,8 @@
 }
 
 @media (max-width: 600px) {
-    .infoGrid {
-        grid-template-columns: 1fr;
+    .infoflex {
+        flex-template-columns: 1fr;
     }
 
     .heroContent {
@@ -182,9 +182,9 @@
     width: 100%;
 }
 
-.executiveGrid {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
+.executiveflex {
+    display: flex;
+    flex-template-columns: repeat(4, 1fr);
     gap: 24px;
     overflow: visible;
     padding-top: 8px;
@@ -297,8 +297,8 @@
 
 
 .deptRow {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
+    display: flex;
+    flex-template-columns: repeat(4, 1fr);
     gap: 24px;
     margin-bottom: 28px;
 }
@@ -437,8 +437,8 @@
 
 
 .deptRow {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
+    display: flex;
+    flex-template-columns: repeat(4, 1fr);
     gap: 16px;
     padding: 0 20px;
 }
@@ -473,20 +473,20 @@
 
 @media (max-width: 900px) {
     .deptRow {
-        grid-template-columns: repeat(2, 1fr);
+        flex-template-columns: repeat(2, 1fr);
     }
 }
 
 @media (max-width: 480px) {
     .deptRow {
-        grid-template-columns: 1fr;
+        flex-template-columns: 1fr;
     }
 }
 
 // Organization Types
 .vmvWrapper {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    display: flex;
+    flex-template-columns: repeat(3, 1fr);
     gap: 28px;
     margin: 60px 0;
     align-items: center;
@@ -565,7 +565,7 @@
 
 @media (max-width: 992px) {
     .vmvWrapper {
-        grid-template-columns: 1fr;
+        flex-template-columns: 1fr;
     }
 }
 
@@ -596,8 +596,8 @@
 }
 
 .policyCard {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
+    display: flex;
+    flex-template-columns: repeat(2, 1fr);
     gap: 24px;
 }
 
@@ -663,9 +663,9 @@
 }
 
 
-.shortcutGrid {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
+.shortcutflex {
+    display: flex;
+    flex-template-columns: repeat(4, 1fr);
     gap: 36px;
 }
 
@@ -738,8 +738,8 @@
 
 
 @media (max-width: 900px) {
-    .shortcutGrid {
-        grid-template-columns: repeat(2, 1fr);
+    .shortcutflex {
+        flex-template-columns: repeat(2, 1fr);
     }
 }
 

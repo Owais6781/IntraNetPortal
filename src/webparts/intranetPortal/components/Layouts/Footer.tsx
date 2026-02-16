@@ -5,7 +5,7 @@ const Footer: React.FC = () => {
     <footer className="w-full bg-gradient-to-r from-[#15162b] to-[#1b1c35] text-gray-300">
       
       {/* Top Section */}
-      <div className="max-w-7xl mx-auto px-8 py-14 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10">
+      <div className="max-w-7xl mx-auto px-8 py-14 flex flex-cols-1 md:flex-cols-2 lg:flex-cols-4 gap-10">
         
         {/* Brand */}
         <div>

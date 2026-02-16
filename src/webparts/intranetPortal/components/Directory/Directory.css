@@ -276,11 +276,10 @@
 }
 
 
-/* ---------- CARD GRID ---------- */
+/* ---------- CARD flex ---------- */
 
-.card-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+.card-flex {
+    display: flex;
     gap: 26px;
 }
 
@@ -634,9 +633,8 @@
     width: 100%;
 }
 
-.modal-details-grid {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
+.modal-details-flex {
+    display: flex;
     column-gap: 30px;
     row-gap: 20px;
     margin-bottom: 30px;
@@ -801,17 +799,12 @@
         width: 100%;
         justify-content: space-between;
     }
-    .card-grid {
-        grid-template-columns: 1fr 1fr;
-        gap: 18px;
-    }
+  
     .modal-content {
         max-width: 94%;
         padding: 20px 18px 18px;
     }
-    .modal-details-grid {
-        grid-template-columns: 1fr;
-    }
+
     .pagination {
         flex-wrap: wrap;
         justify-content: center;
@@ -841,10 +834,7 @@
     .modal-designation-row {
         justify-content: center;
     }
-    .modal-details-grid {
-        grid-template-columns: 1fr;
-        gap: 16px;
-    }
+ 
     .modal-actions {
         justify-content: center;
     }
@@ -864,9 +854,7 @@
 }
 
 @media (max-width: 520px) {
-    .card-grid {
-        grid-template-columns: 1fr;
-    }
+   
     .directory-header {
         flex-direction: column;
         align-items: flex-start;

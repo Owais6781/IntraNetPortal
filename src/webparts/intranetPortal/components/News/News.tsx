@@ -220,7 +220,7 @@ const News: React.FC<IProps> = ({ sp }) => {
           <p className="news-empty">No news found.</p>
         ) : (
           <>
-            <div className="news-grid">
+            <div className="news-flex">
               {paginatedNews.map((item) => (
                 <article key={item.id} className="news-card">
                   <div
