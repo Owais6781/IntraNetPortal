@@ -1,0 +1,78 @@
+/* Navigation Bar with Glass Effect */
+.nav {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(20px);
+    border-bottom: 1px solid rgba(229, 231, 235, 0.5);
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05);
+}
+
+.rb-nav-wrapper {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 0 2rem;
+}
+
+.navItems {
+    display: flex;
+    gap: 2rem;
+}
+
+.navItem {
+    padding: 1.25rem 0;
+    background: none;
+    border: none;
+    border-bottom: 3px solid transparent;
+    color: #6b7280;
+    font-size: 0.925rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 0.625rem;
+}
+
+.navItem:hover {
+    color: #667eea;
+    transform: translateY(-2px);
+}
+
+.navItem.active,
+.active {
+    color: #667eea;
+    border-bottom-color: #667eea;
+}
+
+.navItem i {
+    font-size: 1.125rem;
+    transition: transform 0.3s ease;
+}
+
+.navItem:hover i {
+    transform: scale(1.2);
+}
+
+@media (max-width: 768px) {
+    .rb-nav-wrapper {
+        padding: 0 1rem;
+    }
+
+    .navItems {
+        gap: 0.5rem;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .navItem {
+        padding: 1rem;
+        white-space: nowrap;
+    }
+
+    .navItem span {
+        display: none;
+    }
+
+    .navItem i {
+        font-size: 1.25rem;
+    }
+}

@@ -1,0 +1,66 @@
+.card {
+    background: #ffffff;
+    border-radius: 4px;
+    padding: 1.5rem;
+    border: 1px solid #edebe9;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04);
+}
+
+.content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+}
+
+.label {
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: #605e5c;
+    margin-bottom: 0.25rem;
+    text-transform: uppercase;
+}
+
+.value {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: #323130;
+    margin: 0;
+}
+
+.iconWrapper {
+    width: 3rem;
+    height: 3rem;
+    border-radius: 2px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+}
+
+/* Color Variants */
+.blue {
+    background: #f3f9ff;
+    color: #0078d4;
+}
+
+.green {
+    background: #f1fdf5;
+    color: #107c10;
+}
+
+.yellow {
+    background: #fffcf0;
+    color: #d83b01;
+}
+
+.purple {
+    background: #f5f3ff;
+    color: #5c2d91;
+}
+
+@media (max-width: 768px) {
+    .card {
+        padding: 1rem;
+    }
+}

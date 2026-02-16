@@ -15,13 +15,15 @@ import { WebPartContext } from "@microsoft/sp-webpart-base";
 import "bootstrap/dist/css/bootstrap.min.css";
 import RecruitmentPortal from "./RecruitmentPortal/RecruitmentPortal";
 import OnboardingPortal from "./OnboardingPortal/OnboardingPortal";
-import MeetingRoom from "./MeetingRoom/MeetingRoom";
 import ExpenseDashboard from "./ExpenseClaim/Dashboard";
 import ExpenseClaim from "./ExpenseClaim/ExpenseClaim";
 import ExpenseView from "./ExpenseClaim/ExpenseView";
 import ExpenseEdit from "./ExpenseClaim/ExpenseEdit";
 import ViewForm from "./OnboardingPortal/View";
-
+import MeetingRoomDashboard from "./MeetingRoom/MeetingRoomDashboard";
+import BookRoom from "./MeetingRoom/BookRoom";
+import AdminPage from "./MeetingRoom/AdminPage";
+import MyBookings from "./MeetingRoom/MyBookings";
 
 interface RoutingIPROPS {
   sp: SPFI;
@@ -49,9 +51,11 @@ const Routing: React.FC<RoutingIPROPS> = ({ sp, graph, context }) => {
           <Route path="expense-claims/edit/:id" element={<ExpenseEdit context={context} />} />
           <Route path="recruitment-portal" element={<RecruitmentPortal context={context} />} />
           <Route path="onboarding-portal" element={<OnboardingPortal sp={sp} context={context} graph={graph} />} />
-          <Route path="meeting-room" element={<MeetingRoom />} />
           <Route path="/view-form/:id" element={<ViewForm sp={sp} context={context} graph={graph} />} />
-
+          <Route path="meeting-room" element={<MeetingRoomDashboard sp={sp} graph={graph} />} />
+          <Route path="BookRoom" element={<BookRoom sp={sp} />} />
+          <Route path="MyBookings" element={<MyBookings sp={sp} />} />
+          <Route path="AdminPage" element={<AdminPage sp={sp} />} />
         </Route>
       </Routes>
     </HashRouter>

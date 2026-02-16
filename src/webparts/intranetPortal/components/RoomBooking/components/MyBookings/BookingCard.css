@@ -1,0 +1,99 @@
+.card {
+    background: #ffffff;
+    border-radius: 4px;
+    padding: 1.25rem;
+    border: 1px solid #edebe9;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04);
+}
+
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 1rem;
+}
+
+.roomName {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #323130;
+    margin: 0;
+}
+
+.statusBadge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.25rem 0.75rem;
+    border-radius: 2px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.statusConfirmed {
+    background: #dff6dd;
+    color: #107c10;
+}
+
+.statusCancelled {
+    background: #fde7e9;
+    color: #a4262c;
+}
+
+.statusPending {
+    background: #fff4ce;
+    color: #797673;
+}
+
+.cancelBtn {
+    padding: 0.5rem 1rem;
+    background: #ffffff;
+    color: #a4262c;
+    border: 1px solid #a4262c;
+    border-radius: 2px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.1s ease-in-out;
+}
+
+.cancelBtn:hover:not(:disabled) {
+    background: #fde7e9;
+}
+
+.details {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+.detail {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.875rem;
+    color: #605e5c;
+}
+
+.detail i {
+    color: #0078d4;
+    width: 16px;
+}
+
+.footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-top: 0.75rem;
+    border-top: 1px solid #edebe9;
+    font-size: 0.75rem;
+    color: #605e5c;
+}
+
+@media (max-width: 768px) {
+    .header {
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+}
