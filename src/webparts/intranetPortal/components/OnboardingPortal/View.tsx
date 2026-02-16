@@ -1263,11 +1263,13 @@ const isAllDocumentsUploaded =
     );
 
   const AllVerify = verify.profile === true && verify.education === true && verify.identity === true;
+ const  isFinalApprovel= isProfile&&isAllDocumentsUploaded&&AllVerify;
+
   const steps = [
     { title: "Profile Information", status: isProfile ? "completed" : "pending" },
     { title: "Document Upload", status: isAllDocumentsUploaded ? "completed" : "pending" },
     { title: "Verification", status: AllVerify ? "completed" : "pending" },
-    { title: "Final Approval", status: "pending" },
+    { title: "Final Approval", status:isFinalApprovel?"completed" :"pending" },
   ];
 
   return (
