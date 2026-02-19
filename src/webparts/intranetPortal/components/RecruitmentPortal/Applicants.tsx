@@ -14,7 +14,6 @@ interface IApplicantProps {
   onClearFilter?: () => void;
 }
 
-// ==================== MAIN COMPONENT ====================
 const Applicant: React.FC<IApplicantProps> = ({
   service,
   onNavigateToJob,
@@ -27,9 +26,7 @@ const Applicant: React.FC<IApplicantProps> = ({
   const [loading, setLoading] = useState<boolean>(true);
   const [selectedRecruitment, setSelectedRecruitment] =
     useState<IRecruitmentApplication | null>(null);
-  const [attachments, setAttachments] = useState<
-    { FileName: string; ServerRelativeUrl: string }[]
-  >([]);
+  const [attachments, setAttachments] = useState<{ FileName: string; ServerRelativeUrl: string }[]>([]);
   const [updating, setUpdating] = useState<boolean>(false);
 
   // Current User State
@@ -42,14 +39,17 @@ const Applicant: React.FC<IApplicantProps> = ({
   const [locationFilter, setLocationFilter] = useState<string>("All");
   const [searchTerm, setSearchTerm] = useState<string>("");
 
-  // Job Details ID Filter (from navigation)
+  // REFERBY ID Filter (from navigation)
   const [jobDetailsIdFilter, setJobDetailsIdFilter] = useState<string>(
     initialJobDetailsIdFilter,
   );
 
   // Pagination State
   const [currentPage, setCurrentPage] = useState<number>(1);
-  const itemsPerPage = 5;
+  const itemsPerPage = 6;
+
+  // Hover states
+  const [hoveredRow, setHoveredRow] = useState<number | null>(null);
 
   // HR Screening State
   const [screeningChecklist, setScreeningChecklist] =
@@ -108,7 +108,6 @@ const Applicant: React.FC<IApplicantProps> = ({
     void loadRecruitments();
   }, [loadCurrentUser, loadRecruitments]);
 
-  // Handle filter prop changes
   useEffect(() => {
     if (initialJobDetailsIdFilter) {
       setJobDetailsIdFilter(initialJobDetailsIdFilter);
@@ -117,7 +116,6 @@ const Applicant: React.FC<IApplicantProps> = ({
     }
   }, [initialJobDetailsIdFilter]);
 
-  // Reset to page 1 when filters change
   useEffect(() => {
     setCurrentPage(1);
   }, [
@@ -128,7 +126,7 @@ const Applicant: React.FC<IApplicantProps> = ({
     jobDetailsIdFilter,
   ]);
 
-  // ==================== NAVIGATION HANDLERS ====================
+  // Navigation Handlers
   const handleJobIdClick = (jobId: string): void => {
     if (onNavigateToJob && jobId) {
       onNavigateToJob(jobId);
@@ -144,7 +142,7 @@ const Applicant: React.FC<IApplicantProps> = ({
     }
   };
 
-  // ==================== BASIC FILTERS ====================
+  // Basic Filters
   const getFilteredRecruitments = (): IRecruitmentApplication[] => {
     let filtered = [...recruitments];
 
@@ -179,7 +177,24 @@ const Applicant: React.FC<IApplicantProps> = ({
     return filtered;
   };
 
-  // ==================== PAGINATION ====================
+  const hasActiveFilters = (): boolean => {
+    return (
+      searchTerm !== "" ||
+      statusFilter !== "All" ||
+      departmentFilter !== "All" ||
+      locationFilter !== "All"
+    );
+  };
+
+  const clearAllFilters = (): void => {
+    setSearchTerm("");
+    setStatusFilter("All");
+    setDepartmentFilter("All");
+    setLocationFilter("All");
+    setCurrentPage(1);
+  };
+
+  // Pagination
   const filteredData = getFilteredRecruitments();
   const totalPages = Math.ceil(filteredData.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
@@ -258,7 +273,7 @@ const Applicant: React.FC<IApplicantProps> = ({
     return Object.keys(statusMap);
   };
 
-  // ==================== SCREENING HANDLERS ====================
+  // Screening Handlers
   const handleChecklistChange = (field: keyof IScreeningChecklist): void => {
     if (actionTaken) return;
     setScreeningChecklist((prev: IScreeningChecklist) => ({
@@ -296,28 +311,44 @@ const Applicant: React.FC<IApplicantProps> = ({
     setEmailId("");
   };
 
+  // ✅ FIXED: loadScreeningData - No auto-ticking for Open status
   const loadScreeningData = (recruitment: IRecruitmentApplication): void => {
+    // Load candidate details
     setCandidateName(recruitment.CandidateName || "");
     setPhoneNumber(recruitment.PhoneNumber || "");
     setEmailId(recruitment.EmailId || "");
 
-    if (
-      recruitment.Status === "Shortlisted" ||
-      recruitment.Status === "Rejected"
-    ) {
+    // For "Open" status - ALWAYS start with all checkboxes UNCHECKED
+    // User must manually click to check each item
+    if (recruitment.Status === "Open") {
       setScreeningChecklist({
-        ResumeReviewed: true,
-        ExperienceVerified: true,
-        SkillsMatched: true,
-        QualificationChecked: true,
-        LocationSuitable: true,
-        SalaryExpectationOk: true,
-        AvailabilityConfirmed: true,
-        BackgroundCheckOk: true,
+        ResumeReviewed: false,
+        ExperienceVerified: false,
+        SkillsMatched: false,
+        QualificationChecked: false,
+        LocationSuitable: false,
+        SalaryExpectationOk: false,
+        AvailabilityConfirmed: false,
+        BackgroundCheckOk: false,
       });
-      setHrComments(recruitment.HRComments || "Action completed by HR.");
-    } else {
-      // Load partial screening data for Draft/Open status
+      setHrComments("");
+    } 
+    // For "Draft" status - Load saved values so user can continue from where they left
+    else if (recruitment.Status === "Draft") {
+      setScreeningChecklist({
+        ResumeReviewed: recruitment.ResumeReviewed || false,
+        ExperienceVerified: recruitment.ExperienceVerified || false,
+        SkillsMatched: recruitment.SkillsMatched || false,
+        QualificationChecked: recruitment.QualificationChecked || false,
+        LocationSuitable: recruitment.LocationSuitable || false,
+        SalaryExpectationOk: recruitment.SalaryExpectationOk || false,
+        AvailabilityConfirmed: recruitment.AvailabilityConfirmed || false,
+        BackgroundCheckOk: recruitment.BackgroundCheckOk || false,
+      });
+      setHrComments(recruitment.HRComments || "");
+    }
+    // For "Shortlisted" or "Rejected" status - Load saved values (view only, disabled)
+    else {
       setScreeningChecklist({
         ResumeReviewed: recruitment.ResumeReviewed || false,
         ExperienceVerified: recruitment.ExperienceVerified || false,
@@ -332,7 +363,7 @@ const Applicant: React.FC<IApplicantProps> = ({
     }
   };
 
-  // ==================== HANDLERS ====================
+  // Handlers
   const handleStatusDropdownChange = async (
     recruitment: IRecruitmentApplication,
     newStatus: string,
@@ -356,7 +387,6 @@ const Applicant: React.FC<IApplicantProps> = ({
       setPhoneNumber(recruitment.PhoneNumber || "");
       setEmailId(recruitment.EmailId || "");
 
-      // Load existing screening data
       loadScreeningData(recruitment);
 
       try {
@@ -412,13 +442,11 @@ const Applicant: React.FC<IApplicantProps> = ({
     resetScreeningState();
   };
 
-  // ==================== SAVE AS DRAFT ====================
   const handleSaveAsDraft = async (): Promise<void> => {
     if (!selectedRecruitment?.Id) return;
 
     setUpdating(true);
     try {
-      // Save all data with Draft status (no final action taken)
       await service.updateRecruitmentWithScreening(
         selectedRecruitment.Id,
         "Draft",
@@ -430,12 +458,7 @@ const Applicant: React.FC<IApplicantProps> = ({
         emailId || undefined,
       );
 
-      alert(
-        "📝 Draft Saved Successfully!\n\n" +
-          "All screening data has been saved.\n" +
-          "You can continue reviewing later.\n\n" +
-          "Status: Draft (No final action taken)",
-      );
+      alert("📝 Draft Saved Successfully!");
 
       setSelectedRecruitment({
         ...selectedRecruitment,
@@ -458,7 +481,6 @@ const Applicant: React.FC<IApplicantProps> = ({
   const handleShortlisted = async (): Promise<void> => {
     if (!selectedRecruitment?.Id) return;
 
-    // Validate candidate details
     if (!candidateName.trim()) {
       alert("⚠️ Please enter the Candidate Name.");
       return;
@@ -483,9 +505,7 @@ const Applicant: React.FC<IApplicantProps> = ({
     }
 
     if (!isScreeningComplete()) {
-      alert(
-        "⚠️ Please complete ALL screening checks before Shortlisting.\n\nAll 8 checkboxes must be checked.",
-      );
+      alert("⚠️ Please complete ALL screening checks before Shortlisting.");
       return;
     }
 
@@ -506,9 +526,7 @@ const Applicant: React.FC<IApplicantProps> = ({
         phoneNumber,
         emailId,
       );
-      alert(
-        "✅ Candidate has been Shortlisted!\n\nData saved to SharePoint list.",
-      );
+      alert("✅ Candidate has been Shortlisted!");
       setActionTaken(true);
       setPendingAction("");
       setSelectedRecruitment({
@@ -531,7 +549,6 @@ const Applicant: React.FC<IApplicantProps> = ({
   const handleRejected = async (): Promise<void> => {
     if (!selectedRecruitment?.Id) return;
 
-    // Validate candidate details
     if (!candidateName.trim()) {
       alert("⚠️ Please enter the Candidate Name.");
       return;
@@ -562,9 +579,7 @@ const Applicant: React.FC<IApplicantProps> = ({
         phoneNumber,
         emailId,
       );
-      alert(
-        "❌ Candidate has been Rejected!\n\nData saved to SharePoint list.",
-      );
+      alert("❌ Candidate has been Rejected!");
       setActionTaken(true);
       setPendingAction("");
       setSelectedRecruitment({
@@ -599,7 +614,7 @@ const Applicant: React.FC<IApplicantProps> = ({
     }
   };
 
-  // ==================== UTILITY FUNCTIONS ====================
+  // Utility Functions
   const formatDate = (dateString: string): string => {
     if (!dateString) return "-";
     try {
@@ -628,301 +643,109 @@ const Applicant: React.FC<IApplicantProps> = ({
     }
   };
 
-  const getStatusStyle = (status: string): React.CSSProperties => {
-    const colors: { [key: string]: string } = {
-      open: "#2196f3",
-      draft: "#ff9800",
-      active: "#2196f3",
-      closed: "#9e9e9e",
-      onhold: "#ff9800",
-      pending: "#ff9800",
-      "in review": "#9c27b0",
-      shortlisted: "#4caf50",
-      interview: "#673ab7",
-      selected: "#4caf50",
-      rejected: "#f44336",
-    };
-    return {
-      backgroundColor: colors[status?.toLowerCase()] || "#2196f3",
-      color: "white",
-      padding: "6px 14px",
-      borderRadius: "16px",
-      fontSize: "12px",
-      fontWeight: 600,
-      display: "inline-block",
-      textAlign: "center",
-      minWidth: "80px",
-    };
+  // Status Indicator with dot
+  const getStatusIndicator = (status: string): JSX.Element => {
+    const statusLower = status?.toLowerCase() || "open";
+    let dotColor = "#3b82f6";
+    let textColor = "#1e40af";
+
+    if (statusLower === "shortlisted" || statusLower === "selected") {
+      dotColor = "#22c55e";
+      textColor = "#166534";
+    } else if (statusLower === "rejected") {
+      dotColor = "#ef4444";
+      textColor = "#991b1b";
+    } else if (
+      statusLower === "draft" ||
+      statusLower === "onhold" ||
+      statusLower === "pending"
+    ) {
+      dotColor = "#f59e0b";
+      textColor = "#92400e";
+    } else if (statusLower === "closed") {
+      dotColor = "#6b7280";
+      textColor = "#374151";
+    }
+
+    return (
+      <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+        <span
+          style={{
+            width: "8px",
+            height: "8px",
+            borderRadius: "50%",
+            backgroundColor: dotColor,
+            display: "inline-block",
+          }}
+        />
+        <span
+          style={{
+            fontSize: "13px",
+            fontWeight: 500,
+            color: textColor,
+            textTransform: "capitalize",
+          }}
+        >
+          {status || "Open"}
+        </span>
+      </div>
+    );
   };
 
   const isActionCompleted = (status: string): boolean => {
     return status === "Shortlisted" || status === "Rejected";
   };
 
+  // View Button Style
+  const getViewButtonStyle = (isHovered: boolean): React.CSSProperties => {
+    return {
+      padding: "8px 14px",
+      fontSize: "12px",
+      fontWeight: 600,
+      border: "none",
+      borderRadius: "6px",
+      cursor: "pointer",
+      background: isHovered ? "#1e40af" : "#f1f5f9",
+      color: isHovered ? "#ffffff" : "#475569",
+      display: "inline-flex",
+      alignItems: "center",
+      gap: "4px",
+      transform: isHovered ? "translateY(-1px)" : "translateY(0)",
+      boxShadow: isHovered ? "0 4px 12px rgba(30, 64, 175, 0.25)" : "none",
+      transition: "all 0.2s ease",
+    };
+  };
+
   if (loading) {
-    return <div className={styles.loading}>Loading Applications...</div>;
+    return (
+      <div className={styles.loading}>
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            gap: "16px",
+          }}
+        >
+          <div
+            style={{
+              width: "48px",
+              height: "48px",
+              border: "3px solid #e2e8f0",
+              borderTopColor: "#1e40af",
+              borderRadius: "50%",
+              animation: "spin 0.8s linear infinite",
+            }}
+          />
+          <span style={{ color: "#64748b", fontWeight: 500 }}>
+            Loading Applications...
+          </span>
+        </div>
+      </div>
+    );
   }
 
-  // ==================== INLINE STYLES ====================
-  const filterRowStyle: React.CSSProperties = {
-    display: "flex",
-    flexWrap: "wrap",
-    gap: "16px",
-    marginBottom: "20px",
-    padding: "20px",
-    background: "white",
-    borderRadius: "12px",
-    boxShadow: "0 4px 20px rgba(0, 0, 0, 0.08)",
-  };
-
-  const filterItemStyle: React.CSSProperties = {
-    display: "flex",
-    alignItems: "center",
-    gap: "8px",
-  };
-
-  const filterLabelStyle: React.CSSProperties = {
-    fontWeight: 600,
-    color: "#666",
-    fontSize: "13px",
-    whiteSpace: "nowrap",
-  };
-
-  const filterInputStyle: React.CSSProperties = {
-    padding: "8px 14px",
-    border: "2px solid #e8e8e8",
-    borderRadius: "8px",
-    fontSize: "14px",
-    minWidth: "150px",
-  };
-
-  const searchInputStyle: React.CSSProperties = {
-    ...filterInputStyle,
-    minWidth: "250px",
-  };
-
-  // Beautiful Job ID Link Style
-  const jobIdLinkStyle: React.CSSProperties = {
-    display: "inline-flex",
-    alignItems: "center",
-    gap: "6px",
-    padding: "6px 12px",
-    background: "linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%)",
-    border: "2px solid #64b5f6",
-    borderRadius: "20px",
-    color: "#1565c0",
-    fontWeight: 700,
-    fontSize: "12px",
-    cursor: "pointer",
-    transition: "all 0.3s ease",
-    textDecoration: "none",
-    boxShadow: "0 2px 6px rgba(33, 150, 243, 0.2)",
-  };
-
-  // Beautiful Job Details ID Style
-  const jobDetailsIdStyle: React.CSSProperties = {
-    display: "inline-flex",
-    alignItems: "center",
-    gap: "6px",
-    padding: "6px 12px",
-    background: "linear-gradient(135deg, #f3e5f5 0%, #e1bee7 100%)",
-    border: "2px solid #ba68c8",
-    borderRadius: "20px",
-    color: "#7b1fa2",
-    fontWeight: 700,
-    fontSize: "12px",
-    cursor: "default",
-    boxShadow: "0 2px 6px rgba(156, 39, 176, 0.2)",
-  };
-
-  const shortlistedBtnStyle: React.CSSProperties = {
-    padding: "14px 35px",
-    background: actionTaken
-      ? "#bdbdbd"
-      : "linear-gradient(135deg, #4caf50 0%, #388e3c 100%)",
-    color: "white",
-    border: "none",
-    borderRadius: "8px",
-    cursor: actionTaken ? "not-allowed" : "pointer",
-    fontSize: "16px",
-    fontWeight: 600,
-    display: "flex",
-    alignItems: "center",
-    gap: "8px",
-    transition: "all 0.3s ease",
-    opacity: actionTaken ? 0.6 : 1,
-  };
-
-  const rejectedBtnStyle: React.CSSProperties = {
-    padding: "14px 35px",
-    background: actionTaken
-      ? "#bdbdbd"
-      : "linear-gradient(135deg, #f44336 0%, #d32f2f 100%)",
-    color: "white",
-    border: "none",
-    borderRadius: "8px",
-    cursor: actionTaken ? "not-allowed" : "pointer",
-    fontSize: "16px",
-    fontWeight: 600,
-    display: "flex",
-    alignItems: "center",
-    gap: "8px",
-    transition: "all 0.3s ease",
-    opacity: actionTaken ? 0.6 : 1,
-  };
-
-  const draftBtnStyle: React.CSSProperties = {
-    padding: "14px 35px",
-    background: actionTaken
-      ? "#bdbdbd"
-      : "linear-gradient(135deg, #ff9800 0%, #f57c00 100%)",
-    color: "white",
-    border: "none",
-    borderRadius: "8px",
-    cursor: actionTaken ? "not-allowed" : "pointer",
-    fontSize: "16px",
-    fontWeight: 600,
-    display: "flex",
-    alignItems: "center",
-    gap: "8px",
-    transition: "all 0.3s ease",
-    opacity: actionTaken ? 0.6 : 1,
-    boxShadow: "0 4px 12px rgba(255, 152, 0, 0.3)",
-  };
-
-  const backBtnStyle: React.CSSProperties = {
-    padding: "14px 35px",
-    background: "linear-gradient(135deg, #9e9e9e 0%, #757575 100%)",
-    color: "white",
-    border: "none",
-    borderRadius: "8px",
-    cursor: "pointer",
-    fontSize: "16px",
-    fontWeight: 600,
-    display: "flex",
-    alignItems: "center",
-    gap: "8px",
-  };
-
-  const checkboxContainerStyle: React.CSSProperties = {
-    display: "grid",
-    gridTemplateColumns: "repeat(2, 1fr)",
-    gap: "12px",
-    marginBottom: "20px",
-  };
-
-  const checkboxItemStyle: React.CSSProperties = {
-    display: "flex",
-    alignItems: "center",
-    gap: "10px",
-    padding: "12px 15px",
-    background: "#f8f9fa",
-    borderRadius: "8px",
-    cursor: "pointer",
-    transition: "all 0.3s ease",
-    border: "2px solid #e0e0e0",
-  };
-
-  const checkboxItemCheckedStyle: React.CSSProperties = {
-    ...checkboxItemStyle,
-    background: "linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%)",
-    border: "2px solid #4caf50",
-  };
-
-  const checkboxItemDisabledStyle: React.CSSProperties = {
-    ...checkboxItemStyle,
-    opacity: 0.6,
-    cursor: "not-allowed",
-  };
-
-  const paginationContainerStyle: React.CSSProperties = {
-    display: "flex",
-    justifyContent: "center",
-    alignItems: "center",
-    gap: "8px",
-    marginTop: "24px",
-    padding: "20px",
-    background: "white",
-    borderRadius: "12px",
-    boxShadow: "0 2px 10px rgba(0, 0, 0, 0.05)",
-  };
-
-  const pageButtonStyle: React.CSSProperties = {
-    padding: "8px 14px",
-    border: "2px solid #e0e0e0",
-    borderRadius: "8px",
-    background: "white",
-    cursor: "pointer",
-    fontSize: "14px",
-    fontWeight: 600,
-    color: "#666",
-    transition: "all 0.3s ease",
-    minWidth: "40px",
-  };
-
-  const activePageButtonStyle: React.CSSProperties = {
-    ...pageButtonStyle,
-    background: "linear-gradient(135deg, #1976d2 0%, #1565c0 100%)",
-    color: "white",
-    border: "2px solid #1976d2",
-  };
-
-  const navButtonStyle: React.CSSProperties = {
-    ...pageButtonStyle,
-    padding: "8px 16px",
-    display: "flex",
-    alignItems: "center",
-    gap: "6px",
-  };
-
-  const disabledNavButtonStyle: React.CSSProperties = {
-    ...navButtonStyle,
-    opacity: 0.5,
-    cursor: "not-allowed",
-  };
-
-  const modalOverlayStyle: React.CSSProperties = {
-    position: "fixed",
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: "rgba(0, 0, 0, 0.6)",
-    display: "flex",
-    justifyContent: "center",
-    alignItems: "center",
-    zIndex: 1000,
-    padding: "20px",
-    overflow: "auto",
-  };
-
-  const modalContentStyle: React.CSSProperties = {
-    background: "white",
-    borderRadius: "16px",
-    maxWidth: "900px",
-    width: "100%",
-    maxHeight: "90vh",
-    overflow: "auto",
-    boxShadow: "0 25px 80px rgba(0, 0, 0, 0.3)",
-    animation: "slideIn 0.3s ease-out",
-  };
-
-  const inputStyle: React.CSSProperties = {
-    width: "100%",
-    padding: "12px 15px",
-    border: "2px solid #e0e0e0",
-    borderRadius: "8px",
-    fontSize: "14px",
-    transition: "border-color 0.3s ease",
-    boxSizing: "border-box",
-  };
-
-  const inputDisabledStyle: React.CSSProperties = {
-    ...inputStyle,
-    background: "#f5f5f5",
-    cursor: "not-allowed",
-  };
-
+  // Screening Items
   const screeningItems: { key: keyof IScreeningChecklist; label: string }[] = [
     { key: "ResumeReviewed", label: "📄 Resume Reviewed" },
     { key: "ExperienceVerified", label: "💼 Experience Verified" },
@@ -934,7 +757,7 @@ const Applicant: React.FC<IApplicantProps> = ({
     { key: "BackgroundCheckOk", label: "✅ Background Check OK" },
   ];
 
-  // ==================== RENDER DETAILS CONTENT ====================
+  // Render Details Content
   const renderDetailsContent = (): React.ReactNode => {
     if (!selectedRecruitment) return null;
 
@@ -943,11 +766,11 @@ const Applicant: React.FC<IApplicantProps> = ({
         {/* Status Badge Section */}
         <div
           style={{
-            background: "linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%)",
+            background: "#f8fafc",
             padding: "20px",
-            borderRadius: "12px",
-            marginBottom: "25px",
-            border: "2px solid #e0e0e0",
+            borderRadius: "10px",
+            marginBottom: "24px",
+            border: "1px solid #e2e8f0",
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",
@@ -956,29 +779,36 @@ const Applicant: React.FC<IApplicantProps> = ({
           }}
         >
           <div>
-            <h2 style={{ margin: "0", color: "#1a237e", fontSize: "20px" }}>
+            <h2
+              style={{
+                margin: "0",
+                color: "#1e293b",
+                fontSize: "18px",
+                fontWeight: 600,
+              }}
+            >
               {selectedRecruitment.Title || "Application"}
             </h2>
           </div>
-          <span style={getStatusStyle(selectedRecruitment.Status || "Open")}>
-            {selectedRecruitment.Status || "Open"}
-          </span>
+          {getStatusIndicator(selectedRecruitment.Status || "Open")}
         </div>
 
         {/* Application Details */}
         <div
           style={{
-            background: "#fff",
+            background: "#ffffff",
             padding: "20px",
-            borderRadius: "12px",
-            marginBottom: "25px",
-            border: "1px solid #e0e0e0",
+            borderRadius: "10px",
+            marginBottom: "24px",
+            border: "1px solid #e2e8f0",
           }}
         >
           <h4
             style={{
-              margin: "0 0 15px",
-              color: "#1a237e",
+              margin: "0 0 16px",
+              color: "#1e293b",
+              fontSize: "14px",
+              fontWeight: 600,
               display: "flex",
               alignItems: "center",
               gap: "8px",
@@ -989,39 +819,54 @@ const Applicant: React.FC<IApplicantProps> = ({
 
           <div className={styles.formRow}>
             <div className={styles.formGroup}>
-              <label>📌 Job Details ID</label>
-              <div style={jobDetailsIdStyle}>
-                <span>📋</span>
-                {selectedRecruitment.JobDetailsId || "N/A"}
-              </div>
+              <label>REFERBY ID</label>
+              <input
+                type="text"
+                value={selectedRecruitment.JobDetailsId || "N/A"}
+                readOnly
+                className={styles.readOnlyInput}
+              />
             </div>
             <div className={styles.formGroup}>
-              <label>🔖 Job ID</label>
+              <label>Job ID</label>
               <div
-                style={jobIdLinkStyle}
-                onClick={() => handleJobIdClick(selectedRecruitment.JobId)}
-                title="Click to view this job in Job Openings"
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.transform = "translateY(-2px)";
-                  e.currentTarget.style.boxShadow =
-                    "0 4px 12px rgba(33, 150, 243, 0.4)";
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.transform = "translateY(0)";
-                  e.currentTarget.style.boxShadow =
-                    "0 2px 6px rgba(33, 150, 243, 0.2)";
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "8px",
                 }}
               >
-                <span>🔗</span>
-                {selectedRecruitment.JobId || "N/A"}
-                <span style={{ fontSize: "10px" }}>→</span>
+                <input
+                  type="text"
+                  value={selectedRecruitment.JobId || "N/A"}
+                  readOnly
+                  className={styles.readOnlyInput}
+                  style={{ flex: 1 }}
+                />
+                <button
+                  onClick={() => handleJobIdClick(selectedRecruitment.JobId)}
+                  style={{
+                    padding: "8px 12px",
+                    background: "#f1f5f9",
+                    border: "1px solid #e2e8f0",
+                    borderRadius: "6px",
+                    cursor: "pointer",
+                    fontSize: "12px",
+                    fontWeight: 500,
+                    color: "#475569",
+                    transition: "all 0.2s ease",
+                  }}
+                  title="View Job Details"
+                >
+                  View →
+                </button>
               </div>
             </div>
           </div>
 
           <div className={styles.formRow}>
             <div className={styles.formGroup}>
-              <label>💼 Job Title</label>
+              <label>Job Title</label>
               <input
                 type="text"
                 value={selectedRecruitment.Title || ""}
@@ -1030,7 +875,7 @@ const Applicant: React.FC<IApplicantProps> = ({
               />
             </div>
             <div className={styles.formGroup}>
-              <label>🏢 Department</label>
+              <label>Department</label>
               <input
                 type="text"
                 value={selectedRecruitment.Department || ""}
@@ -1042,7 +887,7 @@ const Applicant: React.FC<IApplicantProps> = ({
 
           <div className={styles.formRow}>
             <div className={styles.formGroup}>
-              <label>⏱️ Experience</label>
+              <label>Experience</label>
               <input
                 type="text"
                 value={selectedRecruitment.Experience || ""}
@@ -1051,7 +896,7 @@ const Applicant: React.FC<IApplicantProps> = ({
               />
             </div>
             <div className={styles.formGroup}>
-              <label>📍 Location</label>
+              <label>Location</label>
               <input
                 type="text"
                 value={selectedRecruitment.Location || ""}
@@ -1063,46 +908,28 @@ const Applicant: React.FC<IApplicantProps> = ({
 
           <div className={styles.formRow}>
             <div className={styles.formGroup}>
-              <label>💰 Salary Range</label>
+              <label>Salary Range</label>
               <input
                 type="text"
                 value={selectedRecruitment.SalaryRange || "Not specified"}
                 readOnly
                 className={styles.readOnlyInput}
-                style={{
-                  background: selectedRecruitment.SalaryRange
-                    ? "#d1fae5"
-                    : "#f5f5f5",
-                  color: selectedRecruitment.SalaryRange
-                    ? "#065f46"
-                    : "#6b7280",
-                  fontWeight: 600,
-                }}
               />
             </div>
             <div className={styles.formGroup}>
-              <label>⏰ Notice Period</label>
+              <label>Notice Period</label>
               <input
                 type="text"
                 value={selectedRecruitment.NoticePeriod || "Not specified"}
                 readOnly
                 className={styles.readOnlyInput}
-                style={{
-                  background: selectedRecruitment.NoticePeriod
-                    ? "#fef3c7"
-                    : "#f5f5f5",
-                  color: selectedRecruitment.NoticePeriod
-                    ? "#92400e"
-                    : "#6b7280",
-                  fontWeight: 600,
-                }}
               />
             </div>
           </div>
 
           <div className={styles.formRow}>
             <div className={styles.formGroup}>
-              <label>📅 Applied On</label>
+              <label>Applied On</label>
               <input
                 type="text"
                 value={formatDate(selectedRecruitment.CreatedOn)}
@@ -1111,7 +938,7 @@ const Applicant: React.FC<IApplicantProps> = ({
               />
             </div>
             <div className={styles.formGroup}>
-              <label>⏰ Deadline</label>
+              <label>Deadline</label>
               <input
                 type="text"
                 value={formatDate(selectedRecruitment.ApplicationDeadline)}
@@ -1120,53 +947,38 @@ const Applicant: React.FC<IApplicantProps> = ({
               />
             </div>
           </div>
-
-          <div className={styles.formGroup}>
-            <label>📝 Description</label>
-            <textarea
-              value={selectedRecruitment.Description || ""}
-              readOnly
-              className={styles.readOnlyInput}
-              rows={3}
-            />
-          </div>
         </div>
 
         {/* Attachments Section */}
         <div
           style={{
-            background: "#fff",
+            background: "#ffffff",
             padding: "20px",
-            borderRadius: "12px",
-            marginBottom: "25px",
-            border: "1px solid #e0e0e0",
+            borderRadius: "10px",
+            marginBottom: "24px",
+            border: "1px solid #e2e8f0",
           }}
         >
           <h4
             style={{
-              margin: "0 0 15px",
-              color: "#1a237e",
-              display: "flex",
-              alignItems: "center",
-              gap: "8px",
+              margin: "0 0 16px",
+              color: "#1e293b",
+              fontSize: "14px",
+              fontWeight: 600,
             }}
           >
             📎 Resume / Attachments
           </h4>
           <div
             style={{
-              padding: "15px",
-              background: "#f5f5f5",
+              padding: "12px",
+              background: "#f8fafc",
               borderRadius: "8px",
             }}
           >
             {attachments.length > 0 ? (
               <div
-                style={{
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: "10px",
-                }}
+                style={{ display: "flex", flexDirection: "column", gap: "8px" }}
               >
                 {attachments.map((att, index) => (
                   <a
@@ -1178,31 +990,24 @@ const Applicant: React.FC<IApplicantProps> = ({
                       display: "flex",
                       alignItems: "center",
                       gap: "8px",
-                      padding: "12px 15px",
-                      background:
-                        "linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%)",
-                      borderRadius: "8px",
+                      padding: "10px 14px",
+                      background: "#ffffff",
+                      borderRadius: "6px",
                       textDecoration: "none",
-                      color: "#1976d2",
-                      border: "1px solid #90caf9",
-                      fontWeight: 600,
+                      color: "#1e40af",
+                      border: "1px solid #e2e8f0",
+                      fontWeight: 500,
+                      fontSize: "13px",
                     }}
                   >
                     📄 {att.FileName}
-                    <span
-                      style={{
-                        marginLeft: "auto",
-                        fontSize: "12px",
-                        color: "#666",
-                      }}
-                    >
-                      Click to open →
-                    </span>
                   </a>
                 ))}
               </div>
             ) : (
-              <span style={{ color: "#999" }}>No attachments available</span>
+              <span style={{ color: "#94a3b8", fontSize: "13px" }}>
+                No attachments available
+              </span>
             )}
           </div>
         </div>
@@ -1210,57 +1015,45 @@ const Applicant: React.FC<IApplicantProps> = ({
         {/* Candidate Details Section */}
         <div
           style={{
-            background: "linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%)",
-            padding: "25px",
-            borderRadius: "12px",
-            marginBottom: "25px",
-            border: "2px solid #81c784",
+            background: "#f8fafc",
+            padding: "20px",
+            borderRadius: "10px",
+            marginBottom: "24px",
+            border: "1px solid #e2e8f0",
           }}
         >
-          <div
+          <h4
             style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              marginBottom: "20px",
+              margin: "0 0 16px",
+              color: "#1e293b",
+              fontSize: "14px",
+              fontWeight: 600,
             }}
           >
-            <h4
-              style={{
-                margin: 0,
-                color: "#2e7d32",
-                display: "flex",
-                alignItems: "center",
-                gap: "8px",
-              }}
-            >
-              👤 Candidate Details
-              {!actionTaken && (
-                <span style={{ color: "#f44336", fontSize: "14px" }}>
-                  * Required for final action
-                </span>
-              )}
-            </h4>
-          </div>
+            👤 Candidate Details
+            {!actionTaken && (
+              <span style={{ color: "#ef4444", marginLeft: "4px" }}>*</span>
+            )}
+          </h4>
 
           <div
             style={{
               display: "grid",
               gridTemplateColumns: "repeat(3, 1fr)",
-              gap: "15px",
+              gap: "16px",
             }}
           >
             <div>
               <label
                 style={{
                   display: "block",
-                  fontWeight: 600,
-                  color: "#2e7d32",
-                  marginBottom: "8px",
+                  fontWeight: 500,
+                  color: "#475569",
+                  marginBottom: "6px",
                   fontSize: "13px",
                 }}
               >
-                👤 Candidate Name *
+                Candidate Name *
               </label>
               <input
                 type="text"
@@ -1268,7 +1061,15 @@ const Applicant: React.FC<IApplicantProps> = ({
                 onChange={(e) => setCandidateName(e.target.value)}
                 placeholder="Enter candidate name"
                 disabled={actionTaken}
-                style={actionTaken ? inputDisabledStyle : inputStyle}
+                style={{
+                  width: "100%",
+                  padding: "10px 12px",
+                  border: "1px solid #e2e8f0",
+                  borderRadius: "6px",
+                  fontSize: "14px",
+                  background: actionTaken ? "#f1f5f9" : "#ffffff",
+                  boxSizing: "border-box",
+                }}
               />
             </div>
 
@@ -1276,13 +1077,13 @@ const Applicant: React.FC<IApplicantProps> = ({
               <label
                 style={{
                   display: "block",
-                  fontWeight: 600,
-                  color: "#2e7d32",
-                  marginBottom: "8px",
+                  fontWeight: 500,
+                  color: "#475569",
+                  marginBottom: "6px",
                   fontSize: "13px",
                 }}
               >
-                📞 Phone Number *
+                Phone Number *
               </label>
               <input
                 type="tel"
@@ -1290,7 +1091,15 @@ const Applicant: React.FC<IApplicantProps> = ({
                 onChange={(e) => setPhoneNumber(e.target.value)}
                 placeholder="Enter phone number"
                 disabled={actionTaken}
-                style={actionTaken ? inputDisabledStyle : inputStyle}
+                style={{
+                  width: "100%",
+                  padding: "10px 12px",
+                  border: "1px solid #e2e8f0",
+                  borderRadius: "6px",
+                  fontSize: "14px",
+                  background: actionTaken ? "#f1f5f9" : "#ffffff",
+                  boxSizing: "border-box",
+                }}
               />
             </div>
 
@@ -1298,13 +1107,13 @@ const Applicant: React.FC<IApplicantProps> = ({
               <label
                 style={{
                   display: "block",
-                  fontWeight: 600,
-                  color: "#2e7d32",
-                  marginBottom: "8px",
+                  fontWeight: 500,
+                  color: "#475569",
+                  marginBottom: "6px",
                   fontSize: "13px",
                 }}
               >
-                📧 Email ID *
+                Email ID *
               </label>
               <input
                 type="email"
@@ -1312,7 +1121,15 @@ const Applicant: React.FC<IApplicantProps> = ({
                 onChange={(e) => setEmailId(e.target.value)}
                 placeholder="Enter email address"
                 disabled={actionTaken}
-                style={actionTaken ? inputDisabledStyle : inputStyle}
+                style={{
+                  width: "100%",
+                  padding: "10px 12px",
+                  border: "1px solid #e2e8f0",
+                  borderRadius: "6px",
+                  fontSize: "14px",
+                  background: actionTaken ? "#f1f5f9" : "#ffffff",
+                  boxSizing: "border-box",
+                }}
               />
             </div>
           </div>
@@ -1321,11 +1138,11 @@ const Applicant: React.FC<IApplicantProps> = ({
         {/* HR Screening Checklist */}
         <div
           style={{
-            background: "linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%)",
-            padding: "25px",
-            borderRadius: "12px",
-            marginBottom: "25px",
-            border: "2px solid #ffb74d",
+            background: "#f8fafc",
+            padding: "20px",
+            borderRadius: "10px",
+            marginBottom: "24px",
+            border: "1px solid #e2e8f0",
           }}
         >
           <div
@@ -1333,7 +1150,7 @@ const Applicant: React.FC<IApplicantProps> = ({
               display: "flex",
               alignItems: "center",
               justifyContent: "space-between",
-              marginBottom: "20px",
+              marginBottom: "16px",
               flexWrap: "wrap",
               gap: "10px",
             }}
@@ -1341,32 +1158,20 @@ const Applicant: React.FC<IApplicantProps> = ({
             <h4
               style={{
                 margin: 0,
-                color: "#e65100",
-                display: "flex",
-                alignItems: "center",
-                gap: "8px",
+                color: "#1e293b",
+                fontSize: "14px",
+                fontWeight: 600,
               }}
             >
               📋 HR Screening Checklist
-              {!actionTaken && (
-                <span
-                  style={{
-                    fontSize: "12px",
-                    color: "#666",
-                    fontWeight: "normal",
-                  }}
-                >
-                  (Required 100% for Shortlisting)
-                </span>
-              )}
             </h4>
             <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
               <div
                 style={{
-                  width: "150px",
-                  height: "8px",
-                  background: "#e0e0e0",
-                  borderRadius: "4px",
+                  width: "120px",
+                  height: "6px",
+                  background: "#e2e8f0",
+                  borderRadius: "3px",
                   overflow: "hidden",
                 }}
               >
@@ -1375,19 +1180,17 @@ const Applicant: React.FC<IApplicantProps> = ({
                     width: `${getScreeningProgress()}%`,
                     height: "100%",
                     background:
-                      getScreeningProgress() === 100
-                        ? "linear-gradient(135deg, #4caf50 0%, #388e3c 100%)"
-                        : "linear-gradient(135deg, #ff9800 0%, #f57c00 100%)",
-                    borderRadius: "4px",
+                      getScreeningProgress() === 100 ? "#22c55e" : "#f59e0b",
+                    borderRadius: "3px",
                     transition: "width 0.3s ease",
                   }}
                 />
               </div>
               <span
                 style={{
-                  fontSize: "14px",
-                  fontWeight: 700,
-                  color: getScreeningProgress() === 100 ? "#4caf50" : "#ff9800",
+                  fontSize: "13px",
+                  fontWeight: 600,
+                  color: getScreeningProgress() === 100 ? "#22c55e" : "#f59e0b",
                 }}
               >
                 {getScreeningProgress()}%
@@ -1395,17 +1198,32 @@ const Applicant: React.FC<IApplicantProps> = ({
             </div>
           </div>
 
-          <div style={checkboxContainerStyle}>
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(2, 1fr)",
+              gap: "10px",
+            }}
+          >
             {screeningItems.map((item, index) => (
               <label
                 key={index}
-                style={
-                  actionTaken
-                    ? checkboxItemDisabledStyle
-                    : screeningChecklist[item.key]
-                      ? checkboxItemCheckedStyle
-                      : checkboxItemStyle
-                }
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "10px",
+                  padding: "10px 14px",
+                  background: screeningChecklist[item.key]
+                    ? "#f0fdf4"
+                    : "#ffffff",
+                  borderRadius: "6px",
+                  cursor: actionTaken ? "not-allowed" : "pointer",
+                  border: screeningChecklist[item.key]
+                    ? "1px solid #86efac"
+                    : "1px solid #e2e8f0",
+                  opacity: actionTaken ? 0.7 : 1,
+                  transition: "all 0.2s ease",
+                }}
                 onClick={() => !actionTaken && handleChecklistChange(item.key)}
               >
                 <input
@@ -1414,16 +1232,17 @@ const Applicant: React.FC<IApplicantProps> = ({
                   onChange={() => handleChecklistChange(item.key)}
                   disabled={actionTaken}
                   style={{
-                    width: "20px",
-                    height: "20px",
-                    accentColor: "#4caf50",
+                    width: "16px",
+                    height: "16px",
+                    accentColor: "#22c55e",
                     cursor: actionTaken ? "not-allowed" : "pointer",
                   }}
                 />
                 <span
                   style={{
                     fontWeight: 500,
-                    color: screeningChecklist[item.key] ? "#2e7d32" : "#666",
+                    color: screeningChecklist[item.key] ? "#166534" : "#475569",
+                    fontSize: "13px",
                   }}
                 >
                   {item.label}
@@ -1431,224 +1250,112 @@ const Applicant: React.FC<IApplicantProps> = ({
               </label>
             ))}
           </div>
-
-          {!actionTaken && (
-            <div
-              style={{
-                padding: "12px 16px",
-                background: "rgba(255,255,255,0.8)",
-                borderRadius: "8px",
-                border: "1px solid #ffcc80",
-                fontSize: "13px",
-              }}
-            >
-              <strong>💡 Note:</strong>
-              <ul style={{ margin: "8px 0 0 20px", padding: 0 }}>
-                <li>
-                  ✅ <strong>Shortlisting:</strong> Requires 100% checklist
-                  completion + HR comments
-                </li>
-                <li>
-                  ❌ <strong>Rejection:</strong> Requires HR comments only
-                </li>
-                <li>
-                  📝 <strong>Draft:</strong> Save progress without final
-                  decision
-                </li>
-              </ul>
-            </div>
-          )}
         </div>
 
         {/* HR Comments */}
         <div
           style={{
-            background: "#fff",
+            background: "#ffffff",
             padding: "20px",
-            borderRadius: "12px",
-            marginBottom: "25px",
-            border: "2px solid #90caf9",
+            borderRadius: "10px",
+            marginBottom: "24px",
+            border: "1px solid #e2e8f0",
           }}
         >
           <h4
             style={{
-              margin: "0 0 15px",
-              color: "#1565c0",
-              display: "flex",
-              alignItems: "center",
-              gap: "8px",
+              margin: "0 0 12px",
+              color: "#1e293b",
+              fontSize: "14px",
+              fontWeight: 600,
             }}
           >
             💬 HR Comments{" "}
-            {!actionTaken && (
-              <span style={{ color: "#f44336", fontSize: "14px" }}>*</span>
-            )}
+            {!actionTaken && <span style={{ color: "#ef4444" }}>*</span>}
           </h4>
           <textarea
             value={hrComments}
             onChange={(e) => setHrComments(e.target.value)}
-            placeholder="Enter your review comments, observations, and recommendation here..."
+            placeholder="Enter your review comments..."
             disabled={actionTaken}
             style={{
               width: "100%",
-              minHeight: "120px",
-              padding: "15px",
-              border: "2px solid #e0e0e0",
-              borderRadius: "8px",
+              minHeight: "100px",
+              padding: "12px",
+              border: "1px solid #e2e8f0",
+              borderRadius: "6px",
               fontSize: "14px",
               resize: "vertical",
               fontFamily: "inherit",
-              background: actionTaken ? "#f5f5f5" : "#fff",
-              cursor: actionTaken ? "not-allowed" : "text",
+              background: actionTaken ? "#f8fafc" : "#ffffff",
               boxSizing: "border-box",
             }}
           />
         </div>
 
-        {/* Reviewed By Info - Show for completed actions */}
+        {/* Reviewed By Info */}
         {actionTaken && (
           <div
             style={{
-              background: "linear-gradient(135deg, #e8eaf6 0%, #c5cae9 100%)",
-              padding: "20px",
-              borderRadius: "12px",
-              marginBottom: "25px",
-              border: "2px solid #7986cb",
+              background: "#f8fafc",
+              padding: "16px 20px",
+              borderRadius: "10px",
+              marginBottom: "24px",
+              border: "1px solid #e2e8f0",
             }}
           >
-            <h4
-              style={{
-                margin: "0 0 15px",
-                color: "#3949ab",
-                display: "flex",
-                alignItems: "center",
-                gap: "8px",
-              }}
-            >
-              👤 Reviewed By
-            </h4>
             <div
               style={{
                 display: "grid",
                 gridTemplateColumns: "1fr 1fr",
-                gap: "15px",
+                gap: "16px",
               }}
             >
               <div>
                 <label
                   style={{
-                    display: "block",
-                    fontWeight: 600,
-                    color: "#666",
-                    marginBottom: "5px",
-                    fontSize: "13px",
+                    fontSize: "12px",
+                    color: "#64748b",
+                    fontWeight: 500,
                   }}
                 >
-                  Reviewer Name
+                  Reviewed By
                 </label>
-                <input
-                  type="text"
-                  value={
-                    selectedRecruitment.ReviewedByName || currentUserName || "-"
-                  }
-                  readOnly
+                <div
                   style={{
-                    width: "100%",
-                    padding: "10px",
-                    border: "1px solid #e0e0e0",
-                    borderRadius: "6px",
-                    background: "#f5f5f5",
+                    fontSize: "14px",
                     fontWeight: 600,
+                    color: "#1e293b",
+                    marginTop: "4px",
                   }}
-                />
+                >
+                  {selectedRecruitment.ReviewedByName || currentUserName || "-"}
+                </div>
               </div>
               <div>
                 <label
                   style={{
-                    display: "block",
-                    fontWeight: 600,
-                    color: "#666",
-                    marginBottom: "5px",
-                    fontSize: "13px",
+                    fontSize: "12px",
+                    color: "#64748b",
+                    fontWeight: 500,
                   }}
                 >
                   Reviewed On
                 </label>
-                <input
-                  type="text"
-                  value={
-                    selectedRecruitment.ReviewedOn
-                      ? formatDateTime(selectedRecruitment.ReviewedOn)
-                      : formatDateTime(new Date().toISOString())
-                  }
-                  readOnly
+                <div
                   style={{
-                    width: "100%",
-                    padding: "10px",
-                    border: "1px solid #e0e0e0",
-                    borderRadius: "6px",
-                    background: "#f5f5f5",
+                    fontSize: "14px",
+                    fontWeight: 500,
+                    color: "#475569",
+                    marginTop: "4px",
                   }}
-                />
+                >
+                  {selectedRecruitment.ReviewedOn
+                    ? formatDateTime(selectedRecruitment.ReviewedOn)
+                    : formatDateTime(new Date().toISOString())}
+                </div>
               </div>
             </div>
-          </div>
-        )}
-
-        {/* Action Status Message */}
-        {actionTaken && (
-          <div
-            style={{
-              padding: "15px 20px",
-              background:
-                selectedRecruitment.Status === "Shortlisted"
-                  ? "linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%)"
-                  : "linear-gradient(135deg, #ffebee 0%, #ffcdd2 100%)",
-              borderRadius: "8px",
-              marginBottom: "20px",
-              border:
-                selectedRecruitment.Status === "Shortlisted"
-                  ? "2px solid #4caf50"
-                  : "2px solid #f44336",
-              textAlign: "center",
-            }}
-          >
-            <span
-              style={{
-                fontSize: "16px",
-                fontWeight: 600,
-                color:
-                  selectedRecruitment.Status === "Shortlisted"
-                    ? "#2e7d32"
-                    : "#c62828",
-              }}
-            >
-              {selectedRecruitment.Status === "Shortlisted"
-                ? "✅ This candidate has been SHORTLISTED"
-                : selectedRecruitment.Status === "Rejected"
-                  ? "❌ This candidate has been REJECTED"
-                  : `📌 Status: ${selectedRecruitment.Status}`}
-            </span>
-          </div>
-        )}
-
-        {/* Draft Status Message */}
-        {selectedRecruitment.Status === "Draft" && !actionTaken && (
-          <div
-            style={{
-              padding: "15px 20px",
-              background: "linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%)",
-              borderRadius: "8px",
-              marginBottom: "20px",
-              border: "2px solid #ff9800",
-              textAlign: "center",
-            }}
-          >
-            <span
-              style={{ fontSize: "16px", fontWeight: 600, color: "#e65100" }}
-            >
-              📝 This application is saved as DRAFT - No final action taken yet
-            </span>
           </div>
         )}
 
@@ -1657,160 +1364,161 @@ const Applicant: React.FC<IApplicantProps> = ({
           style={{
             display: "flex",
             justifyContent: "center",
-            gap: "15px",
-            marginTop: "30px",
-            paddingTop: "25px",
-            borderTop: "2px solid #e0e0e0",
+            gap: "12px",
+            marginTop: "24px",
+            paddingTop: "20px",
+            borderTop: "1px solid #e2e8f0",
             flexWrap: "wrap",
           }}
         >
           <button
-            style={backBtnStyle}
             onClick={handleCloseView}
             disabled={updating}
+            style={{
+              padding: "10px 20px",
+              background: "#f1f5f9",
+              color: "#475569",
+              border: "1px solid #e2e8f0",
+              borderRadius: "6px",
+              cursor: "pointer",
+              fontSize: "14px",
+              fontWeight: 600,
+            }}
           >
-            ← {viewMode === "modal" ? "Close" : "Back to List"}
+            ← {viewMode === "modal" ? "Close" : "Back"}
           </button>
 
-          {/* Draft Button - NEW */}
           <button
-            style={draftBtnStyle}
             onClick={() => void handleSaveAsDraft()}
             disabled={updating || actionTaken}
-            title="Save all data as draft without final decision"
-            onMouseEnter={(e) => {
-              if (!actionTaken) {
-                e.currentTarget.style.transform = "translateY(-2px)";
-                e.currentTarget.style.boxShadow =
-                  "0 6px 16px rgba(255, 152, 0, 0.4)";
-              }
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.transform = "translateY(0)";
-              e.currentTarget.style.boxShadow =
-                "0 4px 12px rgba(255, 152, 0, 0.3)";
+            style={{
+              padding: "10px 20px",
+              background: actionTaken ? "#e2e8f0" : "#f59e0b",
+              color: actionTaken ? "#94a3b8" : "#ffffff",
+              border: "none",
+              borderRadius: "6px",
+              cursor: actionTaken ? "not-allowed" : "pointer",
+              fontSize: "14px",
+              fontWeight: 600,
+              opacity: actionTaken ? 0.6 : 1,
             }}
           >
-            {updating ? "⏳ Saving..." : "📝 Save as Draft"}
+            {updating ? "Saving..." : "Save Draft"}
           </button>
 
           <button
-            style={shortlistedBtnStyle}
             onClick={() => void handleShortlisted()}
             disabled={updating || actionTaken}
-            title={
-              actionTaken
-                ? "Action already taken"
-                : !isScreeningComplete()
-                  ? "Complete all screening checks to shortlist"
-                  : "Shortlist this candidate"
-            }
-            onMouseEnter={(e) => {
-              if (!actionTaken) {
-                e.currentTarget.style.transform = "translateY(-2px)";
-                e.currentTarget.style.boxShadow =
-                  "0 6px 16px rgba(76, 175, 80, 0.4)";
-              }
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.transform = "translateY(0)";
-              e.currentTarget.style.boxShadow = "none";
+            style={{
+              padding: "10px 20px",
+              background: actionTaken ? "#e2e8f0" : "#22c55e",
+              color: actionTaken ? "#94a3b8" : "#ffffff",
+              border: "none",
+              borderRadius: "6px",
+              cursor: actionTaken ? "not-allowed" : "pointer",
+              fontSize: "14px",
+              fontWeight: 600,
+              opacity: actionTaken ? 0.6 : 1,
             }}
           >
-            {updating ? "⏳ Processing..." : "✅ Shortlisted"}
+            {updating ? "Processing..." : "✓ Shortlist"}
           </button>
 
           <button
-            style={rejectedBtnStyle}
             onClick={() => void handleRejected()}
             disabled={updating || actionTaken}
-            title={
-              actionTaken ? "Action already taken" : "Reject this candidate"
-            }
-            onMouseEnter={(e) => {
-              if (!actionTaken) {
-                e.currentTarget.style.transform = "translateY(-2px)";
-                e.currentTarget.style.boxShadow =
-                  "0 6px 16px rgba(244, 67, 54, 0.4)";
-              }
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.transform = "translateY(0)";
-              e.currentTarget.style.boxShadow = "none";
+            style={{
+              padding: "10px 20px",
+              background: actionTaken ? "#e2e8f0" : "#ef4444",
+              color: actionTaken ? "#94a3b8" : "#ffffff",
+              border: "none",
+              borderRadius: "6px",
+              cursor: actionTaken ? "not-allowed" : "pointer",
+              fontSize: "14px",
+              fontWeight: 600,
+              opacity: actionTaken ? 0.6 : 1,
             }}
           >
-            {updating ? "⏳ Processing..." : "❌ Rejected"}
+            {updating ? "Processing..." : "✕ Reject"}
           </button>
         </div>
-
-        {actionTaken && (
-          <div
-            style={{
-              textAlign: "center",
-              marginTop: "15px",
-              fontSize: "13px",
-              color: "#999",
-            }}
-          >
-            🔒 Actions are locked after final decision is made
-          </div>
-        )}
-
-        {!actionTaken && (
-          <div
-            style={{
-              textAlign: "center",
-              marginTop: "15px",
-              fontSize: "13px",
-              color: "#666",
-            }}
-          >
-            💡 Use <strong>Save as Draft</strong> to save your progress and
-            continue later
-          </div>
-        )}
       </>
     );
   };
 
   return (
     <div className={styles.pageContainer}>
-      {/* HEADER */}
+      {/* CSS Animation Keyframes */}
+      <style>
+        {`
+          @keyframes spin {
+            to { transform: rotate(360deg); }
+          }
+          @keyframes slideIn {
+            from { opacity: 0; transform: translateY(-20px) scale(0.95); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+          }
+        `}
+      </style>
+
+      {/* Page Header */}
       <div className={styles.pageHeader}>
-        <h1>👥 Applicants Dashboard - HR Screening</h1>
-        {currentUserName && (
-          <div
+        <h1 style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+          <span
             style={{
-              background: "linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%)",
-              padding: "8px 16px",
-              borderRadius: "20px",
-              marginTop: "10px",
-              display: "inline-flex",
+              width: "40px",
+              height: "40px",
+              background: "linear-gradient(135deg, #1e40af 0%, #3b82f6 100%)",
+              borderRadius: "10px",
+              display: "flex",
               alignItems: "center",
-              gap: "8px",
-              fontSize: "14px",
+              justifyContent: "center",
+              fontSize: "20px",
             }}
           >
-            <span>👤</span>
-            <strong>Logged in as: {currentUserName}</strong>
-          </div>
-        )}
+            👥
+          </span>
+          Applicants
+        </h1>
       </div>
 
-      {/* POPUP MODAL */}
+      {/* Modal View */}
       {viewMode === "modal" && selectedRecruitment && (
-        <div style={modalOverlayStyle} onClick={handleCloseView}>
-          <div style={modalContentStyle} onClick={(e) => e.stopPropagation()}>
+        <div
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: "rgba(0, 0, 0, 0.5)",
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            zIndex: 1000,
+            padding: "20px",
+            overflow: "auto",
+          }}
+          onClick={handleCloseView}
+        >
+          <div
+            style={{
+              background: "#ffffff",
+              borderRadius: "12px",
+              maxWidth: "900px",
+              width: "100%",
+              maxHeight: "90vh",
+              overflow: "auto",
+              boxShadow: "0 20px 60px rgba(0, 0, 0, 0.2)",
+              animation: "slideIn 0.3s ease-out",
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
             <div
               style={{
-                background:
-                  pendingAction === "Shortlisted"
-                    ? "linear-gradient(135deg, #4caf50 0%, #388e3c 100%)"
-                    : pendingAction === "Rejected"
-                      ? "linear-gradient(135deg, #f44336 0%, #d32f2f 100%)"
-                      : "linear-gradient(135deg, #1976d2 0%, #1565c0 100%)",
-                padding: "20px 25px",
-                borderRadius: "16px 16px 0 0",
+                background: "#1e40af",
+                padding: "16px 20px",
+                borderRadius: "12px 12px 0 0",
                 display: "flex",
                 justifyContent: "space-between",
                 alignItems: "center",
@@ -1820,13 +1528,11 @@ const Applicant: React.FC<IApplicantProps> = ({
                 style={{
                   margin: 0,
                   color: "white",
-                  fontSize: "18px",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "10px",
+                  fontSize: "16px",
+                  fontWeight: 600,
                 }}
               >
-                📋 HR Screening - {pendingAction} Action
+                HR Screening - {pendingAction}
               </h3>
               <button
                 onClick={handleCloseView}
@@ -1834,29 +1540,26 @@ const Applicant: React.FC<IApplicantProps> = ({
                   background: "rgba(255,255,255,0.2)",
                   border: "none",
                   color: "white",
-                  width: "36px",
-                  height: "36px",
+                  width: "32px",
+                  height: "32px",
                   borderRadius: "50%",
                   cursor: "pointer",
-                  fontSize: "18px",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
+                  fontSize: "16px",
                 }}
               >
                 ✕
               </button>
             </div>
-            <div style={{ padding: "25px" }}>{renderDetailsContent()}</div>
+            <div style={{ padding: "24px" }}>{renderDetailsContent()}</div>
           </div>
         </div>
       )}
 
-      {/* PAGE VIEW */}
+      {/* Page View */}
       {viewMode === "page" && selectedRecruitment && (
         <div className={styles.formCard}>
           <div className={styles.formHeader}>
-            <h3>📋 Application Details - View Mode</h3>
+            <h3>Application Details</h3>
             <button className={styles.closeBtn} onClick={handleCloseView}>
               ✕
             </button>
@@ -1865,95 +1568,142 @@ const Applicant: React.FC<IApplicantProps> = ({
         </div>
       )}
 
-      {/* FILTER BADGE - When filtered from Interviews */}
+      {/* Filter Badge - When filtered from Interviews */}
       {!viewMode && jobDetailsIdFilter && (
         <div
           style={{
             display: "flex",
             alignItems: "center",
-            gap: "12px",
-            marginBottom: "20px",
-            padding: "16px 20px",
-            background: "linear-gradient(135deg, #f3e5f5 0%, #e1bee7 100%)",
-            borderRadius: "12px",
-            border: "2px solid #ab47bc",
-            boxShadow: "0 4px 12px rgba(171, 71, 188, 0.15)",
+            gap: "16px",
+            marginBottom: "16px",
+            padding: "12px 16px",
+            background: "#ffffff",
+            borderRadius: "8px",
+            border: "1px solid #e2e8f0",
           }}
         >
-          <span style={{ fontSize: "24px" }}>🔗</span>
-          <div style={{ flex: 1 }}>
-            <div
-              style={{
-                fontSize: "12px",
-                color: "#7b1fa2",
-                fontWeight: 500,
-                marginBottom: "2px",
-              }}
-            >
-              Filtered from Interviews
-            </div>
-            <div
-              style={{ fontSize: "16px", fontWeight: 700, color: "#4a148c" }}
-            >
-              Job Details ID: {jobDetailsIdFilter}
-            </div>
-          </div>
           <div
             style={{
-              background: "#ab47bc",
-              color: "white",
-              padding: "4px 12px",
-              borderRadius: "20px",
-              fontSize: "12px",
-              fontWeight: 600,
+              width: "32px",
+              height: "32px",
+              background: "#f0f9ff",
+              borderRadius: "6px",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              fontSize: "14px",
             }}
           >
-            {filteredData.length}{" "}
-            {filteredData.length === 1 ? "Record" : "Records"} Found
+            🔍
           </div>
+          <div style={{ flex: 1 }}>
+            <div
+              style={{ fontSize: "11px", color: "#64748b", fontWeight: 500 }}
+            >
+              Filtered by REFERBY ID
+            </div>
+            <div
+              style={{ fontSize: "14px", fontWeight: 600, color: "#1e293b" }}
+            >
+              {jobDetailsIdFilter}
+            </div>
+          </div>
+          <span style={{ fontSize: "12px", color: "#64748b" }}>
+            {filteredData.length} result{filteredData.length !== 1 ? "s" : ""}
+          </span>
           <button
             onClick={handleClearJobDetailsIdFilter}
             style={{
-              background: "linear-gradient(135deg, #ab47bc 0%, #7b1fa2 100%)",
-              color: "white",
-              border: "none",
-              borderRadius: "8px",
-              padding: "8px 16px",
+              background: "#f8fafc",
+              color: "#64748b",
+              border: "1px solid #e2e8f0",
+              borderRadius: "6px",
+              padding: "6px 12px",
               cursor: "pointer",
-              fontSize: "13px",
-              fontWeight: 600,
-              display: "flex",
-              alignItems: "center",
-              gap: "6px",
-              transition: "all 0.2s ease",
+              fontSize: "12px",
+              fontWeight: 500,
             }}
-            title="Clear filter and show all applicants"
           >
-            ✕ Clear Filter
+            ✕ Clear
           </button>
         </div>
       )}
 
-      {/* FILTERS */}
+      {/* Compact Filters - Always Visible */}
       {!viewMode && (
         <>
-          <div style={filterRowStyle}>
-            <div style={filterItemStyle}>
-              <label style={filterLabelStyle}>🔍 Search:</label>
-              <input
-                type="text"
-                placeholder="Search by name, title, ID, email..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                style={searchInputStyle}
-              />
-            </div>
-            <div style={filterItemStyle}>
-              <label style={filterLabelStyle}>📊 Status:</label>
+          <div
+            style={{
+              background: "#ffffff",
+              padding: "14px 16px",
+              borderRadius: "10px",
+              marginBottom: "16px",
+              border: "1px solid #e2e8f0",
+            }}
+          >
+            {/* Single Row: Search + Filters + Clear */}
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "12px",
+                flexWrap: "wrap",
+              }}
+            >
+              {/* Search Input */}
+              <div
+                style={{ position: "relative", flex: "1", minWidth: "200px" }}
+              >
+                <input
+                  type="text"
+                  placeholder="Search by name, title, ID, email..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  style={{
+                    width: "100%",
+                    padding: "8px 12px 8px 36px",
+                    border: "1px solid #e2e8f0",
+                    borderRadius: "6px",
+                    fontSize: "13px",
+                    background: "#f8fafc",
+                    boxSizing: "border-box",
+                  }}
+                  onFocus={(e) => {
+                    e.target.style.borderColor = "#1e40af";
+                    e.target.style.background = "#ffffff";
+                  }}
+                  onBlur={(e) => {
+                    e.target.style.borderColor = "#e2e8f0";
+                    e.target.style.background = "#f8fafc";
+                  }}
+                />
+                <span
+                  style={{
+                    position: "absolute",
+                    left: "12px",
+                    top: "50%",
+                    transform: "translateY(-50%)",
+                    fontSize: "14px",
+                    color: "#94a3b8",
+                  }}
+                >
+                  🔍
+                </span>
+              </div>
+
+              {/* Status Filter */}
               <select
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
-                style={filterInputStyle}
+                style={{
+                  padding: "8px 12px",
+                  border: "1px solid #e2e8f0",
+                  borderRadius: "6px",
+                  fontSize: "13px",
+                  background: "#ffffff",
+                  cursor: "pointer",
+                  minWidth: "120px",
+                }}
               >
                 <option value="All">All Status</option>
                 {getUniqueStatuses().map((status) => (
@@ -1962,13 +1712,20 @@ const Applicant: React.FC<IApplicantProps> = ({
                   </option>
                 ))}
               </select>
-            </div>
-            <div style={filterItemStyle}>
-              <label style={filterLabelStyle}>🏢 Department:</label>
+
+              {/* Department Filter */}
               <select
                 value={departmentFilter}
                 onChange={(e) => setDepartmentFilter(e.target.value)}
-                style={filterInputStyle}
+                style={{
+                  padding: "8px 12px",
+                  border: "1px solid #e2e8f0",
+                  borderRadius: "6px",
+                  fontSize: "13px",
+                  background: "#ffffff",
+                  cursor: "pointer",
+                  minWidth: "140px",
+                }}
               >
                 <option value="All">All Departments</option>
                 {getUniqueDepartments().map((dep) => (
@@ -1977,13 +1734,20 @@ const Applicant: React.FC<IApplicantProps> = ({
                   </option>
                 ))}
               </select>
-            </div>
-            <div style={filterItemStyle}>
-              <label style={filterLabelStyle}>📍 Location:</label>
+
+              {/* Location Filter */}
               <select
                 value={locationFilter}
                 onChange={(e) => setLocationFilter(e.target.value)}
-                style={filterInputStyle}
+                style={{
+                  padding: "8px 12px",
+                  border: "1px solid #e2e8f0",
+                  borderRadius: "6px",
+                  fontSize: "13px",
+                  background: "#ffffff",
+                  cursor: "pointer",
+                  minWidth: "130px",
+                }}
               >
                 <option value="All">All Locations</option>
                 {getUniqueLocations().map((loc) => (
@@ -1992,422 +1756,371 @@ const Applicant: React.FC<IApplicantProps> = ({
                   </option>
                 ))}
               </select>
+
+              {/* Clear All Button - Only when filters active */}
+              {hasActiveFilters() && (
+                <button
+                  onClick={clearAllFilters}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "4px",
+                    padding: "8px 12px",
+                    background: "#fef2f2",
+                    border: "1px solid #fecaca",
+                    borderRadius: "6px",
+                    cursor: "pointer",
+                    fontSize: "12px",
+                    fontWeight: 500,
+                    color: "#dc2626",
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  ✕ Clear
+                </button>
+              )}
             </div>
           </div>
 
-          {/* Results Count */}
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              gap: "12px",
-              marginBottom: "20px",
-              padding: "12px 20px",
-              background: "#f5f5f5",
-              borderRadius: "8px",
-              fontSize: "14px",
-              color: "#666",
-            }}
-          >
-            <span>
-              📋 Showing {filteredData.length > 0 ? startIndex + 1 : 0}-
-              {Math.min(endIndex, filteredData.length)} of {filteredData.length}{" "}
-              applications
-            </span>
-            {totalPages > 1 && (
-              <span
-                style={{
-                  background: "#e3f2fd",
-                  padding: "4px 12px",
-                  borderRadius: "20px",
-                  fontSize: "12px",
-                  fontWeight: 600,
-                  color: "#1976d2",
-                }}
-              >
-                Page {currentPage} of {totalPages}
-              </span>
-            )}
-          </div>
-
-          {/* TABLE - Delete button removed from Actions */}
+          {/* Table */}
           <div className={styles.tableContainer}>
             <table className={styles.table}>
               <thead>
                 <tr>
-                  <th>S.No</th>
-                  <th>Job Details ID</th>
+                  <th style={{ width: "50px" }}>#</th>
+                  <th>REFERBY ID</th>
                   <th>Job ID</th>
                   <th>Title</th>
                   <th>Candidate</th>
                   <th>Department</th>
-                  <th>Location</th>
                   <th>Applied On</th>
-                  <th>Status</th>
-                  <th>Reviewed By</th>
+                  <th style={{ width: "100px" }}>Status</th>
                   <th>Resume</th>
-                  <th>Action</th>
+                  <th style={{ width: "80px", textAlign: "center" }}>Action</th>
                 </tr>
               </thead>
               <tbody>
                 {paginatedData.length === 0 ? (
                   <tr>
-                    <td colSpan={12} className={styles.noData}>
-                      <span>📭</span>
-                      <p>No applications found</p>
-                      {jobDetailsIdFilter && (
-                        <button
-                          onClick={handleClearJobDetailsIdFilter}
+                    <td colSpan={10}>
+                      <div
+                        style={{
+                          display: "flex",
+                          flexDirection: "column",
+                          alignItems: "center",
+                          padding: "48px 20px",
+                        }}
+                      >
+                        <div
                           style={{
-                            marginTop: "10px",
-                            padding: "8px 16px",
-                            background: "#ab47bc",
-                            color: "white",
-                            border: "none",
-                            borderRadius: "6px",
-                            cursor: "pointer",
+                            width: "72px",
+                            height: "72px",
+                            background: "#f1f5f9",
+                            borderRadius: "50%",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            fontSize: "32px",
+                            marginBottom: "16px",
                           }}
                         >
-                          Clear Filter & Show All
-                        </button>
-                      )}
+                          📭
+                        </div>
+                        <p
+                          style={{
+                            color: "#64748b",
+                            fontSize: "15px",
+                            fontWeight: 500,
+                            margin: "0 0 12px",
+                          }}
+                        >
+                          No applications found
+                        </p>
+                        {(hasActiveFilters() || jobDetailsIdFilter) && (
+                          <button
+                            onClick={() => {
+                              clearAllFilters();
+                              handleClearJobDetailsIdFilter();
+                            }}
+                            style={{
+                              background: "#1e40af",
+                              color: "#ffffff",
+                              border: "none",
+                              borderRadius: "6px",
+                              padding: "8px 16px",
+                              cursor: "pointer",
+                              fontSize: "13px",
+                              fontWeight: 500,
+                            }}
+                          >
+                            Clear Filters
+                          </button>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 ) : (
-                  paginatedData.map((recruitment, index) => (
-                    <tr
-                      key={recruitment.Id}
-                      style={{
-                        background:
-                          recruitment.Status === "Shortlisted"
-                            ? "linear-gradient(135deg, #e8f5e9 0%, #f1f8e9 100%)"
-                            : recruitment.Status === "Rejected"
-                              ? "linear-gradient(135deg, #ffebee 0%, #fce4ec 100%)"
-                              : recruitment.Status === "Draft"
-                                ? "linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%)"
-                                : jobDetailsIdFilter &&
-                                    recruitment.JobDetailsId ===
-                                      jobDetailsIdFilter
-                                  ? "linear-gradient(135deg, #f3e5f5 0%, #e1bee7 100%)"
-                                  : "transparent",
-                      }}
-                    >
-                      <td>
-                        <span
-                          style={{
-                            background: "#e3f2fd",
-                            padding: "4px 10px",
-                            borderRadius: "50%",
-                            fontWeight: 600,
-                            color: "#1976d2",
-                          }}
-                        >
-                          {startIndex + index + 1}
-                        </span>
-                      </td>
-                      {/* Job Details ID - Beautiful Badge */}
-                      <td>
-                        <div
-                          style={{
-                            ...jobDetailsIdStyle,
-                            background:
-                              jobDetailsIdFilter &&
-                              recruitment.JobDetailsId === jobDetailsIdFilter
-                                ? "linear-gradient(135deg, #ab47bc 0%, #7b1fa2 100%)"
-                                : jobDetailsIdStyle.background,
-                            color:
-                              jobDetailsIdFilter &&
-                              recruitment.JobDetailsId === jobDetailsIdFilter
-                                ? "white"
-                                : jobDetailsIdStyle.color,
-                            borderColor:
-                              jobDetailsIdFilter &&
-                              recruitment.JobDetailsId === jobDetailsIdFilter
-                                ? "#7b1fa2"
-                                : "#ba68c8",
-                          }}
-                        >
-                          <span>📋</span>
-                          {recruitment.JobDetailsId}
-                        </div>
-                      </td>
-                      {/* Job ID - Clickable Beautiful Badge */}
-                      <td>
-                        <div
-                          style={jobIdLinkStyle}
-                          onClick={() => handleJobIdClick(recruitment.JobId)}
-                          title={`Click to view Job ${recruitment.JobId} in Job Openings`}
-                          onMouseEnter={(e) => {
-                            e.currentTarget.style.transform =
-                              "translateY(-2px)";
-                            e.currentTarget.style.boxShadow =
-                              "0 4px 12px rgba(33, 150, 243, 0.4)";
-                            e.currentTarget.style.background =
-                              "linear-gradient(135deg, #1976d2 0%, #1565c0 100%)";
-                            e.currentTarget.style.color = "white";
-                          }}
-                          onMouseLeave={(e) => {
-                            e.currentTarget.style.transform = "translateY(0)";
-                            e.currentTarget.style.boxShadow =
-                              "0 2px 6px rgba(33, 150, 243, 0.2)";
-                            e.currentTarget.style.background =
-                              "linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%)";
-                            e.currentTarget.style.color = "#1565c0";
-                          }}
-                        >
-                          <span>🔗</span>
-                          {recruitment.JobId}
-                          <span style={{ fontSize: "10px" }}>→</span>
-                        </div>
-                      </td>
-                      <td>
-                        <strong>{recruitment.Title}</strong>
-                      </td>
-                      <td>
-                        {recruitment.CandidateName ? (
-                          <div style={{ fontSize: "12px" }}>
-                            <div style={{ fontWeight: 600 }}>
-                              {recruitment.CandidateName}
-                            </div>
-                            {recruitment.EmailId && (
-                              <div style={{ color: "#666" }}>
-                                📧 {recruitment.EmailId}
-                              </div>
-                            )}
-                            {recruitment.PhoneNumber && (
-                              <div style={{ color: "#666" }}>
-                                📞 {recruitment.PhoneNumber}
-                              </div>
-                            )}
-                          </div>
-                        ) : (
-                          <span style={{ color: "#999", fontSize: "12px" }}>
-                            Not provided
-                          </span>
-                        )}
-                      </td>
-                      <td>{recruitment.Department}</td>
-                      <td>{recruitment.Location}</td>
-                      <td>{formatDate(recruitment.CreatedOn)}</td>
-                      <td>
-                        {isActionCompleted(recruitment.Status || "Open") ? (
-                          <span
-                            style={getStatusStyle(recruitment.Status || "Open")}
-                          >
-                            {recruitment.Status}
-                          </span>
-                        ) : (
-                          <select
-                            value={recruitment.Status || "Open"}
-                            onChange={(e) =>
-                              void handleStatusDropdownChange(
-                                recruitment,
-                                e.target.value,
-                              )
-                            }
-                            style={{
-                              padding: "8px 12px",
-                              borderRadius: "8px",
-                              border: "2px solid #e0e0e0",
-                              cursor: "pointer",
-                              fontWeight: 600,
-                              fontSize: "13px",
-                              background:
-                                recruitment.Status === "Draft"
-                                  ? "#fff3e0"
-                                  : "#fff",
-                              minWidth: "120px",
-                            }}
-                          >
-                            <option value="Open">Open</option>
-                            <option value="Draft">📝 Draft</option>
-                            <option value="Shortlisted">Shortlisted</option>
-                            <option value="Rejected">Rejected</option>
-                          </select>
-                        )}
-                      </td>
-                      <td>
-                        {recruitment.ReviewedByName ? (
+                  paginatedData.map((recruitment, index) => {
+                    const isRowHovered = hoveredRow === recruitment.Id;
+
+                    return (
+                      <tr
+                        key={recruitment.Id}
+                        style={{
+                          background: isRowHovered ? "#f8fafc" : "transparent",
+                          transition: "background 0.15s ease",
+                        }}
+                        onMouseEnter={() =>
+                          setHoveredRow(recruitment.Id || null)
+                        }
+                        onMouseLeave={() => setHoveredRow(null)}
+                      >
+                        <td>
                           <span
                             style={{
-                              display: "flex",
-                              alignItems: "center",
-                              gap: "4px",
                               fontSize: "12px",
-                              color: "#666",
-                            }}
-                          >
-                            👤 {recruitment.ReviewedByName}
-                          </span>
-                        ) : (
-                          <span style={{ color: "#999", fontSize: "12px" }}>
-                            -
-                          </span>
-                        )}
-                      </td>
-                      <td>
-                        {recruitment.HasAttachment ? (
-                          <button
-                            onClick={() =>
-                              void handleOpenAttachment(recruitment.Id!)
-                            }
-                            style={{
-                              background:
-                                "linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%)",
-                              border: "1px solid #90caf9",
-                              borderRadius: "6px",
-                              padding: "6px 12px",
-                              cursor: "pointer",
-                              display: "flex",
-                              alignItems: "center",
-                              gap: "4px",
-                              fontSize: "13px",
-                              color: "#1976d2",
                               fontWeight: 600,
+                              color: "#64748b",
                             }}
-                            title="Click to open resume"
                           >
-                            📄 View
-                          </button>
-                        ) : (
-                          <span style={{ color: "#999", fontSize: "12px" }}>
-                            No Resume
+                            {startIndex + index + 1}
                           </span>
-                        )}
-                      </td>
-                      {/* Actions - Only View button, Delete removed */}
-                      <td>
-                        <button
-                          onClick={() => void handleView(recruitment)}
-                          title="View Details"
-                          style={{
-                            padding: "8px 16px",
-                            background:
-                              "linear-gradient(135deg, #2196f3 0%, #1976d2 100%)",
-                            color: "white",
-                            border: "none",
-                            borderRadius: "6px",
-                            cursor: "pointer",
-                            fontSize: "13px",
-                            fontWeight: 600,
-                            display: "flex",
-                            alignItems: "center",
-                            gap: "6px",
-                            transition: "all 0.2s ease",
-                          }}
-                          onMouseEnter={(e) => {
-                            e.currentTarget.style.transform =
-                              "translateY(-1px)";
-                            e.currentTarget.style.boxShadow =
-                              "0 4px 12px rgba(33, 150, 243, 0.4)";
-                          }}
-                          onMouseLeave={(e) => {
-                            e.currentTarget.style.transform = "translateY(0)";
-                            e.currentTarget.style.boxShadow = "none";
-                          }}
-                        >
-                          👁️ View
-                        </button>
-                      </td>
-                    </tr>
-                  ))
+                        </td>
+
+                        {/* REFERBY ID */}
+                        <td>
+                          <span
+                            style={{
+                              fontFamily: "'SF Mono', 'Consolas', monospace",
+                              fontSize: "12px",
+                              fontWeight: 600,
+                              color: "#475569",
+                              background: "#f1f5f9",
+                              padding: "4px 8px",
+                              borderRadius: "4px",
+                              display: "inline-block",
+                            }}
+                          >
+                            {recruitment.JobDetailsId}
+                          </span>
+                        </td>
+
+                        {/* Job ID - Clickable */}
+                        <td>
+                          <button
+                            onClick={() => handleJobIdClick(recruitment.JobId)}
+                            style={{
+                              fontFamily: "'SF Mono', 'Consolas', monospace",
+                              fontSize: "12px",
+                              fontWeight: 600,
+                              color: "#1e40af",
+                              background: "#f0f9ff",
+                              padding: "4px 8px",
+                              borderRadius: "4px",
+                              border: "none",
+                              cursor: "pointer",
+                              transition: "all 0.2s ease",
+                            }}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.background = "#1e40af";
+                              e.currentTarget.style.color = "#ffffff";
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.background = "#f0f9ff";
+                              e.currentTarget.style.color = "#1e40af";
+                            }}
+                            title="Click to view job"
+                          >
+                            {recruitment.JobId}
+                          </button>
+                        </td>
+
+                        <td>
+                          <span style={{ fontWeight: 600, color: "#1e293b" }}>
+                            {recruitment.Title}
+                          </span>
+                        </td>
+
+                        {/* Candidate Info */}
+                        <td>
+                          {recruitment.CandidateName ? (
+                            <div style={{ fontSize: "12px" }}>
+                              <div
+                                style={{ fontWeight: 600, color: "#1e293b" }}
+                              >
+                                {recruitment.CandidateName}
+                              </div>
+                              {recruitment.EmailId && (
+                                <div
+                                  style={{ color: "#64748b", marginTop: "2px" }}
+                                >
+                                  {recruitment.EmailId}
+                                </div>
+                              )}
+                            </div>
+                          ) : (
+                            <span
+                              style={{ color: "#94a3b8", fontSize: "12px" }}
+                            >
+                              -
+                            </span>
+                          )}
+                        </td>
+
+                        <td style={{ color: "#475569" }}>
+                          {recruitment.Department}
+                        </td>
+
+                        <td style={{ color: "#64748b", fontSize: "13px" }}>
+                          {formatDate(recruitment.CreatedOn)}
+                        </td>
+
+                        {/* Status */}
+                        <td>
+                          {isActionCompleted(recruitment.Status || "Open") ? (
+                            getStatusIndicator(recruitment.Status || "Open")
+                          ) : (
+                            <select
+                              value={recruitment.Status || "Open"}
+                              onChange={(e) =>
+                                void handleStatusDropdownChange(
+                                  recruitment,
+                                  e.target.value,
+                                )
+                              }
+                              style={{
+                                padding: "6px 10px",
+                                borderRadius: "6px",
+                                border: "1px solid #e2e8f0",
+                                cursor: "pointer",
+                                fontWeight: 500,
+                                fontSize: "12px",
+                                background: "#ffffff",
+                                minWidth: "100px",
+                              }}
+                            >
+                              <option value="Open">Open</option>
+                              <option value="Draft">Draft</option>
+                              <option value="Shortlisted">Shortlisted</option>
+                              <option value="Rejected">Rejected</option>
+                            </select>
+                          )}
+                        </td>
+
+                        {/* Resume */}
+                        <td>
+                          {recruitment.HasAttachment ? (
+                            <button
+                              onClick={() =>
+                                void handleOpenAttachment(recruitment.Id!)
+                              }
+                              style={{
+                                background: "#f1f5f9",
+                                border: "1px solid #e2e8f0",
+                                borderRadius: "6px",
+                                padding: "6px 10px",
+                                cursor: "pointer",
+                                display: "flex",
+                                alignItems: "center",
+                                gap: "4px",
+                                fontSize: "12px",
+                                color: "#475569",
+                                fontWeight: 500,
+                                transition: "all 0.2s ease",
+                              }}
+                              onMouseEnter={(e) => {
+                                e.currentTarget.style.background = "#1e40af";
+                                e.currentTarget.style.color = "#ffffff";
+                                e.currentTarget.style.borderColor = "#1e40af";
+                              }}
+                              onMouseLeave={(e) => {
+                                e.currentTarget.style.background = "#f1f5f9";
+                                e.currentTarget.style.color = "#475569";
+                                e.currentTarget.style.borderColor = "#e2e8f0";
+                              }}
+                              title="View Resume"
+                            >
+                              📄 View
+                            </button>
+                          ) : (
+                            <span
+                              style={{ color: "#94a3b8", fontSize: "12px" }}
+                            >
+                              -
+                            </span>
+                          )}
+                        </td>
+
+                        {/* Action */}
+                        <td style={{ textAlign: "center" }}>
+                          <button
+                            onClick={() => void handleView(recruitment)}
+                            style={getViewButtonStyle(isRowHovered)}
+                            title="View Details"
+                          >
+                            View
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  })
                 )}
               </tbody>
             </table>
           </div>
 
-          {/* PAGINATION */}
+          {/* Pagination */}
           {totalPages > 1 && (
-            <div style={paginationContainerStyle}>
-              <button
-                style={
-                  currentPage === 1 ? disabledNavButtonStyle : navButtonStyle
-                }
-                onClick={() => handlePageChange(1)}
-                disabled={currentPage === 1}
-              >
-                ⏮️ First
-              </button>
-              <button
-                style={
-                  currentPage === 1 ? disabledNavButtonStyle : navButtonStyle
-                }
-                onClick={() => handlePageChange(currentPage - 1)}
-                disabled={currentPage === 1}
-              >
-                ◀️ Prev
-              </button>
-              <div style={{ display: "flex", gap: "6px", margin: "0 10px" }}>
-                {getPageNumbers().map((page, index) =>
-                  typeof page === "number" ? (
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "center",
+                alignItems: "center",
+                marginTop: "16px",
+                padding: "12px",
+                background: "#ffffff",
+                borderRadius: "8px",
+                border: "1px solid #e2e8f0",
+              }}
+            >
+              <div className={styles.paginationControls}>
+                <button
+                  className={styles.paginationBtn}
+                  onClick={() => handlePageChange(currentPage - 1)}
+                  disabled={currentPage === 1}
+                >
+                  ← Prev
+                </button>
+
+                <div className={styles.pageNumbers}>
+                  {getPageNumbers().map((page, index) => (
                     <button
                       key={index}
-                      style={
-                        page === currentPage
-                          ? activePageButtonStyle
-                          : pageButtonStyle
+                      className={`${styles.pageNumber} ${
+                        page === currentPage ? styles.activePage : ""
+                      } ${page === "..." ? styles.ellipsis : ""}`}
+                      onClick={() =>
+                        typeof page === "number" && handlePageChange(page)
                       }
-                      onClick={() => handlePageChange(page)}
+                      disabled={page === "..."}
                     >
                       {page}
                     </button>
-                  ) : (
-                    <span
-                      key={index}
-                      style={{
-                        padding: "8px 12px",
-                        color: "#999",
-                        fontWeight: 600,
-                      }}
-                    >
-                      {page}
-                    </span>
-                  ),
-                )}
+                  ))}
+                </div>
+
+                <button
+                  className={styles.paginationBtn}
+                  onClick={() => handlePageChange(currentPage + 1)}
+                  disabled={currentPage === totalPages}
+                >
+                  Next →
+                </button>
               </div>
-              <button
-                style={
-                  currentPage === totalPages
-                    ? disabledNavButtonStyle
-                    : navButtonStyle
-                }
-                onClick={() => handlePageChange(currentPage + 1)}
-                disabled={currentPage === totalPages}
-              >
-                Next ▶️
-              </button>
-              <button
-                style={
-                  currentPage === totalPages
-                    ? disabledNavButtonStyle
-                    : navButtonStyle
-                }
-                onClick={() => handlePageChange(totalPages)}
-                disabled={currentPage === totalPages}
-              >
-                Last ⏭️
-              </button>
             </div>
           )}
         </>
       )}
-
-      {/* CSS Animation */}
-      <style>
-        {`
-          @keyframes slideIn {
-            from {
-              opacity: 0;
-              transform: translateY(-20px) scale(0.95);
-            }
-            to {
-              opacity: 1;
-              transform: translateY(0) scale(1);
-            }
-          }
-        `}
-      </style>
     </div>
   );
 };
