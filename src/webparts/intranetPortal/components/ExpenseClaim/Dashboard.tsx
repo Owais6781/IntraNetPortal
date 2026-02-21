@@ -3,18 +3,35 @@ import { WebPartContext } from "@microsoft/sp-webpart-base";
 import { spfi, SPFx } from "@pnp/sp";
 import { Icon } from "@fluentui/react/lib/Icon";
 import { useNavigate } from "react-router-dom";
+
 import "@pnp/sp/webs";
 import "@pnp/sp/lists";
 import "@pnp/sp/fields";
 import "@pnp/sp/items";
+import "@pnp/sp/site-users/web"; // ✅ currentUser
 
 type Props = {
   context: WebPartContext;
+
+  /** Expense header list (dashboard source) */
   empListTitle?: string;
+
+  /** Expense line items list (delete child items) */
+  claimListTitle?: string;
+
+  /** ✅ EmployeeDirectory list (RBAC mapping source) */
+  employeeDirectoryListTitle?: string;
+
+  /** EmployeeDirectory column display names (as per your screenshot) */
+  directoryEmployeeFieldDisplayName?: string; // default: "Email"
+  directoryManagerFieldDisplayName?: string; // default: "Manager"
+  directoryDirectorFieldDisplayName?: string; // default: "Director"
+  directoryHRFieldDisplayName?: string; // default: "HR"
+
   expenseClaimRoute?: string;
   expenseViewRouteTemplate?: string;
   expenseEditRouteTemplate?: string;
-  claimListTitle?: string;
+
   onNavigateToExpenseClaim?: () => void;
 };
 
@@ -27,7 +44,12 @@ type EmpRow = {
   TotalAmount?: string | number;
   Status?: string;
   Created?: string;
+
+  /** ✅ used to ensure employee can only edit/delete own */
+  AuthorId?: number;
 };
+
+type Me = { Id: number; Title?: string; Email?: string };
 
 const normalizeKey = (text: string) => (text || "").toLowerCase().replace(/\s+/g, "").trim();
 
@@ -39,10 +61,6 @@ const normalizeStatus = (s?: string) =>
 
 type StatusType = "approved" | "pending" | "rejected" | "draft" | "other";
 
-/**
- * ✅ Pending includes: Pending, Pending for Approval, Awaiting, Submitted, In Progress,
- * ✅ Send Back / Sent Back (with or without spaces)
- */
 const getStatusType = (status?: string): StatusType => {
   const t = normalizeStatus(status);
   if (!t) return "other";
@@ -52,7 +70,6 @@ const getStatusType = (status?: string): StatusType => {
   if (t === "approved" || t.includes("approve")) return "approved";
 
   const tNoSpace = t.replace(/\s+/g, "");
-
   if (
     t === "pending" ||
     t.includes("pending") ||
@@ -90,11 +107,7 @@ const formatCurrency = (amount: number) => {
 
 const formatDate = (dateStr?: string) => {
   if (!dateStr) return "-";
-  return new Date(dateStr).toLocaleDateString("en-US", {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-  });
+  return new Date(dateStr).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" });
 };
 
 type NavAction = "BACK" | "ADD" | "VIEW";
@@ -122,10 +135,24 @@ const buildViewRoute = (template: string, row?: EmpRow) => {
   return result;
 };
 
+/** builds: (Field eq 1) or (Field eq 2) ... */
+const buildOrIdFilter = (field: string, ids: number[]) => {
+  const uniq = Array.from(new Set(ids.filter((x) => Number.isFinite(x))));
+  if (uniq.length === 0) return "";
+  return uniq.map((id) => `(${field} eq ${id})`).join(" or ");
+};
+
 const ExpenseDashboard: React.FC<Props> = ({
   context,
   empListTitle = "ExpenseEmpData",
   claimListTitle = "ExpenseClaim",
+
+  employeeDirectoryListTitle = "EmployeeDirectory",
+  directoryEmployeeFieldDisplayName = "Email",
+  directoryManagerFieldDisplayName = "Manager",
+  directoryDirectorFieldDisplayName = "Director",
+  directoryHRFieldDisplayName = "HR",
+
   expenseClaimRoute = "/expense-claims/add",
   expenseViewRouteTemplate = "/expense-claims/:id",
   expenseEditRouteTemplate = "/expense-claims/edit/:id",
@@ -134,96 +161,83 @@ const ExpenseDashboard: React.FC<Props> = ({
   const sp = React.useMemo(() => spfi().using(SPFx(context)), [context]);
   const navigate = useNavigate();
 
+  const [me, setMe] = React.useState<Me | null>(null);
+
   const [loading, setLoading] = React.useState(true);
   const [rows, setRows] = React.useState<EmpRow[]>([]);
   const [searchTerm, setSearchTerm] = React.useState("");
   const [statusFilter, setStatusFilter] = React.useState("all");
   const [deleting, setDeleting] = React.useState<number | null>(null);
-  const [deleteError, setDeleteError] = React.useState("");
 
-  // ✅ NEW: Page size selector (default 8)
   const [pageSize, setPageSize] = React.useState<number>(8);
   const [currentPage, setCurrentPage] = React.useState<number>(1);
 
-  // ✅ ONLY ONE navigation handler for Back/Add/View
+  // ✅ Navigation
   const handleNavigation = React.useCallback(
     (action: NavAction, row?: EmpRow) => {
-      if (action === "BACK") {
-        navigate(-1);
-        return;
-      }
+      if (action === "BACK") return navigate(-1);
 
       if (action === "ADD") {
         onNavigateToExpenseClaim?.();
-        navigate(expenseClaimRoute);
-        return;
+        return navigate(expenseClaimRoute);
       }
 
       if (action === "VIEW") {
         if (!row) return;
-        const route = buildViewRoute(expenseViewRouteTemplate, row);
-        navigate(route);
+        return navigate(buildViewRoute(expenseViewRouteTemplate, row));
       }
     },
     [navigate, expenseClaimRoute, expenseViewRouteTemplate, onNavigateToExpenseClaim]
   );
 
-  // ✅ Edit handler
   const handleEdit = React.useCallback(
     (row: EmpRow) => {
-      const route = buildViewRoute(expenseEditRouteTemplate, row);
-      navigate(route);
+      navigate(buildViewRoute(expenseEditRouteTemplate, row));
     },
     [navigate, expenseEditRouteTemplate]
   );
 
-  // ✅ Delete handler (UPDATED: also deletes log history from ExpenseApproverData)
+  // ✅ employee can only manage own claim (based on AuthorId)
+  const canManage = React.useCallback((row: EmpRow) => !!me && row.AuthorId === me.Id, [me]);
+
+  // ✅ Delete handler (employee-only) + deletes claim lines + log history
   const handleDelete = React.useCallback(
     async (row: EmpRow) => {
-      if (!window.confirm(`Are you sure you want to delete claim ${row.Title}? This action cannot be undone.`)) {
+      if (!canManage(row)) {
         return;
       }
 
+      if (!window.confirm(`Are you sure you want to delete claim ${row.Title}? This action cannot be undone.`)) return;
+
       try {
         setDeleting(row.Id);
-        setDeleteError("");
+
 
         const empList = sp.web.lists.getByTitle(empListTitle);
         const claimList = sp.web.lists.getByTitle(claimListTitle);
-
-        // ✅ Log history list (your screenshot)
         const logList = sp.web.lists.getByTitle("ExpenseApproverData");
 
-        // 1) Delete all line items in ExpenseClaim with matching Title
         const safeTitle = String(row.Title || "").replace(/'/g, "''");
+
         const claimItems: any[] = await claimList.items.filter(`Title eq '${safeTitle}'`).select("Id").top(5000)();
+        for (const item of claimItems) await claimList.items.getById(item.Id).delete();
 
-        for (const item of claimItems) {
-          await claimList.items.getById(item.Id).delete();
-        }
-
-        // ✅ 2) Delete all log history items in ExpenseApproverData with matching Title
         const logItems: any[] = await logList.items.filter(`Title eq '${safeTitle}'`).select("Id").top(5000)();
+        for (const item of logItems) await logList.items.getById(item.Id).delete();
 
-        for (const item of logItems) {
-          await logList.items.getById(item.Id).delete();
-        }
-
-        // 3) Delete header in ExpenseEmpData
         await empList.items.getById(row.Id).delete();
 
-        // 4) Update local state
-        setRows((prevRows) => prevRows.filter((r) => r.Id !== row.Id));
+        setRows((prev) => prev.filter((r) => r.Id !== row.Id));
       } catch (e: any) {
-        setDeleteError(e?.message || "Failed to delete claim.");
       } finally {
         setDeleting(null);
       }
     },
-    [sp, empListTitle, claimListTitle]
+    [sp, empListTitle, claimListTitle, canManage]
   );
 
-  const getFieldInternals = React.useCallback(async () => {
+  // ✅ Get internal names from ExpenseEmpData
+  const getExpenseFieldInternals = React.useCallback(async () => {
     const list = sp.web.lists.getByTitle(empListTitle);
     const fields: any[] = await list.fields.select("InternalName", "Title", "Hidden")();
 
@@ -244,6 +258,52 @@ const ExpenseDashboard: React.FC<Props> = ({
     };
   }, [sp, empListTitle]);
 
+  const getAssignedEmployeeUserIdsFromDirectory = React.useCallback(
+    async (currentUserId: number) => {
+      const dirList = sp.web.lists.getByTitle(employeeDirectoryListTitle);
+      const fields: any[] = await dirList.fields.select("InternalName", "Title", "Hidden")();
+
+      const map: Record<string, string> = {};
+      for (const f of fields) {
+        if (f.Hidden) continue;
+        map[normalizeKey(String(f.Title))] = String(f.InternalName);
+      }
+
+      const empInternal = map[normalizeKey(directoryEmployeeFieldDisplayName)];
+      const mgrInternal = map[normalizeKey(directoryManagerFieldDisplayName)];
+      const dirInternal = map[normalizeKey(directoryDirectorFieldDisplayName)];
+      const hrInternal = map[normalizeKey(directoryHRFieldDisplayName)];
+
+      if (!empInternal) throw new Error(`EmployeeDirectory column not found: "${directoryEmployeeFieldDisplayName}"`);
+      if (!mgrInternal) throw new Error(`EmployeeDirectory column not found: "${directoryManagerFieldDisplayName}"`);
+      if (!dirInternal) throw new Error(`EmployeeDirectory column not found: "${directoryDirectorFieldDisplayName}"`);
+      if (!hrInternal) throw new Error(`EmployeeDirectory column not found: "${directoryHRFieldDisplayName}"`);
+
+      const empIdField = `${empInternal}Id`;
+
+      // Filter: where current user is Manager/Director/HR
+      const f = `(${mgrInternal}Id eq ${currentUserId}) or (${dirInternal}Id eq ${currentUserId}) or (${hrInternal}Id eq ${currentUserId})`;
+
+      const items: any[] = await dirList.items.select("Id", empIdField).filter(f).top(5000)();
+
+      const empUserIds = items.map((it) => it[empIdField]).filter((x) => Number.isFinite(x)) as number[];
+      return Array.from(new Set(empUserIds));
+    },
+    [
+      sp,
+      // employeeDirectoryListTitle,
+      // directoryEmployeeFieldDisplayName,
+      // directoryManagerFieldDisplayName,
+      // directoryDirectorFieldDisplayName,
+      // directoryHRFieldDisplayName,
+    ]
+  );
+
+  /**
+   * ✅ MAIN LOAD with RBAC:
+   * - Employee sees only own claims (AuthorId == me.Id)
+   * - Approver sees own + assigned employees claims (AuthorId in {me.Id, assignedEmployeeIds})
+   */
   React.useEffect(() => {
     let mounted = true;
 
@@ -251,8 +311,29 @@ const ExpenseDashboard: React.FC<Props> = ({
       try {
         setLoading(true);
 
+        // current user
+        const current = await sp.web.currentUser.select("Id", "Title", "Email")();
+        if (!mounted) return;
+        setMe({ Id: current.Id, Title: current.Title, Email: current.Email });
+
+        // who are assigned to me (as Manager/Director/HR)
+        let assignedEmployeeIds: number[] = [];
+        try {
+          assignedEmployeeIds = await getAssignedEmployeeUserIdsFromDirectory(current.Id);
+        } catch {
+          // If directory mapping fails, fallback to only own
+          assignedEmployeeIds = [];
+        }
+
+        // build RBAC filter for ExpenseEmpData (using AuthorId)
+        const idsForExpense = Array.from(new Set([current.Id, ...assignedEmployeeIds]));
+
+        // NOTE: If you have huge number of assigned employees, this OR filter can get long.
+        // In that case we can switch to paging + client filter, or you should store Employee(Person) in ExpenseEmpData.
+        const rbacFilter = buildOrIdFilter("AuthorId", idsForExpense) || `(AuthorId eq ${current.Id})`;
+
         const list = sp.web.lists.getByTitle(empListTitle);
-        const internal = await getFieldInternals();
+        const internal = await getExpenseFieldInternals();
 
         const selectCols = [
           "Id",
@@ -263,10 +344,14 @@ const ExpenseDashboard: React.FC<Props> = ({
           internal.TotalAmount,
           internal.Status,
           "Created",
+          "AuthorId", // ✅ required for RBAC + edit/delete permission
         ];
 
-        const uniqueSelect = Array.from(new Set(selectCols));
-        const items: any[] = await list.items.select(...uniqueSelect).orderBy("Created", false).top(200)();
+        const items: any[] = await list.items
+          .select(...Array.from(new Set(selectCols)))
+          .filter(rbacFilter)
+          .orderBy("Created", false)
+          .top(200)();
 
         const mapped: EmpRow[] = items.map((it) => ({
           Id: it.Id,
@@ -277,11 +362,13 @@ const ExpenseDashboard: React.FC<Props> = ({
           TotalAmount: it[internal.TotalAmount],
           Status: it[internal.Status],
           Created: it.Created,
+          AuthorId: it.AuthorId,
         }));
 
         if (mounted) setRows(mapped);
       } catch (e: any) {
-        // optional: console.error(e);
+        // you can show error if you want
+        // setDeleteError(e?.message || "Failed to load data.");
       } finally {
         if (mounted) setLoading(false);
       }
@@ -291,9 +378,9 @@ const ExpenseDashboard: React.FC<Props> = ({
     return () => {
       mounted = false;
     };
-  }, [sp, empListTitle, getFieldInternals]);
+  }, [sp, empListTitle, getExpenseFieldInternals, getAssignedEmployeeUserIdsFromDirectory]);
 
-  // ✅ SUMMARY (Draft + Pending includes Send Back)
+  // ✅ SUMMARY
   const summary = React.useMemo(() => {
     const total = rows.length;
     const draft = rows.filter((r) => getStatusType(r.Status) === "draft").length;
@@ -301,11 +388,10 @@ const ExpenseDashboard: React.FC<Props> = ({
     const approved = rows.filter((r) => getStatusType(r.Status) === "approved").length;
     const rejected = rows.filter((r) => getStatusType(r.Status) === "rejected").length;
     const totalAmount = rows.reduce((acc, r) => acc + parseMoney(r.TotalAmount), 0);
-
     return { total, draft, pending, approved, rejected, totalAmount };
   }, [rows]);
 
-  // ✅ FILTER (Pending filter matches Pending/Send Back/etc.)
+  // ✅ FILTER
   const filteredRows = React.useMemo(() => {
     return rows.filter((r) => {
       const matchesSearch =
@@ -321,78 +407,51 @@ const ExpenseDashboard: React.FC<Props> = ({
     });
   }, [rows, searchTerm, statusFilter]);
 
-  // ✅ Reset pagination when filter/search changes OR page size changes
   React.useEffect(() => {
     setCurrentPage(1);
   }, [searchTerm, statusFilter, pageSize]);
 
-  // ✅ Pagination calculations
-  const totalPages = React.useMemo(() => {
-    return Math.max(1, Math.ceil(filteredRows.length / pageSize));
-  }, [filteredRows.length, pageSize]);
+  const totalPages = React.useMemo(() => Math.max(1, Math.ceil(filteredRows.length / pageSize)), [
+    filteredRows.length,
+    pageSize,
+  ]);
 
-  // keep current page valid if data count changes
   React.useEffect(() => {
     if (currentPage > totalPages) setCurrentPage(totalPages);
   }, [currentPage, totalPages]);
 
   const pageStartIndex = (currentPage - 1) * pageSize;
   const pageEndIndexExclusive = Math.min(pageStartIndex + pageSize, filteredRows.length);
-  const visibleRows = React.useMemo(() => {
-    return filteredRows.slice(pageStartIndex, pageEndIndexExclusive);
-  }, [filteredRows, pageStartIndex, pageEndIndexExclusive]);
+
+  const visibleRows = React.useMemo(
+    () => filteredRows.slice(pageStartIndex, pageEndIndexExclusive),
+    [filteredRows, pageStartIndex, pageEndIndexExclusive]
+  );
 
   const getStatusBadge = (status?: string) => {
     const type = getStatusType(status);
 
     const badgeConfig: Record<StatusType, { bg: string; text: string; icon: string }> = {
-      approved: {
-        bg: "bg-gradient-to-r from-emerald-50 to-green-50 border-emerald-200",
-        text: "text-emerald-700",
-        icon: "CheckMark",
-      },
-      pending: {
-        bg: "bg-gradient-to-r from-amber-50 to-yellow-50 border-amber-200",
-        text: "text-amber-700",
-        icon: "Clock",
-      },
-      rejected: {
-        bg: "bg-gradient-to-r from-red-50 to-rose-50 border-red-200",
-        text: "text-red-700",
-        icon: "Cancel",
-      },
-      draft: {
-        bg: "bg-gradient-to-r from-slate-50 to-gray-50 border-slate-200",
-        text: "text-slate-700",
-        icon: "Edit",
-      },
-      other: {
-        bg: "bg-gray-50 border-gray-200",
-        text: "text-gray-600",
-        icon: "StatusCircleQuestionMark",
-      },
+      approved: { bg: "bg-gradient-to-r from-emerald-50 to-green-50 border-emerald-200", text: "text-emerald-700", icon: "CheckMark" },
+      pending: { bg: "bg-gradient-to-r from-amber-50 to-yellow-50 border-amber-200", text: "text-amber-700", icon: "Clock" },
+      rejected: { bg: "bg-gradient-to-r from-red-50 to-rose-50 border-red-200", text: "text-red-700", icon: "Cancel" },
+      draft: { bg: "bg-gradient-to-r from-slate-50 to-gray-50 border-slate-200", text: "text-slate-700", icon: "Edit" },
+      other: { bg: "bg-gray-50 border-gray-200", text: "text-gray-600", icon: "StatusCircleQuestionMark" },
     };
 
     const config = badgeConfig[type];
-
     return (
-      <span
-        className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold border ${config.bg} ${config.text}`}
-      >
+      <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold border ${config.bg} ${config.text}`}>
         <Icon iconName={config.icon} className="text-[10px]" />
         {status || "Unknown"}
       </span>
     );
   };
 
-  // ✅ NEW: clicking any stats container will filter the dashboard table
-  const handleContainerFilter = React.useCallback(
-    (filter: "all" | "draft" | "pending" | "approved" | "rejected") => {
-      setStatusFilter(filter);
-      setCurrentPage(1);
-    },
-    []
-  );
+  const handleContainerFilter = React.useCallback((filter: "all" | "draft" | "pending" | "approved" | "rejected") => {
+    setStatusFilter(filter);
+    setCurrentPage(1);
+  }, []);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100 p-4 md:p-6">
@@ -400,7 +459,6 @@ const ExpenseDashboard: React.FC<Props> = ({
       <div className="bg-white rounded-2xl shadow-lg shadow-slate-200/60 border border-slate-100 p-4 md:p-5 mb-5">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
           <div className="flex items-center gap-3">
-            {/* Back Button */}
             <button
               type="button"
               onClick={() => handleNavigation("BACK")}
@@ -410,7 +468,6 @@ const ExpenseDashboard: React.FC<Props> = ({
               <Icon iconName="ChevronLeft" />
             </button>
 
-            {/* Money Icon */}
             <div className="relative">
               <div className="w-12 h-12 bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 rounded-xl flex items-center justify-center shadow-lg shadow-indigo-500/30">
                 <Icon iconName="Money" className="text-white text-xl" />
@@ -418,19 +475,13 @@ const ExpenseDashboard: React.FC<Props> = ({
               <div className="absolute -inset-1 bg-gradient-to-br from-indigo-500/20 to-purple-500/20 rounded-xl blur-md -z-10" />
             </div>
 
-            {/* Title */}
-            <div>
+            <div className="min-w-0">
               <h1 className="text-xl md:text-2xl font-bold bg-gradient-to-r from-slate-800 to-slate-600 bg-clip-text text-transparent">
                 Expense Dashboard
               </h1>
-              <p className="flex items-center gap-1.5 mt-0.5 text-xs text-slate-500">
-                <Icon iconName="Calendar" className="text-slate-400 text-xs" />
-                Track and manage expense claims
-              </p>
             </div>
           </div>
 
-          {/* Add Button */}
           <button
             onClick={() => handleNavigation("ADD")}
             disabled={loading}
@@ -445,25 +496,6 @@ const ExpenseDashboard: React.FC<Props> = ({
         </div>
       </div>
 
-      {/* Delete Error Alert */}
-      {deleteError && (
-        <div className="flex items-center gap-3 p-3 bg-gradient-to-r from-red-50 to-rose-50 border border-red-200 rounded-xl mb-5">
-          <div className="w-8 h-8 bg-red-500 rounded-lg flex items-center justify-center shrink-0">
-            <Icon iconName="ErrorBadge" className="text-white text-sm" />
-          </div>
-          <div className="flex-1 min-w-0">
-            <span className="font-semibold text-red-800 text-xs">Delete Error</span>
-            <p className="text-red-600 text-xs mt-0.5 truncate">{deleteError}</p>
-          </div>
-          <button
-            onClick={() => setDeleteError("")}
-            className="w-7 h-7 rounded-lg hover:bg-red-100 flex items-center justify-center text-red-500 transition-colors shrink-0"
-          >
-            <Icon iconName="Cancel" className="text-xs" />
-          </button>
-        </div>
-      )}
-
       {/* Stats Cards */}
       <div className="flex flex-wrap gap-3 mb-5">
         <div
@@ -472,63 +504,34 @@ const ExpenseDashboard: React.FC<Props> = ({
           title="Show all claims"
           role="button"
           tabIndex={0}
-          onKeyDown={(e) => {
-            if (e.key === "Enter" || e.key === " ") handleContainerFilter("all");
-          }}
+          onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && handleContainerFilter("all")}
         >
-          <div className="relative z-10 flex items-center gap-2.5">
-            <div className="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center shrink-0">
-              <Icon iconName="DocumentSet" className="text-base" />
-            </div>
-            <div className="min-w-0">
-              <p className="text-[10px] font-medium uppercase tracking-wide opacity-80 truncate">Total Claims</p>
-              <p className="text-xl font-bold leading-tight">{summary.total}</p>
-            </div>
-          </div>
+          <p className="text-[10px] font-medium uppercase tracking-wide opacity-80 truncate">Total Claims</p>
+          <p className="text-xl font-bold leading-tight">{summary.total}</p>
         </div>
 
-        {/* Draft */}
         <div
           onClick={() => handleContainerFilter("draft")}
           className="flex-1 min-w-[140px] max-w-[200px] relative overflow-hidden bg-gradient-to-br from-slate-500 via-gray-500 to-slate-600 rounded-xl p-3 text-white shadow-lg shadow-slate-500/20 cursor-pointer"
           title="Show draft claims"
           role="button"
           tabIndex={0}
-          onKeyDown={(e) => {
-            if (e.key === "Enter" || e.key === " ") handleContainerFilter("draft");
-          }}
+          onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && handleContainerFilter("draft")}
         >
-          <div className="relative z-10 flex items-center gap-2.5">
-            <div className="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center shrink-0">
-              <Icon iconName="Edit" className="text-base" />
-            </div>
-            <div className="min-w-0">
-              <p className="text-[10px] font-medium uppercase tracking-wide opacity-80 truncate">Draft</p>
-              <p className="text-xl font-bold leading-tight">{summary.draft}</p>
-            </div>
-          </div>
+          <p className="text-[10px] font-medium uppercase tracking-wide opacity-80 truncate">Draft</p>
+          <p className="text-xl font-bold leading-tight">{summary.draft}</p>
         </div>
 
-        {/* Pending */}
         <div
           onClick={() => handleContainerFilter("pending")}
           className="flex-1 min-w-[140px] max-w-[200px] relative overflow-hidden bg-gradient-to-br from-amber-400 via-orange-400 to-amber-500 rounded-xl p-3 text-white shadow-lg shadow-amber-500/20 cursor-pointer"
           title="Show pending claims"
           role="button"
           tabIndex={0}
-          onKeyDown={(e) => {
-            if (e.key === "Enter" || e.key === " ") handleContainerFilter("pending");
-          }}
+          onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && handleContainerFilter("pending")}
         >
-          <div className="relative z-10 flex items-center gap-2.5">
-            <div className="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center shrink-0">
-              <Icon iconName="Clock" className="text-base" />
-            </div>
-            <div className="min-w-0">
-              <p className="text-[10px] font-medium uppercase tracking-wide opacity-80 truncate">Pending</p>
-              <p className="text-xl font-bold leading-tight">{summary.pending}</p>
-            </div>
-          </div>
+          <p className="text-[10px] font-medium uppercase tracking-wide opacity-80 truncate">Pending</p>
+          <p className="text-xl font-bold leading-tight">{summary.pending}</p>
         </div>
 
         <div
@@ -537,19 +540,10 @@ const ExpenseDashboard: React.FC<Props> = ({
           title="Show approved claims"
           role="button"
           tabIndex={0}
-          onKeyDown={(e) => {
-            if (e.key === "Enter" || e.key === " ") handleContainerFilter("approved");
-          }}
+          onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && handleContainerFilter("approved")}
         >
-          <div className="relative z-10 flex items-center gap-2.5">
-            <div className="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center shrink-0">
-              <Icon iconName="CheckMark" className="text-base" />
-            </div>
-            <div className="min-w-0">
-              <p className="text-[10px] font-medium uppercase tracking-wide opacity-80 truncate">Approved</p>
-              <p className="text-xl font-bold leading-tight">{summary.approved}</p>
-            </div>
-          </div>
+          <p className="text-[10px] font-medium uppercase tracking-wide opacity-80 truncate">Approved</p>
+          <p className="text-xl font-bold leading-tight">{summary.approved}</p>
         </div>
 
         <div
@@ -558,49 +552,28 @@ const ExpenseDashboard: React.FC<Props> = ({
           title="Show rejected claims"
           role="button"
           tabIndex={0}
-          onKeyDown={(e) => {
-            if (e.key === "Enter" || e.key === " ") handleContainerFilter("rejected");
-          }}
+          onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && handleContainerFilter("rejected")}
         >
-          <div className="relative z-10 flex items-center gap-2.5">
-            <div className="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center shrink-0">
-              <Icon iconName="Cancel" className="text-base" />
-            </div>
-            <div className="min-w-0">
-              <p className="text-[10px] font-medium uppercase tracking-wide opacity-80 truncate">Rejected</p>
-              <p className="text-xl font-bold leading-tight">{summary.rejected}</p>
-            </div>
-          </div>
+          <p className="text-[10px] font-medium uppercase tracking-wide opacity-80 truncate">Rejected</p>
+          <p className="text-xl font-bold leading-tight">{summary.rejected}</p>
         </div>
 
-        {/* Total Amount */}
         <div
           onClick={() => handleContainerFilter("all")}
           className="flex-1 min-w-[240px] bg-white rounded-xl p-3 shadow-lg shadow-slate-200/60 border border-slate-100 cursor-pointer"
           title="Show all claims"
           role="button"
           tabIndex={0}
-          onKeyDown={(e) => {
-            if (e.key === "Enter" || e.key === " ") handleContainerFilter("all");
-          }}
+          onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && handleContainerFilter("all")}
         >
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-gradient-to-br from-emerald-500 to-teal-500 rounded-lg flex items-center justify-center shadow-md shadow-emerald-500/25 shrink-0">
-              <Icon iconName="AllCurrency" className="text-white text-lg" />
-            </div>
-            <div className="min-w-0 flex-1">
-              <p className="text-[10px] font-medium text-slate-500 uppercase tracking-wide">Total Amount</p>
-              <p className="text-lg font-bold text-emerald-600 leading-tight whitespace-normal break-all">
-                {formatCurrency(summary.totalAmount)}
-              </p>
-            </div>
-          </div>
+          <p className="text-[10px] font-medium text-slate-500 uppercase tracking-wide">Total Amount</p>
+          <p className="text-lg font-bold text-emerald-600 break-all">{formatCurrency(summary.totalAmount)}</p>
         </div>
       </div>
 
       {/* Table Section */}
       <div className="bg-white rounded-2xl shadow-lg shadow-slate-200/60 border border-slate-100 overflow-hidden">
-        {/* Table Header with Search & Filter */}
+        {/* Header */}
         <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-3 p-4 border-b border-slate-100 bg-gradient-to-b from-slate-50/80 to-white">
           <div className="flex items-center gap-2 flex-wrap">
             <Icon iconName="Table" className="text-indigo-500 text-base" />
@@ -615,7 +588,7 @@ const ExpenseDashboard: React.FC<Props> = ({
                 value={pageSize}
                 onChange={(e) => setPageSize(parseInt(e.target.value, 10))}
                 disabled={loading}
-                className="pl-7 pr-6 py-1.5 border border-slate-200 rounded-full text-[10px] bg-white focus:bg-white focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 outline-none transition-all appearance-none cursor-pointer disabled:opacity-60"
+                className="pl-7 pr-6 py-1.5 border border-slate-200 rounded-full text-[10px] bg-white outline-none appearance-none cursor-pointer disabled:opacity-60"
                 title="How many records to show"
               >
                 <option value={8}>Show 8</option>
@@ -633,7 +606,7 @@ const ExpenseDashboard: React.FC<Props> = ({
                 placeholder="Search..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full lg:w-48 pl-8 pr-8 py-2 border-2 border-slate-200 rounded-lg text-xs bg-slate-50 focus:bg-white focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 outline-none transition-all"
+                className="w-full lg:w-48 pl-8 pr-8 py-2 border-2 border-slate-200 rounded-lg text-xs bg-slate-50 focus:bg-white outline-none"
               />
               {searchTerm && (
                 <button
@@ -646,14 +619,11 @@ const ExpenseDashboard: React.FC<Props> = ({
             </div>
 
             <div className="relative">
-              <Icon
-                iconName="Filter"
-                className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs pointer-events-none"
-              />
+              <Icon iconName="Filter" className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs pointer-events-none" />
               <select
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
-                className="pl-8 pr-6 py-2 border-2 border-slate-200 rounded-lg text-xs bg-slate-50 focus:bg-white focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 outline-none transition-all appearance-none cursor-pointer"
+                className="pl-8 pr-6 py-2 border-2 border-slate-200 rounded-lg text-xs bg-slate-50 focus:bg-white outline-none appearance-none cursor-pointer"
               >
                 <option value="all">All Status</option>
                 <option value="draft">Draft</option>
@@ -679,10 +649,7 @@ const ExpenseDashboard: React.FC<Props> = ({
             <div className="flex flex-col items-center justify-center py-16 text-slate-500 gap-3">
               <div className="relative w-12 h-12">
                 <div className="absolute inset-0 border-3 border-slate-200 border-t-indigo-500 rounded-full animate-spin" />
-                <Icon
-                  iconName="Sync"
-                  className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-indigo-500 text-base"
-                />
+                <Icon iconName="Sync" className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-indigo-500 text-base" />
               </div>
               <span className="text-xs">Loading claims data...</span>
             </div>
@@ -784,20 +751,22 @@ const ExpenseDashboard: React.FC<Props> = ({
                             <Icon iconName="View" className="text-xs" />
                           </button>
 
+                          {/* ✅ employee-only edit */}
                           <button
                             onClick={() => handleEdit(row)}
-                            className="w-7 h-7 border border-slate-200 bg-white hover:border-emerald-400 hover:text-emerald-500 hover:bg-emerald-50 rounded-md flex items-center justify-center text-slate-500 transition-all opacity-70 group-hover:opacity-100"
-                            title="Edit"
-                            disabled={deleting === row.Id}
+                            className="w-7 h-7 border border-slate-200 bg-white hover:border-emerald-400 hover:text-emerald-500 hover:bg-emerald-50 rounded-md flex items-center justify-center text-slate-500 transition-all opacity-70 group-hover:opacity-100 disabled:opacity-40 disabled:cursor-not-allowed"
+                            title={canManage(row) ? "Edit" : "You can edit only your own claim"}
+                            disabled={deleting === row.Id || !canManage(row)}
                           >
                             <Icon iconName="Edit" className="text-xs" />
                           </button>
 
+                          {/* ✅ employee-only delete */}
                           <button
                             onClick={() => handleDelete(row)}
-                            disabled={deleting === row.Id}
-                            className="w-7 h-7 border border-slate-200 bg-white hover:border-red-400 hover:text-red-500 hover:bg-red-50 rounded-md flex items-center justify-center text-slate-500 transition-all opacity-70 group-hover:opacity-100 disabled:opacity-50 disabled:cursor-not-allowed"
-                            title="Delete"
+                            disabled={deleting === row.Id || !canManage(row)}
+                            className="w-7 h-7 border border-slate-200 bg-white hover:border-red-400 hover:text-red-500 hover:bg-red-50 rounded-md flex items-center justify-center text-slate-500 transition-all opacity-70 group-hover:opacity-100 disabled:opacity-40 disabled:cursor-not-allowed"
+                            title={canManage(row) ? "Delete" : "You can delete only your own claim"}
                           >
                             {deleting === row.Id ? (
                               <div className="animate-spin">
@@ -817,15 +786,12 @@ const ExpenseDashboard: React.FC<Props> = ({
           )}
         </div>
 
-        {/* ✅ Pagination footer (now working) */}
+        {/* Pagination footer */}
         {!loading && filteredRows.length > 0 && (
           <div className="flex flex-col sm:flex-row justify-between items-center gap-3 px-4 py-3 border-t border-slate-100 bg-slate-50/50">
             <p className="text-xs text-slate-500">
-              Showing{" "}
-              <span className="font-semibold text-slate-700">
-                {filteredRows.length === 0 ? 0 : pageStartIndex + 1}
-              </span>{" "}
-              to <span className="font-semibold text-slate-700">{pageEndIndexExclusive}</span> of{" "}
+              Showing <span className="font-semibold text-slate-700">{pageStartIndex + 1}</span> to{" "}
+              <span className="font-semibold text-slate-700">{pageEndIndexExclusive}</span> of{" "}
               <span className="font-semibold text-slate-700">{filteredRows.length}</span> claims
             </p>
 
@@ -833,7 +799,7 @@ const ExpenseDashboard: React.FC<Props> = ({
               <button
                 onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
                 disabled={currentPage <= 1}
-                className="w-7 h-7 border border-slate-200 bg-white rounded-md flex items-center justify-center text-slate-500 disabled:text-slate-400 disabled:opacity-50 disabled:cursor-not-allowed hover:border-indigo-400 hover:text-indigo-500 transition-all"
+                className="w-7 h-7 border border-slate-200 bg-white rounded-md flex items-center justify-center text-slate-500 disabled:opacity-50 disabled:cursor-not-allowed hover:border-indigo-400 hover:text-indigo-500 transition-all"
                 title="Previous"
               >
                 <Icon iconName="ChevronLeft" className="text-xs" />
@@ -847,7 +813,7 @@ const ExpenseDashboard: React.FC<Props> = ({
               <button
                 onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
                 disabled={currentPage >= totalPages}
-                className="w-7 h-7 border border-slate-200 bg-white rounded-md flex items-center justify-center text-slate-500 disabled:text-slate-400 disabled:opacity-50 disabled:cursor-not-allowed hover:border-indigo-400 hover:text-indigo-500 transition-all"
+                className="w-7 h-7 border border-slate-200 bg-white rounded-md flex items-center justify-center text-slate-500 disabled:opacity-50 disabled:cursor-not-allowed hover:border-indigo-400 hover:text-indigo-500 transition-all"
                 title="Next"
               >
                 <Icon iconName="ChevronRight" className="text-xs" />

@@ -104,16 +104,14 @@ const inferFieldType = (typeAsString: string, internalName: string, label: strin
   if (n.includes("date") || n.includes("checkin") || n.includes("checkout")) return "date";
   if (n.includes("qty") || n.includes("nights") || n.includes("noof")) return "number";
 
-  if (
-    n.includes("purpose") ||
+  if ( 
     n.includes("description") ||
     n.includes("notes") ||
-    l.includes("purpose") ||
     l.includes("description") ||
     l.includes("notes")
-  )
+  ) {
     return "textarea";
-
+  }
   return "text";
 };
 
@@ -131,36 +129,83 @@ const buildEmptyValuesForCategory = (categoryConfiguration: CategoryConfiguratio
 
 const parseMoney = (value: string) => {
   if (!value) return 0;
-  const n = parseFloat(String(value).replace(/,/g, ""));
+  const n = parseFloat(String(value).replace(/,/g, "").replace(/[^\d.]/g, ""));
   return isFinite(n) ? n : 0;
 };
 
 const pad2 = (n: number) => String(n).padStart(2, "0");
-const escapeRegExp = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+/** ===================== DATE FIX (prevents -1 day) ===================== **/
+const parseYMD = (yyyyMmDd: string) => {
+  const [y, m, d] = (yyyyMmDd || "").split("-").map(Number);
+  if (!y || !m || !d) return null;
+  return { y, m, d };
+};
+
+const dateOnlyToSPDate = (yyyyMmDd: string) => {
+  const p = parseYMD(yyyyMmDd);
+  if (!p) return null;
+  return new Date(Date.UTC(p.y, p.m - 1, p.d, 12, 0, 0));
+};
+/** ===================================================================== **/
 
 const buildECPrefixFromDate = (dateText: string) => {
-  const d = dateText ? new Date(`${dateText}T00:00:00`) : new Date();
-  return `EC-${pad2(d.getMonth() + 1)}-${d.getFullYear()}-`;
+  const p = parseYMD(dateText);
+  const now = new Date();
+  const month = p ? p.m : now.getMonth() + 1;
+  const year = p ? p.y : now.getFullYear();
+  return `EC-${pad2(month)}-${year}-`;
 };
 
-// ✅ Draft prefix in required format: EC-MM-Draft-YYYY-
 const buildECDraftPrefixFromDate = (dateText: string) => {
-  const d = dateText ? new Date(`${dateText}T00:00:00`) : new Date();
-  return `EC-${pad2(d.getMonth() + 1)}-Draft-${d.getFullYear()}-`;
+  const p = parseYMD(dateText);
+  const now = new Date();
+  const month = p ? p.m : now.getMonth() + 1;
+  const year = p ? p.y : now.getFullYear();
+  return `EC-${pad2(month)}-Draft-${year}-`;
 };
 
-const getNextSequenceForPrefix = async (list: any, prefix: string): Promise<number> => {
-  const safePrefix = prefix.replace(/'/g, "''");
-  const items: any[] = await list.items.select("Title").filter(`startswith(Title,'${safePrefix}')`).top(5000)();
+
+const EC_DRAFT_RE = /^EC-\d{2}-Draft-\d{4}-(\d+)$/i;
+const EC_SUBMIT_RE = /^EC-\d{2}-\d{4}-(\d+)$/i;
+
+type ECSeqKind = "draft" | "submit";
+
+const getNextECSequence = async (empList: any, kind: ECSeqKind): Promise<number> => {
+  const re = kind === "draft" ? EC_DRAFT_RE : EC_SUBMIT_RE;
+
   let maxSeq = 0;
-  const re = new RegExp(`^${escapeRegExp(prefix)}(\\d+)$`, "i");
-  for (const it of items) {
-    const m = re.exec(toText(it.Title).trim());
-    if (m?.[1]) {
-      const n = parseInt(m[1]);
-      if (isFinite(n)) maxSeq = Math.max(maxSeq, n);
+
+  const process = (items: any[]) => {
+    for (const it of items || []) {
+      const title = String(it?.Title || "").trim();
+      const m = re.exec(title);
+      if (!m?.[1]) continue;
+      const n = parseInt(m[1], 10);
+      if (Number.isFinite(n)) maxSeq = Math.max(maxSeq, n);
     }
+  };
+
+  // Prefer paged to avoid 5000 limit problems
+  const base = empList.items.select("Title").filter(`startswith(Title,'EC-')`).top(5000);
+
+  // PnP getPaged() exists in most versions; keep fallback if not
+  const hasGetPaged = typeof (base as any).getPaged === "function";
+
+  if (hasGetPaged) {
+    let page = await (base as any).getPaged();
+    process(page.results);
+
+    while (page.hasNext) {
+      page = await page.getNext();
+      process(page.results);
+    }
+  } else {
+    // fallback (may be limited to 5000 in older setups)
+    const items: any[] = await base();
+    process(items);
   }
+
   return maxSeq + 1;
 };
 
@@ -191,8 +236,9 @@ const coerceValueForField = (typeAsString: string, value: any) => {
 
   if (t.includes("datetime")) {
     if (value instanceof Date) return value;
-    const s = String(value);
-    return new Date(s.includes("T") ? s : `${s}T00:00:00`);
+    const s = String(value).trim();
+    if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return dateOnlyToSPDate(s);
+    return new Date(s);
   }
 
   if (t.includes("number") || t.includes("currency") || t.includes("integer")) {
@@ -228,6 +274,85 @@ const buildClaimFieldResolver = async (list: any) => {
     if (byTitle) return { internal: byTitle, typeAsString: internalToType[byTitle] || "Text" };
     return null;
   };
+};
+
+/** ✅ Helper: read real InternalName + Type from SharePoint (fixes Amount not saving) */
+const getFieldInfoSafe = async (list: any, internalNameOrTitle: string): Promise<WritableFieldInfo | null> => {
+  try {
+    const f: any = await list.fields.getByInternalNameOrTitle(internalNameOrTitle).select("InternalName", "TypeAsString")();
+    return {
+      internalName: String(f.InternalName),
+      typeAsString: String(f.TypeAsString || "Text"),
+    };
+  } catch {
+    return null;
+  }
+};
+
+/** ✅ NEW: set Emp list fields (supports Text/Number/Date + Person fields) */
+const toLoginNameForEnsureUser = (raw: string) => {
+  const s = (raw || "").trim();
+  if (!s) return "";
+  if (s.startsWith("i:") || s.includes("|")) return s;
+  if (s.includes("@")) return `i:0#.f|membership|${s.toLowerCase()}`;
+  return s;
+};
+
+const ensureUserIdSafe = async (sp: any, rawUser: string): Promise<number | null> => {
+  const login = toLoginNameForEnsureUser(rawUser);
+  if (!login) return null;
+  try {
+    const r: any = await sp.web.ensureUser(login);
+    const id = r?.data?.Id ?? r?.data?.ID ?? null;
+    return typeof id === "number" ? id : null;
+  } catch {
+    return null;
+  }
+};
+
+const setEmpFieldValue = async (
+  sp: any,
+  resolveEmpField: (displayTitle: string) => WritableFieldInfo | null,
+  empPayload: any,
+  displayTitle: string,
+  value: any
+) => {
+  if (value === undefined || value === null) return;
+  const valueText = String(value).trim();
+  if (valueText === "") return;
+
+  const info = resolveEmpField(displayTitle);
+  if (!info) return;
+
+  const typeLower = (info.typeAsString || "").toLowerCase();
+
+  if (typeLower.includes("user")) {
+    const parts = valueText
+      .split(/[;,]/g)
+      .map((x) => x.trim())
+      .filter(Boolean);
+
+    if (!parts.length) return;
+
+    const ids: number[] = [];
+    for (const p of parts) {
+      const id = await ensureUserIdSafe(sp, p);
+      if (id) ids.push(id);
+    }
+
+    if (!ids.length) return;
+
+    const key = `${info.internalName}Id`;
+
+    if (typeLower.includes("multi")) {
+      empPayload[key] = { results: ids };
+    } else {
+      empPayload[key] = ids[0];
+    }
+    return;
+  }
+
+  empPayload[info.internalName] = coerceValueForField(info.typeAsString, value);
 };
 
 // ===== Styles (UI unchanged) =====
@@ -291,6 +416,7 @@ const ExpenseClaim = ({
     email: "",
     manager: "",
     director: "",
+    hr: "",
   });
 
   React.useEffect(() => {
@@ -377,10 +503,7 @@ const ExpenseClaim = ({
     };
 
     void load();
-    return () => {
-      mounted = false;
-    };
-  }, [sp, claimListTitle, masterListTitle, categoryInternalName, subCategoryListTitle, subCategoryCategoryInternalName, subCategoryStatusInternalName, subCategoryActiveValue]);
+  }, [sp]);
 
   const grandTotal = React.useMemo(
     () => rows.reduce((sum, row) => sum + parseMoney(row.values[COMMON_FIELD_KEYS.amount]), 0),
@@ -395,7 +518,9 @@ const ExpenseClaim = ({
     if (el) {
       try {
         el.value = "";
-      } catch { }
+      } catch {
+        // ignore
+      }
       delete fileInputRefs.current[rowId];
     }
 
@@ -434,7 +559,9 @@ const ExpenseClaim = ({
       try {
         const el = fileInputRefs.current[rowId];
         if (el) el.value = "";
-      } catch { }
+      } catch {
+        // ignore
+      }
     }
   };
 
@@ -443,9 +570,8 @@ const ExpenseClaim = ({
     return dates.length ? dates.reduce((min, cur) => (cur < min ? cur : min), dates[0]) : "";
   };
 
-  // ✅ Common Save (Draft + Submit) => stores ALL data to SharePoint
   const saveToSharePoint = async (statusValue: string, navigateAfterSuccess: boolean) => {
-    // Keeping same validations for Draft as well (so SharePoint required fields won't fail)
+    // validations
     for (const row of rows) {
       if (!row.categoryKey) return alert("Please select Category for all rows.");
 
@@ -455,7 +581,13 @@ const ExpenseClaim = ({
       }
 
       if (!row.values[COMMON_FIELD_KEYS.date]) return alert("Please select Date for all rows.");
-      if (!row.values[COMMON_FIELD_KEYS.amount]) return alert("Please enter Amount for all rows.");
+
+      const amtText = (row.values[COMMON_FIELD_KEYS.amount] || "").trim();
+      if (!amtText) return alert("Please enter Amount for all rows.");
+
+      const amt = parseMoney(amtText);
+      if (!isFinite(amt) || amt < 1) return alert("Amount should not less than 1");
+
       if (!row.values[COMMON_FIELD_KEYS.description]) return alert("Please enter Description for all rows.");
     }
 
@@ -465,83 +597,68 @@ const ExpenseClaim = ({
 
     const claimList = sp.web.lists.getByTitle(claimListTitle);
     const empList = sp.web.lists.getByTitle(empListTitle);
+
+    /** ✅ get real internal names */
+    const amountField = await getFieldInfoSafe(claimList, "Amount");
+    const dateField = await getFieldInfoSafe(claimList, "Date");
+    const categoryField = await getFieldInfoSafe(claimList, "Category");
+    const descField = await getFieldInfoSafe(claimList, "Description");
+    const subCategoryField = await getFieldInfoSafe(claimList, "SubCategory"); 
+
+    if (!amountField) throw new Error(`Field "Amount" not found in list ${claimListTitle}`);
+    if (!dateField) throw new Error(`Field "Date" not found in list ${claimListTitle}`);
+    if (!categoryField) throw new Error(`Field "Category" not found in list ${claimListTitle}`);
+    if (!descField) throw new Error(`Field "Description" not found in list ${claimListTitle}`);
+
+    const amountType = amountField.typeAsString.toLowerCase();
+    const amountIsNumericColumn =
+      amountType.includes("number") || amountType.includes("currency") || amountType.includes("integer");
+
     const resolveClaimField = await buildClaimFieldResolver(claimList);
 
-    // Claim No - Draft vs Pending
+    // ✅ Claim No (NEVER restart + Draft/Submit separate)
     let submissionTitle = "";
+    const titleDateText = getDateTextForSubmissionTitle(rows);
 
     if (statusValue === empStatusDraftValue) {
-      // ✅ Draft: EC-MM-Draft-YYYY-{sequence}  (same logic as Pending, only Draft in middle)
-      const titleDateText = getDateTextForSubmissionTitle(rows);
-      const draftPrefix = buildECDraftPrefixFromDate(titleDateText);
-
-      // ✅ sequence from same place as Pending logic (claim list)
-      const draftSeq = await getNextSequenceForPrefix(claimList, draftPrefix);
-
-      submissionTitle = `${draftPrefix}${draftSeq}`;
-
-      const resolveEmpField = await buildWritableFieldResolver(empList);
-      const empPayload: any = { Title: submissionTitle };
-
-      const setEmp = (displayTitle: string, value: any) => {
-        if (value === undefined || value === null || String(value).trim() === "") return;
-        const info = resolveEmpField(displayTitle);
-        if (!info) return;
-        empPayload[info.internalName] = coerceValueForField(info.typeAsString, value);
-      };
-
-      setEmp("Name", employeeValues.name);
-      setEmp("Department", employeeValues.department);
-      setEmp("Designation", employeeValues.designation);
-      setEmp("TotalAmount", grandTotal.toFixed(2));
-      const phoneText = (employeeValues.phone || "").replace(/,/g, "").trim();
-      if (phoneText) {
-        const phoneNumber = Number(phoneText);
-        if (isFinite(phoneNumber)) setEmp("PhoneNumber", phoneNumber);
-      }
-      setEmp("Email", employeeValues.email);
-      setEmp("Manager", employeeValues.manager);
-      setEmp("Director", employeeValues.director);
-      setEmp(empStatusInternalNameOrTitle, statusValue);
-
-      await empList.items.add(empPayload);
+      const prefix = buildECDraftPrefixFromDate(titleDateText);
+      const seq = await getNextECSequence(empList, "draft");
+      submissionTitle = `${prefix}${seq}`;
     } else {
-      // Pending: EC-MM-YYYY-{sequence}
-      const titleDateText = getDateTextForSubmissionTitle(rows);
       const prefix = buildECPrefixFromDate(titleDateText);
-      const seq = await getNextSequenceForPrefix(claimList, prefix);
+      const seq = await getNextECSequence(empList, "submit");
       submissionTitle = `${prefix}${seq}`;
     }
 
-    // 1) Employee/Header -> ExpenseEmpData (for Pending status)
-    if (statusValue !== empStatusDraftValue) {
+    // 1) Header -> ExpenseEmpData  (Draft + Submit both)
+    {
       const resolveEmpField = await buildWritableFieldResolver(empList);
       const empPayload: any = { Title: submissionTitle };
 
-      const setEmp = (displayTitle: string, value: any) => {
-        if (value === undefined || value === null || String(value).trim() === "") return;
-        const info = resolveEmpField(displayTitle);
-        if (!info) return;
-        empPayload[info.internalName] = coerceValueForField(info.typeAsString, value);
-      };
+      await setEmpFieldValue(sp, resolveEmpField, empPayload, "EmpID", employeeValues.empId);
+      await setEmpFieldValue(sp, resolveEmpField, empPayload, "EmployeeID", employeeValues.empId);
 
-      setEmp("Name", employeeValues.name);
-      setEmp("Department", employeeValues.department);
-      setEmp("Designation", employeeValues.designation);
-      setEmp("TotalAmount", grandTotal.toFixed(2));
+      await setEmpFieldValue(sp, resolveEmpField, empPayload, "Name", employeeValues.name);
+      await setEmpFieldValue(sp, resolveEmpField, empPayload, "Department", employeeValues.department);
+      await setEmpFieldValue(sp, resolveEmpField, empPayload, "Designation", employeeValues.designation);
+      await setEmpFieldValue(sp, resolveEmpField, empPayload, "TotalAmount", grandTotal.toFixed(2));
 
       const phoneText = (employeeValues.phone || "").replace(/,/g, "").trim();
       if (phoneText) {
         const phoneNumber = Number(phoneText);
-        if (isFinite(phoneNumber)) setEmp("PhoneNumber", phoneNumber);
+        const phoneValueToSave = isFinite(phoneNumber) ? phoneNumber : phoneText;
+
+        await setEmpFieldValue(sp, resolveEmpField, empPayload, "PhoneNumber", phoneValueToSave);
+        await setEmpFieldValue(sp, resolveEmpField, empPayload, "Contact", phoneValueToSave);
       }
 
-      setEmp("Email", employeeValues.email);
-      setEmp("Manager", employeeValues.manager);
-      setEmp("Director", employeeValues.director);
+      await setEmpFieldValue(sp, resolveEmpField, empPayload, "Email", employeeValues.email);
 
-      // ✅ Status: Draft / Pending
-      setEmp(empStatusInternalNameOrTitle, statusValue);
+      await setEmpFieldValue(sp, resolveEmpField, empPayload, "Manager", employeeValues.manager);
+      await setEmpFieldValue(sp, resolveEmpField, empPayload, "Director", employeeValues.director);
+      await setEmpFieldValue(sp, resolveEmpField, empPayload, "Hr", employeeValues.hr);
+
+      await setEmpFieldValue(sp, resolveEmpField, empPayload, empStatusInternalNameOrTitle, statusValue);
 
       await empList.items.add(empPayload);
     }
@@ -554,26 +671,39 @@ const ExpenseClaim = ({
         const config = row.categoryKey ? categoryConfigurationByKey[row.categoryKey] : undefined;
         const subOptions = subCategoryOptionsByCategory[row.categoryKey] || [];
 
+        const amtNumber = parseMoney(row.values[COMMON_FIELD_KEYS.amount] || "");
+        if (!isFinite(amtNumber) || amtNumber < 1) throw new Error("Amount must be minimum 1.");
+
+        const amtTextToSave = amtNumber.toFixed(2);
+        const dateText = (row.values[COMMON_FIELD_KEYS.date] || "").trim();
+
         const payload: any = {
           Title: submissionTitle,
-          Category: row.categoryKey,
-          Date: row.values[COMMON_FIELD_KEYS.date] ? new Date(`${row.values[COMMON_FIELD_KEYS.date]}T00:00:00`) : null,
-          Amount: parseMoney(row.values[COMMON_FIELD_KEYS.amount]),
-          Description: row.values[COMMON_FIELD_KEYS.description],
         };
 
-        if (subOptions.length > 0) payload.SubCategory = row.values[COMMON_FIELD_KEYS.subcategory];
+        payload[categoryField.internalName] = coerceValueForField(categoryField.typeAsString, row.categoryKey);
+        payload[dateField.internalName] = dateText ? dateOnlyToSPDate(dateText) : null;
+        payload[amountField.internalName] = amountIsNumericColumn ? amtNumber : amtTextToSave;
+        payload[descField.internalName] = coerceValueForField(descField.typeAsString, row.values[COMMON_FIELD_KEYS.description]);
+
+        if (subOptions.length > 0 && subCategoryField) {
+          payload[subCategoryField.internalName] = coerceValueForField(
+            subCategoryField.typeAsString,
+            row.values[COMMON_FIELD_KEYS.subcategory]
+          );
+        }
 
         if (config?.fields?.length) {
           for (const f of config.fields) {
             const raw = (row.values[f.id] || "").trim();
             if (!raw) continue;
 
-            const target = resolveClaimField(f);
+            const target = await resolveClaimField(f);
             if (!target) continue;
 
             const claimType = (target.typeAsString || "").toLowerCase();
-            if (claimType.includes("datetime")) payload[target.internal] = new Date(`${raw}T00:00:00`);
+
+            if (claimType.includes("datetime")) payload[target.internal] = dateOnlyToSPDate(raw);
             else if (claimType.includes("number") || claimType.includes("currency") || claimType.includes("integer")) {
               const n = Number(raw.replace(/,/g, ""));
               payload[target.internal] = isFinite(n) ? n : null;
@@ -589,7 +719,9 @@ const ExpenseClaim = ({
           try {
             const info: any = await addResult.item.select("Id")();
             itemId = info?.Id ?? info?.ID ?? null;
-          } catch { }
+          } catch {
+            // ignore
+          }
         }
 
         if (!itemId) {
@@ -600,14 +732,16 @@ const ExpenseClaim = ({
               .orderBy("Id", false)
               .top(1)();
             if (found?.length) itemId = found[0].Id ?? found[0].ID ?? null;
-          } catch { }
+          } catch {
+            // ignore
+          }
         }
 
         if (!itemId) throw new Error("Failed to determine created item ID");
 
         if (row.file) {
           try {
-            const safeName = row.file.name.replace(/[\\/:*?"<>|#%]+/g, "_"); 
+            const safeName = row.file.name.replace(/[\\/:*?"<>|#%]+/g, "_");
             const buffer = await row.file.arrayBuffer();
             await claimList.items.getById(itemId).attachmentFiles.add(safeName, buffer);
           } catch (attachmentError: any) {
@@ -621,9 +755,7 @@ const ExpenseClaim = ({
 
     if (rowErrors.length === 0) {
       alert(statusValue === empStatusDraftValue ? "Draft saved successfully!" : "Submitted successfully!");
-      if (navigateAfterSuccess) {
-        navigate(dashboardRoute);
-      }
+      if (navigateAfterSuccess) navigate(dashboardRoute);
     } else {
       alert(`${statusValue} saved with errors:\n${rowErrors.join("\n")}`);
     }
@@ -632,7 +764,7 @@ const ExpenseClaim = ({
   const handleSaveDraft = async () => {
     setIsSavingDraft(true);
     try {
-      await saveToSharePoint(empStatusDraftValue, true); // Draft => navigate to dashboard
+      await saveToSharePoint(empStatusDraftValue, true);
     } catch (e: any) {
       alert(e?.message || "Failed to save draft.");
     } finally {
@@ -652,9 +784,7 @@ const ExpenseClaim = ({
     }
   };
 
-  const handleBack = () => {
-    navigate(-1);
-  };
+  const handleBack = () => navigate(-1);
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -753,7 +883,7 @@ const ExpenseClaim = ({
 
                     {/* Row Body */}
                     <div className="p-4">
-                      {/* Row 1: Category, Subcategory, Date, Amount */}
+                      {/* Row 1 */}
                       <div className="flex flex-wrap gap-3 mb-3">
                         <div className="flex-1 min-w-[160px]">
                           <label className={labelClass}>
@@ -825,11 +955,11 @@ const ExpenseClaim = ({
                             Amount (₹) <span className="text-rose-500">*</span>
                           </label>
                           <input
-                            type="number"
+                            type="text"
                             value={row.values[COMMON_FIELD_KEYS.amount] || ""}
                             onChange={(e) => updateRowValue(row.id, COMMON_FIELD_KEYS.amount, e.target.value)}
                             disabled={!enabled || isSubmitting || isSavingDraft}
-                            placeholder="0.00"
+                            placeholder="1.00"
                             className={inputClass}
                           />
                         </div>
@@ -877,7 +1007,7 @@ const ExpenseClaim = ({
                         </div>
                       </div>
 
-                      {/* Row 2: Dynamic Fields + Description */}
+                      {/* Row 2 */}
                       {enabled && (
                         <div className="flex flex-wrap gap-3">
                           {dynamicFields.map((field) => (
@@ -924,10 +1054,9 @@ const ExpenseClaim = ({
               })}
             </div>
 
-            {/* Footer with Total and Buttons */}
+            {/* Footer */}
             <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-4">
               <div className="flex flex-wrap items-center justify-between gap-4">
-                {/* Left: Status */}
                 <div className="flex items-center gap-2">
                   {(isSubmitting || isSavingDraft) && (
                     <div className="flex items-center gap-2 text-indigo-600">
@@ -937,9 +1066,7 @@ const ExpenseClaim = ({
                   )}
                 </div>
 
-                {/* Right: Total + Buttons */}
                 <div className="flex flex-col items-end gap-3">
-                  {/* Total Amount */}
                   <div className="bg-gradient-to-r from-emerald-50 to-teal-50 border border-emerald-200 rounded-lg px-5 py-2.5 text-right">
                     <div className="text-[10px] font-semibold text-emerald-600 uppercase tracking-wide">Total Amount</div>
                     <div className="text-xl font-bold text-emerald-700">
@@ -947,7 +1074,6 @@ const ExpenseClaim = ({
                     </div>
                   </div>
 
-                  {/* Buttons */}
                   <div className="flex items-center gap-2">
                     <button
                       type="button"
