@@ -790,8 +790,8 @@ const ExpenseDashboard: React.FC<Props> = ({
         {!loading && filteredRows.length > 0 && (
           <div className="flex flex-col sm:flex-row justify-between items-center gap-3 px-4 py-3 border-t border-slate-100 bg-slate-50/50">
             <p className="text-xs text-slate-500">
-              Showing <span className="font-semibold text-slate-700">{pageStartIndex + 1}</span> to{" "}
-              <span className="font-semibold text-slate-700">{pageEndIndexExclusive}</span> of{" "}
+              Showing <span className="font-semibold text-slate-700"></span>
+              <span className="font-semibold text-slate-700">{pageEndIndexExclusive}</span> out of{" "}
               <span className="font-semibold text-slate-700">{filteredRows.length}</span> claims
             </p>
 
