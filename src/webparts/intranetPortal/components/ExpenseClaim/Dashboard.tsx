@@ -290,20 +290,11 @@ const ExpenseDashboard: React.FC<Props> = ({
       return Array.from(new Set(empUserIds));
     },
     [
-      sp,
-      // employeeDirectoryListTitle,
-      // directoryEmployeeFieldDisplayName,
-      // directoryManagerFieldDisplayName,
-      // directoryDirectorFieldDisplayName,
-      // directoryHRFieldDisplayName,
+      sp
     ]
   );
 
-  /**
-   * ✅ MAIN LOAD with RBAC:
-   * - Employee sees only own claims (AuthorId == me.Id)
-   * - Approver sees own + assigned employees claims (AuthorId in {me.Id, assignedEmployeeIds})
-   */
+  
   React.useEffect(() => {
     let mounted = true;
 

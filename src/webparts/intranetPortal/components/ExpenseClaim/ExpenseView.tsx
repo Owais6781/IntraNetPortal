@@ -47,9 +47,9 @@ type ClaimHeader = {
   Email?: string;
   PhoneNumber?: string | number;
 
-  /** ✅ Approvers coming from ExpenseEmpData list */
-  Manager?: string; 
-  Director?: string; 
+  /** Approvers coming from ExpenseEmpData list */
+  Manager?: string;
+  Director?: string;
   TotalAmount?: number;
   SubmitterRemarks?: string;
 };
@@ -239,7 +239,7 @@ const getNextStageAfterApproval = (
   return null;
 };
 
-/** ✅ Approver matching using ExpenseEmpData fields (name OR email) */
+/** Approver matching using ExpenseEmpData fields (name OR email) */
 const splitApprovers = (text: string) =>
   (text || "")
     .split(/[;,]/g)
@@ -258,6 +258,30 @@ const isMeApprover = (approverText: string, myEmail: string, myTitle: string) =>
     if (pl.includes("@")) return pl === myE; // email stored
     return normalizeKey(p) === myT; // name stored
   });
+};
+
+
+const getNextPendingTitleGlobal = async (empList: any, draftTitle: string): Promise<string> => {
+  const raw = String(draftTitle || "").trim();
+  const parts = raw.split("-");
+
+  if (parts.length < 5) throw new Error("Invalid Draft Title format.");
+
+  // Example: EC-06-Draft-2028-4  => prefixWithoutDraft: EC-06-2028-
+  const prefixWithoutDraft = `${parts[0]}-${parts[1]}-${parts[3]}-`;
+
+  const items: any[] = await empList.items.filter("startswith(Status,'Pending')").select("Title").top(5000)();
+
+  let maxNumber = 0;
+  for (const it of items || []) {
+    const title = String(it?.Title || "");
+    const match = title.match(/(\d+)$/);
+    if (!match) continue;
+    const num = parseInt(match[1], 10);
+    if (Number.isFinite(num) && num > maxNumber) maxNumber = num;
+  }
+
+  return `${prefixWithoutDraft}${maxNumber + 1}`;
 };
 
 /** ===================== Styles ===================== */
@@ -410,7 +434,9 @@ const ExpenseView = ({
   let claimTitle = claimTitleFromRoute;
   try {
     claimTitle = decodeURIComponent(claimTitleFromRoute);
-  } catch {}
+  } catch {
+    // ignore
+  }
 
   const [isLoading, setIsLoading] = React.useState(true);
   const [header, setHeader] = React.useState<ClaimHeader | null>(null);
@@ -528,8 +554,11 @@ const ExpenseView = ({
     [sp, resolveApproverFields]
   );
 
-  /** ✅ NEW: create employee "Pending" log (ONLY ONCE) */
-  const ensurePendingLogOnce = React.useCallback(
+  /**
+   * Pending log inserted as NEW row AFTER last log,
+   * but avoid duplicate if LATEST log for that stage is already Pending.
+   */
+  const ensurePendingLogAfterLast = React.useCallback(
     async (claimId: string, stage: "Manager" | "Director" | "HR", initiator: string, remarks?: string) => {
       const list = sp.web.lists.getByTitle("ExpenseApproverData");
       const f = await resolveApproverFields(list);
@@ -537,13 +566,16 @@ const ExpenseView = ({
       const safeTitle = escapeOData(claimId);
       const safeStage = escapeOData(stage);
 
-      // avoid duplicate Pending logs
-      const existing: any[] = await list.items
-        .filter(`Title eq '${safeTitle}' and ${f.stageInternal} eq '${safeStage}' and ${f.statusInternal} eq 'Pending'`)
-        .select("Id")
+      const last: any[] = await list.items
+        .filter(`Title eq '${safeTitle}' and ${f.stageInternal} eq '${safeStage}'`)
+        .select("Id", f.statusInternal)
+        .orderBy("Id", false)
         .top(1)();
 
-      if (existing?.length) return;
+      if (last?.length) {
+        const lastStatus = norm(last[0]?.[f.statusInternal]);
+        if (lastStatus === "pending") return;
+      }
 
       await list.items.add({
         Title: claimId,
@@ -577,10 +609,9 @@ const ExpenseView = ({
           approver: toText(i[f.approverInternal]).trim(),
           remarks: toText(i[f.remarksInternal]).trim(),
         }))
-        // ✅ UPDATED: include Pending + Go Back (and keep Approved/Rejected)
         .filter((x) => {
           const s = norm(x.status);
-          return s === "pending" || s === "approved" || s === "rejected"  || s === "send back";
+          return s === "pending" || s === "approved" || s === "rejected" || s === "send back";
         });
 
       setApprovalHistory(mapped);
@@ -588,7 +619,7 @@ const ExpenseView = ({
     [sp, resolveApproverFields]
   );
 
-  /** ===================== ✅ Detect role ONLY from ExpenseEmpData (Manager/Director/HR) ===================== */
+  /** ===================== Detect role ONLY from ExpenseEmpData (Manager/Director/HR) ===================== */
   React.useEffect(() => {
     const detectRole = async () => {
       try {
@@ -603,7 +634,7 @@ const ExpenseView = ({
 
         const mgr = String(header.Manager || "").trim();
         const dir = String(header.Director || "").trim();
-        const hr = String((header as any).HR || "").trim(); // optional column in ExpenseEmpData
+        const hr = String((header as any).HR || "").trim();
 
         setApproverNames({
           manager: mgr || "",
@@ -700,7 +731,11 @@ const ExpenseView = ({
 
         // Items
         const resolveClaimField = await buildClaimFieldResolver(claimList);
-        const claimItems: any[] = await claimList.items.filter(`Title eq '${safeTitle}'`).select("*").orderBy("Id", true).top(5000)();
+        const claimItems: any[] = await claimList.items
+          .filter(`Title eq '${safeTitle}'`)
+          .select("*")
+          .orderBy("Id", true)
+          .top(5000)();
 
         const mappedRows: LineItemRow[] = await Promise.all(
           claimItems.map(async (it) => {
@@ -755,7 +790,7 @@ const ExpenseView = ({
 
         await loadApprovalHistory(hdr.Title);
       } catch {
-        // kept as-is
+        // keep existing behavior
       } finally {
         if (mounted) setIsLoading(false);
       }
@@ -765,12 +800,35 @@ const ExpenseView = ({
     return () => {
       mounted = false;
     };
-  }, [sp,loadApprovalHistory]);
+  }, [
+    sp,
+    loadApprovalHistory,
+    claimTitle,
+    masterListTitle,
+    claimListTitle,
+    empListTitle,
+    categoryInternalName,
+    subCategoryListTitle,
+    subCategoryCategoryInternalName,
+    subCategoryStatusInternalName,
+    subCategoryActiveValue,
+  ]);
 
   /** ===================== ACTIONS ===================== */
   const [isSubmitting, setIsSubmitting] = React.useState(false);
   const [submitError, setSubmitError] = React.useState("");
 
+  /**
+   * ✅ UPDATED: Draft Submit logic SAME as ExpenseEdit:
+   * - save is not needed here (read-only)
+   * - generate next Pending title
+   * - update ALL line items Title old->new
+   * - update header Title old->new and Status -> "Pending"
+   *
+   * For Send Back submit:
+   * - keep Title same
+   * - update status to Pending - <stage>
+   */
   const onSubmit = async () => {
     if (!header) return;
 
@@ -779,20 +837,54 @@ const ExpenseView = ({
       setSubmitError("");
 
       const empList = sp.web.lists.getByTitle(empListTitle);
+      const claimList = sp.web.lists.getByTitle(claimListTitle);
+      const approverList = sp.web.lists.getByTitle("ExpenseApproverData");
 
+      const oldTitle = String(header.Title || "").trim();
       const isHdrDraft = norm(header.Status) === "draft";
-      const sendBackStage = getSendBackStageFromHeaderStatus(header.Status || "") || "Manager";
-
-      const pendingStageForLog: "Manager" | "Director" | "HR" = isHdrDraft ? "Manager" : sendBackStage;
-      const newStatus = isHdrDraft ? "Pending - Manager" : `Pending - ${sendBackStage}`;
 
       const me = await sp.web.currentUser.select("Title", "Email")();
       const initiatorText = String(me?.Title || me?.Email || header.Name || header.Email || "Employee").trim();
 
-      // 1) create Pending log (only once)
-      await ensurePendingLogOnce(header.Title, pendingStageForLog, initiatorText, header.SubmitterRemarks || "");
+      if (isHdrDraft) {
+        // === SAME DRAFT SUBMIT FLOW AS ExpenseEdit ===
+        const newTitle = await getNextPendingTitleGlobal(empList, oldTitle);
 
-      // 2) update header status
+        const safeOldTitle = escapeOData(oldTitle);
+
+        // 1) Update ALL line items Title -> newTitle
+        const lineItems: any[] = await claimList.items.filter(`Title eq '${safeOldTitle}'`).select("Id").top(5000)();
+        for (const li of lineItems || []) {
+          await claimList.items.getById(li.Id).update({ Title: newTitle });
+        }
+
+        // 2) (Optional but recommended) Update existing approver logs Title -> newTitle
+        try {
+          const logItems: any[] = await approverList.items.filter(`Title eq '${safeOldTitle}'`).select("Id").top(5000)();
+          for (const lg of logItems || []) {
+            await approverList.items.getById(lg.Id).update({ Title: newTitle });
+          }
+        } catch {
+          // ignore if list/permissions not available
+        }
+
+        // 3) Update header Title + Status
+        await empList.items.getById(header.Id).update({ Title: newTitle, Status: "Pending" });
+        setHeader((p) => (p ? { ...p, Title: newTitle, Status: "Pending" } : p));
+
+        // 4) Add pending log for Manager (avoid duplicate)
+        await ensurePendingLogAfterLast(newTitle, "Manager", initiatorText, header.SubmitterRemarks || "");
+
+        navigate(dashboardRoute, { replace: true });
+        return;
+      }
+
+      // === Send Back submit (keep your existing behavior) ===
+      const sendBackStage = getSendBackStageFromHeaderStatus(header.Status || "") || "Manager";
+      const newStatus = `Pending - ${sendBackStage}`;
+
+      await ensurePendingLogAfterLast(oldTitle, sendBackStage, initiatorText, header.SubmitterRemarks || "");
+
       await empList.items.getById(header.Id).update({ Status: newStatus });
       setHeader((p) => (p ? { ...p, Status: newStatus } : p));
 
@@ -804,7 +896,6 @@ const ExpenseView = ({
     }
   };
 
-  // when approver clicks Modify, also add log row with Status="Go Back"
   const onModify = async () => {
     if (!header || !myRole) return;
 
@@ -828,7 +919,6 @@ const ExpenseView = ({
       setHeader((p) => (p ? { ...p, Status: newStatus } : p));
 
       setApprovalRemarks("");
-
       navigate(dashboardRoute, { replace: true });
     } finally {
       setIsModifying(false);
@@ -862,6 +952,7 @@ const ExpenseView = ({
       const me = await sp.web.currentUser.select("Title", "Email")();
       const approverText = (me?.Title || me?.Email || "").trim();
 
+      // 1) Add action log
       await addApproverLogRow(header.Title, {
         stage: myRole,
         status: action,
@@ -870,15 +961,23 @@ const ExpenseView = ({
       });
 
       let newHeaderStatus = header.Status || "";
+      let nextStage: "Manager" | "Director" | "HR" | null = null;
+
       if (action === "Rejected") {
         newHeaderStatus = "Rejected";
       } else {
-        const nextStage = getNextStageAfterApproval(myRole, total);
+        nextStage = getNextStageAfterApproval(myRole, total);
         newHeaderStatus = nextStage ? `Pending - ${nextStage}` : "Approved";
       }
 
+      // 2) Update header status
       await empList.items.getById(header.Id).update({ Status: newHeaderStatus });
       setHeader((p) => (p ? { ...p, Status: newHeaderStatus } : p));
+
+      // 3) If moved to next stage, insert Pending log as NEW row (after last)
+      if (action === "Approved" && nextStage) {
+        await ensurePendingLogAfterLast(header.Title, nextStage, approverText, "");
+      }
 
       setApprovalRemarks("");
       navigate(dashboardRoute, { replace: true });
@@ -887,7 +986,7 @@ const ExpenseView = ({
     }
   };
 
-  /** ===================== Tracker steps (approver names from ExpenseEmpData) ===================== */
+  /** ===================== Tracker steps ===================== */
   const trackerSteps = React.useMemo<TrackerStep[]>(() => {
     if (!header) return [];
 
@@ -895,7 +994,6 @@ const ExpenseView = ({
     const needsDirector = amount > 5000;
     const workflowStages: Array<"Manager" | "Director" | "HR"> = needsDirector ? ["Manager", "Director", "HR"] : ["Manager", "HR"];
 
-    // latest per stage
     const latestByStage: Record<string, ApproverLogView> = {};
     for (const l of approvalHistory) {
       const k = norm(l.stage);
@@ -907,7 +1005,6 @@ const ExpenseView = ({
     const pendingStage = getPendingStageFromHeaderStatus(header.Status || "");
     const hs = norm(header.Status);
 
-    // Hide later steps after reject
     const firstRejectedIndex = workflowStages.findIndex((st) => {
       const log = latestByStage[norm(st)];
       return log && norm(log.status) === "rejected";
@@ -1084,7 +1181,7 @@ const ExpenseView = ({
               )}
             </div>
 
-            {/* Line Items (UNCHANGED UI) */}
+            {/* Line Items */}
             <div className="bg-white border border-slate-200 rounded-xl p-4">
               <div className="flex items-center gap-2 mb-4">
                 <Icon iconName="BulletedList" className="text-indigo-600" />
@@ -1164,7 +1261,13 @@ const ExpenseView = ({
 
                           <div className="flex-1 min-w-[120px]">
                             <label className={labelClass}>Amount (₹)</label>
-                            <input type="text" value={row.values[COMMON_FIELD_KEYS.amount] || ""} onChange={() => {}} disabled className={inputClass} />
+                            <input
+                              type="text"
+                              value={row.values[COMMON_FIELD_KEYS.amount] || ""}
+                              onChange={() => {}}
+                              disabled
+                              className={inputClass}
+                            />
                           </div>
 
                           <div className="flex-1 min-w-[200px]">
@@ -1197,9 +1300,21 @@ const ExpenseView = ({
                             <div key={field.id} className="flex-1 min-w-[140px]">
                               <label className={labelClass}>{field.label}</label>
                               {field.type === "textarea" ? (
-                                <textarea value={row.values[field.id] || ""} onChange={() => {}} disabled={readOnly} rows={2} className={textareaClass} />
+                                <textarea
+                                  value={row.values[field.id] || ""}
+                                  onChange={() => {}}
+                                  disabled={readOnly}
+                                  rows={2}
+                                  className={textareaClass}
+                                />
                               ) : (
-                                <input type={field.type} value={row.values[field.id] || ""} onChange={() => {}} disabled={readOnly} className={inputClass} />
+                                <input
+                                  type={field.type}
+                                  value={row.values[field.id] || ""}
+                                  onChange={() => {}}
+                                  disabled={readOnly}
+                                  className={inputClass}
+                                />
                               )}
                             </div>
                           ))}
@@ -1258,11 +1373,21 @@ const ExpenseView = ({
                     </div>
 
                     <div className="flex justify-center gap-3 flex-wrap">
-                      <button type="button" disabled={!canApprove} onClick={() => handleApproval("Approved")} className={btnApprove}>
+                      <button
+                        type="button"
+                        disabled={!canApprove}
+                        onClick={() => handleApproval("Approved")}
+                        className={btnApprove}
+                      >
                         {isApproving ? "Processing..." : "Approve"}
                       </button>
 
-                      <button type="button" disabled={!canApprove} onClick={() => handleApproval("Rejected")} className={btnReject}>
+                      <button
+                        type="button"
+                        disabled={!canApprove}
+                        onClick={() => handleApproval("Rejected")}
+                        className={btnReject}
+                      >
                         Reject
                       </button>
 
@@ -1290,7 +1415,7 @@ const ExpenseView = ({
                 Back to Dashboard
               </button>
 
-              {/* ✅ Submit button for employee in Draft/SendBack (even though page is read-only) */}
+              {/* Submit button for employee in Draft/SendBack */}
               {showEmployeeSubmit && (
                 <button type="button" onClick={onSubmit} disabled={isSubmitting} className={btnSubmit}>
                   <Icon iconName="Send" />
