@@ -800,35 +800,13 @@ const ExpenseView = ({
     return () => {
       mounted = false;
     };
-  }, [
-    sp,
-    loadApprovalHistory,
-    claimTitle,
-    masterListTitle,
-    claimListTitle,
-    empListTitle,
-    categoryInternalName,
-    subCategoryListTitle,
-    subCategoryCategoryInternalName,
-    subCategoryStatusInternalName,
-    subCategoryActiveValue,
-  ]);
+  }, [sp]);
 
   /** ===================== ACTIONS ===================== */
   const [isSubmitting, setIsSubmitting] = React.useState(false);
   const [submitError, setSubmitError] = React.useState("");
 
-  /**
-   * ✅ UPDATED: Draft Submit logic SAME as ExpenseEdit:
-   * - save is not needed here (read-only)
-   * - generate next Pending title
-   * - update ALL line items Title old->new
-   * - update header Title old->new and Status -> "Pending"
-   *
-   * For Send Back submit:
-   * - keep Title same
-   * - update status to Pending - <stage>
-   */
+  
   const onSubmit = async () => {
     if (!header) return;
 

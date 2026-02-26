@@ -288,13 +288,8 @@ const ExpenseDashboard: React.FC<Props> = ({
 
       const empUserIds = items.map((it) => it[empIdField]).filter((x) => Number.isFinite(x)) as number[];
       return Array.from(new Set(empUserIds));
-    },
-    [
-      sp
-    ]
-  );
+    },[sp] );
 
-  
   React.useEffect(() => {
     let mounted = true;
 
