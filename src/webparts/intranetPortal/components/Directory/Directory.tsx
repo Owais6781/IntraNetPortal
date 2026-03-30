@@ -34,7 +34,7 @@ const Directory: React.FC<IProps> = ({ sp }) => {
 
   // Pagination State
   const [currentPage, setCurrentPage] = useState(1);
-  const usersPerPage = 8;
+  const usersPerPage = 10;
 
   // Active/Inactive Filter State
   const [showActive, setShowActive] = useState(true);
@@ -485,7 +485,7 @@ const Directory: React.FC<IProps> = ({ sp }) => {
                 <div className="modal-name-row">
                   <h2 className="modal-name">{selectedUser.name}</h2>
                   <span className={`modal-status-badge ${selectedUser.status?.trim().toLowerCase() === 'active' ? 'active' : 'inactive'}`}>
-                    {selectedUser.status?.trim().toLowerCase() === 'active' ? '● Active' : '● Inactive'}
+                    ● {selectedUser.status}
                   </span>
                 </div>
                 <div className="modal-designation-row">
@@ -497,87 +497,59 @@ const Directory: React.FC<IProps> = ({ sp }) => {
             </div>
 
             <div className="modal-body">
-              <div className="modal-details-flex">
-
-                {/* Email Address - Clickable to Copy */}
+              <div className="modal-info-grid">
+                {/* Email */}
                 <div
-                  className={`detail-item clickable-item ${copiedEmailId === selectedUser.id ? 'copied-active' : ''}`}
+                  className="info-box clickable"
                   onClick={() => handleCopyEmail(selectedUser.email, selectedUser.id)}
-                  title="Click to copy email"
                 >
-                  <span className="detail-label">Email Address</span>
-                  <span className="detail-value">
-                    {copiedEmailId === selectedUser.id ? (
-                      <span className="copied-success">✅ Copied!</span>
-                    ) : (
-                      <>
-                        {selectedUser.email || "-"}
-                        {selectedUser.email && selectedUser.email !== "-" && (
-                          <span className="copy-icon">📋</span>
-                        )}
-                      </>
-                    )}
-                  </span>
+                  <span className="info-label">EMAIL ADDRESS</span>
+                  <p className="info-value">
+                    {copiedEmailId === selectedUser.id ? "✅ Copied" : selectedUser.email || "-"}
+                  </p>
+                  {selectedUser.email && <span className="copy-hint">📋</span>}
                 </div>
 
-                {/* Contact Number - Clickable to Copy */}
+                {/* Contact */}
                 <div
-                  className={`detail-item clickable-item ${copiedPhoneId === selectedUser.id ? 'copied-active' : ''}`}
+                  className="info-box clickable"
                   onClick={() => handleCopyPhone(selectedUser.contactNumber, selectedUser.id)}
-                  title="Click to copy phone number"
                 >
-                  <span className="detail-label">Contact Number</span>
-                  <span className="detail-value">
-                    {copiedPhoneId === selectedUser.id ? (
-                      <span className="copied-success">✅ Copied!</span>
-                    ) : (
-                      <>
-                        <span className="phone-icon">📞</span> {selectedUser.contactNumber}
-                        {selectedUser.contactNumber && selectedUser.contactNumber !== "-" && (
-                          <span className="copy-icon">📋</span>
-                        )}
-                      </>
-                    )}
-                  </span>
+                  <span className="info-label">CONTACT NUMBER</span>
+                  <p className="info-value">
+                    {copiedPhoneId === selectedUser.id ? "✅ Copied" : selectedUser.contactNumber || "-"}
+                  </p>
+                  <span className="info-icon">📞</span>
+                  {selectedUser.contactNumber && <span className="copy-hint">📋</span>}
                 </div>
 
-                {/* Blood Group with Badge */}
-                <div className="detail-item">
-                  <span className="detail-label">Blood Group</span>
-                  <span className="detail-value">
-                    {selectedUser.bloodGroup && selectedUser.bloodGroup !== "-" ? (
-                      <span
-                        className="blood-group-badge"
-                        style={{ backgroundColor: getBloodGroupColor(selectedUser.bloodGroup) }}
-                      >
-                        🩸 {selectedUser.bloodGroup}
-                      </span>
-                    ) : (
-                      "-"
-                    )}
-                  </span>
+                {/* Blood Group */}
+                <div className="info-box">
+                  <span className="info-label">BLOOD GROUP</span>
+                  <div className="blood-icon-wrapper">
+                    <div className="blood-badge-circle" style={{ backgroundColor: getBloodGroupColor(selectedUser.bloodGroup) }}>
+                       🩸 <br/> {selectedUser.bloodGroup}
+                    </div>
+                  </div>
                 </div>
 
-                {/* Reporting Manager */}
-                <div className="detail-item">
-                  <span className="detail-label">Reporting Manager</span>
-                  <span className="detail-value">
-                    <span className="manager-icon">👤</span> {selectedUser.manager}
-                  </span>
+                {/* Manager */}
+                <div className="info-box">
+                  <span className="info-label">REPORTING MANAGER</span>
+                  <p className="info-value">{selectedUser.manager}</p>
+                  <span className="info-icon">👤</span>
                 </div>
 
                 {/* Joining Date */}
-                <div className="detail-item">
-                  <span className="detail-label">Joining Date</span>
-                  <span className="detail-value">
-                    <span className="date-icon">📅</span> {selectedUser.joiningDate}
-                  </span>
+                <div className="info-box">
+                  <span className="info-label">JOINING DATE</span>
+                  <p className="info-value">{selectedUser.joiningDate}</p>
+                  <span className="info-icon">📅</span>
                 </div>
-
               </div>
 
-              <div className="modal-actions">
-                <button className="action-btn secondary" onClick={() => setSelectedUser(null)}>
+              <div className="modal-footer">
+                <button className="modal-close-btn" onClick={() => setSelectedUser(null)}>
                   Close
                 </button>
               </div>
