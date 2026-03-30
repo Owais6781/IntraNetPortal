@@ -12,7 +12,7 @@ import {
   Download,
   ExternalLink,
   FileImage,
-  
+
 } from "lucide-react";
 
 interface DocFile {
@@ -50,8 +50,8 @@ const Knowledge: React.FC<IIntranetPortalProps> = ({ sp }) => {
         documentCategory: Array.isArray(i.DocumentCategory)
           ? i.DocumentCategory
           : i.DocumentCategory
-          ? [i.DocumentCategory]
-          : ["Other"], // Default if null
+            ? [i.DocumentCategory]
+            : ["Other"], // Default if null
         status: i.Status,
       }));
 
@@ -69,7 +69,7 @@ const Knowledge: React.FC<IIntranetPortalProps> = ({ sp }) => {
 
   // ---------- GROUP DATA ----------
   const GroupDocument: Record<string, DocFile[]> = {};
-  
+
   knowledge.forEach((document) => {
     document.documentCategory.forEach((category) => {
       if (!GroupDocument[category]) {
@@ -102,7 +102,7 @@ const Knowledge: React.FC<IIntranetPortalProps> = ({ sp }) => {
   };
 
 
- return (
+  return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-zinc-50 to-emerald-50 px-4 py-10">
       <div className="max-w-7xl mx-auto mb-10">
         <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4">
@@ -156,11 +156,10 @@ const Knowledge: React.FC<IIntranetPortalProps> = ({ sp }) => {
               </div>
 
               {/* Files */}
-              <div   className={`flex-1 pr-2 custom-scrollbar ${
-    showAll ? "overflow-y-auto max-h-[220px]" : "overflow-hidden"
-  }`}>
+              <div className={`flex-1 pr-2 custom-scrollbar ${showAll ? "overflow-y-auto max-h-[220px]" : "overflow-hidden"
+                }`}>
                 <ul className="flex flex-col gap-2 ">
-                  {items.slice(0,showAll?items.length:3).map((item) => (
+                  {items.slice(0, showAll ? items.length : 3).map((item) => (
                     <li
                       key={item.id}
                       className="flex items-center justify-between p-2.5 rounded-lg bg-zinc-50 hover:bg-emerald-50 border border-transparent hover:border-emerald-200 transition-all duration-200 group"
@@ -177,7 +176,9 @@ const Knowledge: React.FC<IIntranetPortalProps> = ({ sp }) => {
                           {item.name}
                         </a>
                       </div>
-                      <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
+                      <div className="flex items-center gap-1 shrink-0">
+
+                      {/* <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0"> */}
                         <a
                           href={item.fileUrl}
                           target="_blank"
