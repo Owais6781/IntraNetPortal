@@ -35,7 +35,7 @@ const UploadResume: React.FC<IUploadResumeProps> = ({ service }) => {
   const [userLoading, setUserLoading] = useState<boolean>(true);
   const [userError, setUserError] = useState<string>("");
 
-  // ==================== METADATA FILTERS ====================
+  // Metadata Filters
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [departmentFilter, setDepartmentFilter] = useState<string>("All");
   const [locationFilter, setLocationFilter] = useState<string>("All");
@@ -45,7 +45,7 @@ const UploadResume: React.FC<IUploadResumeProps> = ({ service }) => {
 
   // Pagination state
   const [currentPage, setCurrentPage] = useState<number>(1);
-  const itemsPerPage = 5;
+  const itemsPerPage = 6;
 
   // File attachment state
   const [attachmentFile, setAttachmentFile] = useState<File | null>(null);
@@ -53,6 +53,9 @@ const UploadResume: React.FC<IUploadResumeProps> = ({ service }) => {
 
   // Candidate Name
   const [candidateName, setCandidateName] = useState<string>("");
+
+  // Hover states
+  const [hoveredRow, setHoveredRow] = useState<number | null>(null);
 
   // Application Form State
   const [applicationForm, setApplicationForm] = useState<IResumeApplication>({
@@ -94,7 +97,9 @@ const UploadResume: React.FC<IUploadResumeProps> = ({ service }) => {
     setLoading(true);
     try {
       const data = await service.getJobs();
-      const openJobs = data.filter((job) => job.Status.toLowerCase() === "open");
+      const openJobs = data.filter(
+        (job) => job.Status.toLowerCase() === "open",
+      );
       setJobs(openJobs);
     } catch (error) {
       console.error("Error loading jobs:", error);
@@ -108,12 +113,18 @@ const UploadResume: React.FC<IUploadResumeProps> = ({ service }) => {
     void loadCurrentUser();
   }, [loadJobs, loadCurrentUser]);
 
-  // Reset pagination when filters change
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchTerm, departmentFilter, locationFilter, experienceFilter, noticePeriodFilter, salaryRangeFilter]);
+  }, [
+    searchTerm,
+    departmentFilter,
+    locationFilter,
+    experienceFilter,
+    noticePeriodFilter,
+    salaryRangeFilter,
+  ]);
 
-  // ==================== GET UNIQUE VALUES FOR FILTERS ====================
+  // Get unique values for filters
   const getUniqueDepartments = (): string[] => {
     const depts = new Set<string>();
     jobs.forEach((job) => job.Department && depts.add(job.Department));
@@ -144,11 +155,10 @@ const UploadResume: React.FC<IUploadResumeProps> = ({ service }) => {
     return Array.from(salaries).sort();
   };
 
-  // ==================== APPLY METADATA FILTERS ====================
+  // Apply metadata filters
   const getFilteredJobs = (): IJobOpening[] => {
     let filtered = [...jobs];
 
-    // Search filter
     if (searchTerm) {
       const search = searchTerm.toLowerCase();
       filtered = filtered.filter(
@@ -157,39 +167,37 @@ const UploadResume: React.FC<IUploadResumeProps> = ({ service }) => {
           job.JobId?.toLowerCase().includes(search) ||
           job.Department?.toLowerCase().includes(search) ||
           job.Location?.toLowerCase().includes(search) ||
-          job.Description?.toLowerCase().includes(search)
+          job.Description?.toLowerCase().includes(search),
       );
     }
 
-    // Department filter
     if (departmentFilter !== "All") {
       filtered = filtered.filter((job) => job.Department === departmentFilter);
     }
 
-    // Location filter
     if (locationFilter !== "All") {
       filtered = filtered.filter((job) => job.Location === locationFilter);
     }
 
-    // Experience filter
     if (experienceFilter !== "All") {
       filtered = filtered.filter((job) => job.Experience === experienceFilter);
     }
 
-    // Notice Period filter
     if (noticePeriodFilter !== "All") {
-      filtered = filtered.filter((job) => job.NoticePeriod === noticePeriodFilter);
+      filtered = filtered.filter(
+        (job) => job.NoticePeriod === noticePeriodFilter,
+      );
     }
 
-    // Salary Range filter
     if (salaryRangeFilter !== "All") {
-      filtered = filtered.filter((job) => job.SalaryRange === salaryRangeFilter);
+      filtered = filtered.filter(
+        (job) => job.SalaryRange === salaryRangeFilter,
+      );
     }
 
     return filtered;
   };
 
-  // Clear all filters
   const clearAllFilters = (): void => {
     setSearchTerm("");
     setDepartmentFilter("All");
@@ -200,7 +208,6 @@ const UploadResume: React.FC<IUploadResumeProps> = ({ service }) => {
     setCurrentPage(1);
   };
 
-  // Check if any filter is active
   const hasActiveFilters = (): boolean => {
     return (
       searchTerm !== "" ||
@@ -212,18 +219,6 @@ const UploadResume: React.FC<IUploadResumeProps> = ({ service }) => {
     );
   };
 
-  // Get active filter count
-  const getActiveFilterCount = (): number => {
-    let count = 0;
-    if (searchTerm) count++;
-    if (departmentFilter !== "All") count++;
-    if (locationFilter !== "All") count++;
-    if (experienceFilter !== "All") count++;
-    if (noticePeriodFilter !== "All") count++;
-    if (salaryRangeFilter !== "All") count++;
-    return count;
-  };
-
   // Pagination calculations
   const filteredJobs = getFilteredJobs();
   const totalPages = Math.ceil(filteredJobs.length / itemsPerPage);
@@ -231,7 +226,6 @@ const UploadResume: React.FC<IUploadResumeProps> = ({ service }) => {
   const endIndex = startIndex + itemsPerPage;
   const currentJobs = filteredJobs.slice(startIndex, endIndex);
 
-  // Pagination handlers
   const handlePageChange = (page: number): void => {
     if (page >= 1 && page <= totalPages) {
       setCurrentPage(page);
@@ -337,7 +331,9 @@ const UploadResume: React.FC<IUploadResumeProps> = ({ service }) => {
     e.preventDefault();
 
     if (!currentUser) {
-      alert("Unable to identify your profile. Please refresh the page and try again.");
+      alert(
+        "Unable to identify your profile. Please refresh the page and try again.",
+      );
       return;
     }
 
@@ -359,14 +355,15 @@ const UploadResume: React.FC<IUploadResumeProps> = ({ service }) => {
           CandidateName: candidateName.trim(),
         },
         currentUser,
-        attachmentFile
+        attachmentFile,
       );
 
       alert(
-        `✅ Resume uploaded successfully!\n\n` +
-        `📋 Application ID: ${applicantId}\n` +
-        `🧑‍💼 Candidate Name: ${candidateName.trim()}\n` +
-        `💼 Job: ${applicationForm.JobTitle}`
+       `🎉 Your job application has been submitted successfully!\n\n` +
+       `📋 Application ID: ${applicantId}\n` +
+       `👤 Candidate Name: ${candidateName.trim()}\n` +
+       `💼 Position: ${applicationForm.JobTitle}\n\n` +
+       `Our recruitment team will review your application.`
       );
       handleClose();
       void loadJobs();
@@ -392,175 +389,111 @@ const UploadResume: React.FC<IUploadResumeProps> = ({ service }) => {
     return new Date(endDate) < new Date();
   };
 
-  // ==================== INLINE STYLES ====================
-  const filterContainerStyle: React.CSSProperties = {
-    background: "linear-gradient(135deg, #ffffff 0%, #f8fafc 100%)",
-    padding: "24px",
-    borderRadius: "16px",
-    marginBottom: "24px",
-    boxShadow: "0 4px 20px rgba(0, 0, 0, 0.08)",
-    border: "1px solid #e2e8f0",
-  };
-
-  const filterHeaderStyle: React.CSSProperties = {
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: "20px",
-    flexWrap: "wrap",
-    gap: "12px",
-  };
-
-  const filterTitleStyle: React.CSSProperties = {
-    fontSize: "18px",
-    fontWeight: 700,
-    color: "#1e293b",
-    display: "flex",
-    alignItems: "center",
-    gap: "8px",
-  };
-
-  const filterBadgeStyle: React.CSSProperties = {
-    background: "linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)",
-    color: "white",
-    padding: "4px 12px",
-    borderRadius: "20px",
-    fontSize: "12px",
-    fontWeight: 600,
-  };
-
-  const clearFiltersBtnStyle: React.CSSProperties = {
-    background: "linear-gradient(135deg, #ef4444 0%, #dc2626 100%)",
-    color: "white",
-    padding: "8px 16px",
-    borderRadius: "8px",
-    border: "none",
-    cursor: "pointer",
-    fontSize: "13px",
-    fontWeight: 600,
-    display: "flex",
-    alignItems: "center",
-    gap: "6px",
-    transition: "all 0.2s ease",
-  };
-
-  const filterGridStyle: React.CSSProperties = {
-    display: "grid",
-    gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
-    gap: "16px",
-  };
-
-  const filterItemStyle: React.CSSProperties = {
-    display: "flex",
-    flexDirection: "column",
-    gap: "6px",
-  };
-
-  const filterLabelStyle: React.CSSProperties = {
-    fontSize: "12px",
-    fontWeight: 600,
-    color: "#64748b",
-    textTransform: "uppercase",
-    letterSpacing: "0.5px",
-  };
-
-  const filterInputStyle: React.CSSProperties = {
-    padding: "10px 14px",
-    border: "2px solid #e2e8f0",
-    borderRadius: "10px",
-    fontSize: "14px",
-    transition: "all 0.2s ease",
-    background: "white",
-    outline: "none",
-  };
-
-  const searchInputStyle: React.CSSProperties = {
-    ...filterInputStyle,
-    gridColumn: "span 2",
-    paddingLeft: "40px",
-    background: "url('data:image/svg+xml,<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\" fill=\"%2394a3b8\"><path d=\"M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z\"/></svg>') no-repeat 12px center",
-    backgroundSize: "20px",
-  };
-
-  const resultsInfoStyle: React.CSSProperties = {
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
-    padding: "16px 20px",
-    background: "linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%)",
-    borderRadius: "12px",
-    marginBottom: "20px",
-    fontSize: "14px",
-    color: "#475569",
-  };
-
-  const resultsBadgeStyle: React.CSSProperties = {
-    background: "linear-gradient(135deg, #10b981 0%, #059669 100%)",
-    color: "white",
-    padding: "6px 14px",
-    borderRadius: "20px",
-    fontSize: "13px",
-    fontWeight: 600,
-  };
-
-  const getStatusStyle = (status: string): React.CSSProperties => {
+  // Professional Status Indicator
+  const getStatusIndicator = (status: string): JSX.Element => {
     const statusLower = status.toLowerCase();
-    let textColor = "#065f46";
-    let borderColor = "rgba(16, 185, 129, 0.2)";
-    let background = "linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%)";
+    let dotColor = "#22c55e";
+    let textColor = "#166534";
 
     if (statusLower === "closed") {
+      dotColor = "#ef4444";
       textColor = "#991b1b";
-      borderColor = "rgba(239, 68, 68, 0.2)";
-      background = "linear-gradient(135deg, #fef2f2 0%, #fecaca 100%)";
     } else if (statusLower === "onhold") {
+      dotColor = "#f59e0b";
       textColor = "#92400e";
-      borderColor = "rgba(245, 158, 11, 0.2)";
-      background = "linear-gradient(135deg, #fffbeb 0%, #fde68a 100%)";
+    }
+
+    return (
+      <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+        <span
+          style={{
+            width: "8px",
+            height: "8px",
+            borderRadius: "50%",
+            backgroundColor: dotColor,
+            display: "inline-block",
+            animation: statusLower === "open" ? "pulse 2s infinite" : "none",
+          }}
+        />
+        <span
+          style={{
+            fontSize: "13px",
+            fontWeight: 500,
+            color: textColor,
+            textTransform: "capitalize",
+          }}
+        >
+          {status}
+        </span>
+      </div>
+    );
+  };
+
+  // Apply Button Styles
+  const getApplyButtonStyle = (
+    disabled: boolean,
+    isHovered: boolean,
+  ): React.CSSProperties => {
+    if (disabled) {
+      return {
+        padding: "8px 14px",
+        fontSize: "12px",
+        fontWeight: 600,
+        border: "none",
+        borderRadius: "6px",
+        cursor: "not-allowed",
+        background: "#e2e8f0",
+        color: "#94a3b8",
+        display: "inline-flex",
+        alignItems: "center",
+        gap: "4px",
+        opacity: 0.7,
+        transition: "all 0.2s ease",
+      };
     }
 
     return {
-      background: background,
-      color: textColor,
-      padding: "6px 14px",
-      borderRadius: "20px",
+      padding: "8px 14px",
       fontSize: "12px",
       fontWeight: 600,
-      display: "inline-block",
-      border: `1px solid ${borderColor}`,
-      textTransform: "capitalize" as const,
+      border: "none",
+      borderRadius: "6px",
+      cursor: "pointer",
+      background: isHovered ? "#1e40af" : "#f1f5f9",
+      color: isHovered ? "#ffffff" : "#475569",
+      display: "inline-flex",
+      alignItems: "center",
+      gap: "4px",
+      transform: isHovered ? "translateY(-1px)" : "translateY(0)",
+      boxShadow: isHovered ? "0 4px 12px rgba(30, 64, 175, 0.25)" : "none",
+      transition: "all 0.2s ease",
     };
-  };
-
-  const applyBtnStyle: React.CSSProperties = {
-    background: "linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)",
-    color: "white",
-    padding: "8px 16px",
-    borderRadius: "8px",
-    border: "none",
-    cursor: "pointer",
-    fontSize: "13px",
-    fontWeight: 600,
-    display: "flex",
-    alignItems: "center",
-    gap: "6px",
-    transition: "all 0.2s ease",
-    whiteSpace: "nowrap" as const,
-  };
-
-  const applyBtnDisabledStyle: React.CSSProperties = {
-    ...applyBtnStyle,
-    background: "#cbd5e1",
-    cursor: "not-allowed",
-    opacity: 0.6,
   };
 
   if (loading || userLoading) {
     return (
       <div className={styles.loading}>
-        <div>Loading...</div>
-        <div style={{ fontSize: "14px", marginTop: "10px", color: "#6b7280" }}>
-          {userLoading ? "Loading user profile..." : "Loading jobs..."}
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            gap: "16px",
+          }}
+        >
+          <div
+            style={{
+              width: "48px",
+              height: "48px",
+              border: "3px solid #e2e8f0",
+              borderTopColor: "#1e40af",
+              borderRadius: "50%",
+              animation: "spin 0.8s linear infinite",
+            }}
+          />
+          <span style={{ color: "#64748b", fontWeight: 500 }}>
+            {userLoading ? "Loading user profile..." : "Loading jobs..."}
+          </span>
         </div>
       </div>
     );
@@ -568,203 +501,307 @@ const UploadResume: React.FC<IUploadResumeProps> = ({ service }) => {
 
   return (
     <div className={styles.pageContainer}>
-      <div className={styles.pageHeader}>
-        <h1>📄 Upload Resume</h1>
-       
+      {/* CSS Animation Keyframes */}
+      <style>
+        {`
+          @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+          }
+          @keyframes spin {
+            to { transform: rotate(360deg); }
+          }
+        `}
+      </style>
 
-        {!currentUser && userError && (
-          <div
+      {/* Page Header */}
+      <div className={styles.pageHeader}>
+        <h1 style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+          <span
             style={{
-              background: "linear-gradient(135deg, #fef2f2 0%, #fecaca 100%)",
-              padding: "14px 24px",
-              borderRadius: "12px",
-              marginTop: "16px",
-              display: "inline-block",
-              color: "#991b1b",
-              fontWeight: "500",
+              width: "40px",
+              height: "40px",
+              background: "linear-gradient(135deg, #7c3aed 0%, #a855f7 100%)",
+              borderRadius: "10px",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              fontSize: "20px",
             }}
           >
-            ⚠️ {userError}. Please refresh the page or contact IT support.
-          </div>
-        )}
+            📄
+          </span>
+          Upload Resume
+        </h1>
       </div>
+
+      {/* User Error Alert */}
+      {!currentUser && userError && (
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "12px",
+            padding: "14px 20px",
+            background: "#ffffff",
+            borderRadius: "10px",
+            border: "1px solid #fecaca",
+            borderLeft: "4px solid #ef4444",
+            marginBottom: "16px",
+          }}
+        >
+          <span style={{ fontSize: "20px" }}>⚠️</span>
+          <div>
+            <div
+              style={{ fontSize: "14px", fontWeight: 600, color: "#991b1b" }}
+            >
+              Profile Error
+            </div>
+            <div style={{ fontSize: "13px", color: "#b91c1c" }}>
+              {userError}. Please refresh the page or contact IT support.
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* UPLOAD RESUME FORM */}
       {showUploadForm && selectedJob && (
         <div className={styles.formCard}>
           <div className={styles.formHeader}>
-            <h3>📝 Application for {applicationForm.JobTitle || "Job Position"}</h3>
+            <h3 style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+              <span
+                style={{
+                  width: "32px",
+                  height: "32px",
+                  background:
+                    "linear-gradient(135deg, #7c3aed 0%, #a855f7 100%)",
+                  borderRadius: "8px",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  fontSize: "16px",
+                }}
+              >
+                📝
+              </span>
+              Apply for {applicationForm.JobTitle || "Job Position"}
+            </h3>
             <button className={styles.closeBtn} onClick={handleClose}>
               ✕
             </button>
           </div>
 
           <form onSubmit={(e) => void handleSubmit(e)}>
-            {/* CANDIDATE NAME FIELD */}
-            <div className={styles.formGroup}>
-              <label>
-                🧑‍💼 Candidate Name <span style={{ color: "#ef4444" }}>*</span>
-              </label>
-              <input
-                type="text"
-                value={candidateName}
-                onChange={(e) => setCandidateName(e.target.value)}
-                placeholder="Enter the name of the candidate"
-                required
+            {/* Candidate Name Field */}
+            <div
+              style={{
+                background: "#f8fafc",
+                padding: "20px",
+                borderRadius: "10px",
+                marginBottom: "20px",
+                border: "1px solid #e2e8f0",
+              }}
+            >
+              <div className={styles.formGroup} style={{ marginBottom: 0 }}>
+                <label
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "6px",
+                    fontSize: "14px",
+                    fontWeight: 600,
+                    color: "#1e293b",
+                    marginBottom: "8px",
+                  }}
+                >
+                  <span>👤</span>
+                  Candidate Name
+                  <span style={{ color: "#ef4444" }}>*</span>
+                </label>
+                <input
+                  type="text"
+                  value={candidateName}
+                  onChange={(e) => setCandidateName(e.target.value)}
+                  placeholder="Enter the full name of the candidate"
+                  required
+                  style={{
+                    border: "2px solid #e2e8f0",
+                    background: "#ffffff",
+                    fontSize: "15px",
+                    fontWeight: 500,
+                    padding: "12px 14px",
+                    borderRadius: "8px",
+                    width: "100%",
+                    boxSizing: "border-box",
+                    transition: "border-color 0.2s ease",
+                  }}
+                  onFocus={(e) => (e.target.style.borderColor = "#1e40af")}
+                  onBlur={(e) => (e.target.style.borderColor = "#e2e8f0")}
+                />
+              </div>
+            </div>
+
+            {/* Job Details Section */}
+            <div
+              style={{
+                background: "#f8fafc",
+                padding: "20px",
+                borderRadius: "10px",
+                marginBottom: "20px",
+                border: "1px solid #e2e8f0",
+              }}
+            >
+              <div
                 style={{
-                  border: "2px solid #3b82f6",
-                  background: "#f0f9ff",
-                  fontSize: "16px",
-                  fontWeight: 500,
+                  fontSize: "13px",
+                  fontWeight: 600,
+                  color: "#64748b",
+                  marginBottom: "16px",
+                  textTransform: "uppercase",
+                  letterSpacing: "0.05em",
                 }}
-              />
+              >
+                Job Details
+              </div>
+
+              <div className={styles.formRow}>
+                <div className={styles.formGroup}>
+                  <label>Job ID</label>
+                  <input
+                    type="text"
+                    value={applicationForm.JobId}
+                    readOnly
+                    className={styles.readOnlyInput}
+                  />
+                </div>
+                <div className={styles.formGroup}>
+                  <label>Job Title</label>
+                  <input
+                    type="text"
+                    value={applicationForm.JobTitle}
+                    readOnly
+                    className={styles.readOnlyInput}
+                  />
+                </div>
+              </div>
+
+              <div className={styles.formRow}>
+                <div className={styles.formGroup}>
+                  <label>Department</label>
+                  <input
+                    type="text"
+                    value={selectedJob.Department}
+                    readOnly
+                    className={styles.readOnlyInput}
+                  />
+                </div>
+                <div className={styles.formGroup}>
+                  <label>Location</label>
+                  <input
+                    type="text"
+                    value={applicationForm.Location}
+                    readOnly
+                    className={styles.readOnlyInput}
+                  />
+                </div>
+              </div>
+
+              <div className={styles.formRow}>
+                <div className={styles.formGroup}>
+                  <label>Experience Required</label>
+                  <input
+                    type="text"
+                    value={applicationForm.Experience}
+                    readOnly
+                    className={styles.readOnlyInput}
+                  />
+                </div>
+                <div className={styles.formGroup}>
+                  <label>Application Deadline</label>
+                  <input
+                    type="text"
+                    value={formatDate(applicationForm.ApplicationDeadline)}
+                    readOnly
+                    className={styles.readOnlyInput}
+                  />
+                </div>
+              </div>
+
+              <div className={styles.formRow}>
+                <div className={styles.formGroup}>
+                  <label>Salary Range</label>
+                  <input
+                    type="text"
+                    value={applicationForm.SalaryRange || "Not specified"}
+                    readOnly
+                    className={styles.readOnlyInput}
+                  />
+                </div>
+                <div className={styles.formGroup}>
+                  <label>Notice Period</label>
+                  <input
+                    type="text"
+                    value={applicationForm.NoticePeriod || "Not specified"}
+                    readOnly
+                    className={styles.readOnlyInput}
+                  />
+                </div>
+              </div>
             </div>
 
-            <div className={styles.formGroup}>
-              <label>Job ID</label>
-              <input
-                type="text"
-                value={applicationForm.JobId}
-                readOnly
-                className={styles.readOnlyInput}
-              />
-            </div>
-
-            <div className={styles.formRow}>
-              <div className={styles.formGroup}>
-                <label>Job Title</label>
-                <input
-                  type="text"
-                  value={applicationForm.JobTitle}
-                  readOnly
-                  className={styles.readOnlyInput}
-                />
-              </div>
-              <div className={styles.formGroup}>
-                <label>Job Department</label>
-                <input
-                  type="text"
-                  value={selectedJob.Department}
-                  readOnly
-                  className={styles.readOnlyInput}
-                />
-              </div>
-            </div>
-
-            <div className={styles.formRow}>
-              <div className={styles.formGroup}>
-                <label>Experience Required</label>
-                <input
-                  type="text"
-                  value={applicationForm.Experience}
-                  readOnly
-                  className={styles.readOnlyInput}
-                />
-              </div>
-              <div className={styles.formGroup}>
-                <label>Location</label>
-                <input
-                  type="text"
-                  value={applicationForm.Location}
-                  readOnly
-                  className={styles.readOnlyInput}
-                />
-              </div>
-            </div>
-
-            <div className={styles.formRow}>
-              <div className={styles.formGroup}>
-                <label>💰 Salary Range</label>
-                <input
-                  type="text"
-                  value={applicationForm.SalaryRange || "Not specified"}
-                  readOnly
-                  className={styles.readOnlyInput}
+            {/* Resume Upload Section */}
+            <div
+              style={{
+                background: "#faf5ff",
+                padding: "20px",
+                borderRadius: "10px",
+                marginBottom: "20px",
+                border: "1px solid #e9d5ff",
+              }}
+            >
+              <div className={styles.formGroup} style={{ marginBottom: 0 }}>
+                <label
                   style={{
-                    background: applicationForm.SalaryRange ? "#d1fae5" : "#f3f4f6",
-                    color: applicationForm.SalaryRange ? "#065f46" : "#6b7280",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "6px",
+                    fontSize: "14px",
                     fontWeight: 600,
+                    color: "#1e293b",
+                    marginBottom: "8px",
                   }}
-                />
-              </div>
-              <div className={styles.formGroup}>
-                <label>⏰ Notice Period</label>
-                <input
-                  type="text"
-                  value={applicationForm.NoticePeriod || "Not specified"}
-                  readOnly
-                  className={styles.readOnlyInput}
-                  style={{
-                    background: applicationForm.NoticePeriod ? "#fef3c7" : "#f3f4f6",
-                    color: applicationForm.NoticePeriod ? "#92400e" : "#6b7280",
-                    fontWeight: 600,
-                  }}
-                />
-              </div>
-            </div>
-
-            <div className={styles.formRow}>
-              <div className={styles.formGroup}>
-                <label>Posted On</label>
-                <input
-                  type="text"
-                  value={formatDate(applicationForm.CreatedOn)}
-                  readOnly
-                  className={styles.readOnlyInput}
-                />
-              </div>
-              <div className={styles.formGroup}>
-                <label>Application Deadline</label>
-                <input
-                  type="text"
-                  value={formatDate(applicationForm.ApplicationDeadline)}
-                  readOnly
-                  className={styles.readOnlyInput}
-                />
-              </div>
-            </div>
-
-            <div className={styles.formGroup}>
-              <label>Job Description</label>
-              <textarea
-                value={applicationForm.Description}
-                readOnly
-                className={styles.readOnlyInput}
-                rows={4}
-                style={{ resize: "none" }}
-              />
-            </div>
-
-            <div className={styles.formGroup}>
-              <label>
-                📎 Upload Candidates Resume/CV <span style={{ color: "#ef4444" }}>*</span>
-              </label>
-              <div className={styles.attachmentSection}>
-                <input
-                  type="file"
-                  ref={fileInputRef}
-                  onChange={handleFileChange}
-                  accept=".pdf,.doc,.docx"
-                  className={styles.fileInput}
-                />
-                {attachmentFile && (
-                  <div className={styles.fileInfo}>
-                    <span>📄 {attachmentFile.name}</span>
-                    <span className={styles.fileSize}>
-                      ({(attachmentFile.size / 1024).toFixed(2)} KB)
-                    </span>
-                    <button
-                      type="button"
-                      className={styles.removeFileBtn}
-                      onClick={handleRemoveFile}
-                    >
-                      Remove
-                    </button>
-                  </div>
-                )}
-                <p className={styles.fileHint}>
-                  Supported formats: PDF, DOC, DOCX (Max 10MB)
-                </p>
+                >
+                  <span>📎</span>
+                  Upload Resume/CV
+                  <span style={{ color: "#ef4444" }}>*</span>
+                </label>
+                <div className={styles.attachmentSection}>
+                  <input
+                    type="file"
+                    ref={fileInputRef}
+                    onChange={handleFileChange}
+                    accept=".pdf,.doc,.docx"
+                    className={styles.fileInput}
+                  />
+                  {attachmentFile && (
+                    <div className={styles.fileInfo}>
+                      <span>📄 {attachmentFile.name}</span>
+                      <span className={styles.fileSize}>
+                        ({(attachmentFile.size / 1024).toFixed(2)} KB)
+                      </span>
+                      <button
+                        type="button"
+                        className={styles.removeFileBtn}
+                        onClick={handleRemoveFile}
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  )}
+                  <p className={styles.fileHint}>
+                    Supported formats: PDF, DOC, DOCX (Max 10MB)
+                  </p>
+                </div>
               </div>
             </div>
 
@@ -780,146 +817,222 @@ const UploadResume: React.FC<IUploadResumeProps> = ({ service }) => {
               <button
                 type="submit"
                 className={styles.submitBtn}
-                disabled={submitting || !attachmentFile || !currentUser || !candidateName.trim()}
+                disabled={
+                  submitting ||
+                  !attachmentFile ||
+                  !currentUser ||
+                  !candidateName.trim()
+                }
               >
-                {submitting ? "⏳ Submitting..." : "📤 Submit Application"}
+                {submitting ? "Submitting..." : "Submit Application"}
               </button>
             </div>
           </form>
         </div>
       )}
 
-      {/* METADATA FILTERS SECTION */}
+      {/* COMPACT FILTERS - Always Visible */}
       {!showUploadForm && (
         <>
-          <div style={filterContainerStyle}>
-            <div style={filterHeaderStyle}>
-              <div style={filterTitleStyle}>
-                <span>🔍</span>
-                <span>Filter Jobs</span>
-                {hasActiveFilters() && (
-                  <span style={filterBadgeStyle}>
-                    {getActiveFilterCount()} Active
-                  </span>
-                )}
-              </div>
-              {hasActiveFilters() && (
-                <button
-                  style={clearFiltersBtnStyle}
-                  onClick={clearAllFilters}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.transform = "scale(1.02)";
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.transform = "scale(1)";
-                  }}
-                >
-                  ✕ Clear All Filters
-                </button>
-              )}
-            </div>
-
-            <div style={filterGridStyle}>
-              {/* Search Input */}
-              <div style={{ ...filterItemStyle, gridColumn: "span 2" }}>
-                <label style={filterLabelStyle}>🔍 Search</label>
+          <div
+            style={{
+              background: "#ffffff",
+              padding: "12px 16px",
+              borderRadius: "10px",
+              marginBottom: "16px",
+              border: "1px solid #e2e8f0",
+            }}
+          >
+            {/* Row 1: Search + Clear */}
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "12px",
+                marginBottom: "10px",
+              }}
+            >
+              <div style={{ position: "relative", flex: 1 }}>
                 <input
                   type="text"
                   placeholder="Search by job title, ID, department, location..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  style={searchInputStyle}
+                  style={{
+                    width: "100%",
+                    padding: "8px 12px 8px 36px",
+                    border: "1px solid #e2e8f0",
+                    borderRadius: "6px",
+                    fontSize: "13px",
+                    background: "#f8fafc",
+                    boxSizing: "border-box",
+                  }}
+                  onFocus={(e) => {
+                    e.target.style.borderColor = "#1e40af";
+                    e.target.style.background = "#ffffff";
+                  }}
+                  onBlur={(e) => {
+                    e.target.style.borderColor = "#e2e8f0";
+                    e.target.style.background = "#f8fafc";
+                  }}
                 />
+                <span
+                  style={{
+                    position: "absolute",
+                    left: "12px",
+                    top: "50%",
+                    transform: "translateY(-50%)",
+                    fontSize: "14px",
+                    color: "#94a3b8",
+                  }}
+                >
+                  🔍
+                </span>
               </div>
 
-              {/* Department Filter */}
-              <div style={filterItemStyle}>
-                <label style={filterLabelStyle}>🏢 Department</label>
-                <select
-                  value={departmentFilter}
-                  onChange={(e) => setDepartmentFilter(e.target.value)}
-                  style={filterInputStyle}
+              {/* Clear All Button */}
+              {hasActiveFilters() && (
+                <button
+                  onClick={clearAllFilters}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "4px",
+                    padding: "8px 12px",
+                    background: "#fef2f2",
+                    border: "1px solid #fecaca",
+                    borderRadius: "6px",
+                    cursor: "pointer",
+                    fontSize: "12px",
+                    fontWeight: 500,
+                    color: "#dc2626",
+                    whiteSpace: "nowrap",
+                  }}
                 >
-                  <option value="All">All Departments</option>
-                  {getUniqueDepartments().map((dept) => (
-                    <option key={dept} value={dept}>{dept}</option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Location Filter */}
-              <div style={filterItemStyle}>
-                <label style={filterLabelStyle}>📍 Location</label>
-                <select
-                  value={locationFilter}
-                  onChange={(e) => setLocationFilter(e.target.value)}
-                  style={filterInputStyle}
-                >
-                  <option value="All">All Locations</option>
-                  {getUniqueLocations().map((loc) => (
-                    <option key={loc} value={loc}>{loc}</option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Experience Filter */}
-              <div style={filterItemStyle}>
-                <label style={filterLabelStyle}>⏱️ Experience</label>
-                <select
-                  value={experienceFilter}
-                  onChange={(e) => setExperienceFilter(e.target.value)}
-                  style={filterInputStyle}
-                >
-                  <option value="All">All Experience Levels</option>
-                  {getUniqueExperiences().map((exp) => (
-                    <option key={exp} value={exp}>{exp}</option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Notice Period Filter */}
-              <div style={filterItemStyle}>
-                <label style={filterLabelStyle}>⏰ Notice Period</label>
-                <select
-                  value={noticePeriodFilter}
-                  onChange={(e) => setNoticePeriodFilter(e.target.value)}
-                  style={filterInputStyle}
-                >
-                  <option value="All">All Notice Periods</option>
-                  {getUniqueNoticePeriods().map((np) => (
-                    <option key={np} value={np}>{np}</option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Salary Range Filter */}
-              <div style={filterItemStyle}>
-                <label style={filterLabelStyle}>💰 Salary Range</label>
-                <select
-                  value={salaryRangeFilter}
-                  onChange={(e) => setSalaryRangeFilter(e.target.value)}
-                  style={filterInputStyle}
-                >
-                  <option value="All">All Salary Ranges</option>
-                  {getUniqueSalaryRanges().map((sr) => (
-                    <option key={sr} value={sr}>{sr}</option>
-                  ))}
-                </select>
-              </div>
+                  ✕ Clear
+                </button>
+              )}
             </div>
-          </div>
 
-          {/* Results Info */}
-          <div style={resultsInfoStyle}>
-            <span>
-              📋 Showing {filteredJobs.length > 0 ? startIndex + 1 : 0} - {Math.min(endIndex, filteredJobs.length)} of {filteredJobs.length} jobs
-              {hasActiveFilters() && ` (filtered from ${jobs.length} total)`}
-            </span>
-            {totalPages > 1 && (
-              <span style={resultsBadgeStyle}>
-                Page {currentPage} of {totalPages}
-              </span>
-            )}
+            {/* Row 2: All Filter Dropdowns */}
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "10px",
+                flexWrap: "wrap",
+              }}
+            >
+              {/* Department */}
+              <select
+                value={departmentFilter}
+                onChange={(e) => setDepartmentFilter(e.target.value)}
+                style={{
+                  padding: "7px 10px",
+                  border: "1px solid #e2e8f0",
+                  borderRadius: "6px",
+                  fontSize: "12px",
+                  background: "#ffffff",
+                  cursor: "pointer",
+                  minWidth: "130px",
+                }}
+              >
+                <option value="All">All Departments</option>
+                {getUniqueDepartments().map((dept) => (
+                  <option key={dept} value={dept}>
+                    {dept}
+                  </option>
+                ))}
+              </select>
+
+              {/* Location */}
+              <select
+                value={locationFilter}
+                onChange={(e) => setLocationFilter(e.target.value)}
+                style={{
+                  padding: "7px 10px",
+                  border: "1px solid #e2e8f0",
+                  borderRadius: "6px",
+                  fontSize: "12px",
+                  background: "#ffffff",
+                  cursor: "pointer",
+                  minWidth: "120px",
+                }}
+              >
+                <option value="All">All Locations</option>
+                {getUniqueLocations().map((loc) => (
+                  <option key={loc} value={loc}>
+                    {loc}
+                  </option>
+                ))}
+              </select>
+
+              {/* Experience */}
+              <select
+                value={experienceFilter}
+                onChange={(e) => setExperienceFilter(e.target.value)}
+                style={{
+                  padding: "7px 10px",
+                  border: "1px solid #e2e8f0",
+                  borderRadius: "6px",
+                  fontSize: "12px",
+                  background: "#ffffff",
+                  cursor: "pointer",
+                  minWidth: "110px",
+                }}
+              >
+                <option value="All">All Experience</option>
+                {getUniqueExperiences().map((exp) => (
+                  <option key={exp} value={exp}>
+                    {exp}
+                  </option>
+                ))}
+              </select>
+
+              {/* Notice Period */}
+              <select
+                value={noticePeriodFilter}
+                onChange={(e) => setNoticePeriodFilter(e.target.value)}
+                style={{
+                  padding: "7px 10px",
+                  border: "1px solid #e2e8f0",
+                  borderRadius: "6px",
+                  fontSize: "12px",
+                  background: "#ffffff",
+                  cursor: "pointer",
+                  minWidth: "120px",
+                }}
+              >
+                <option value="All">All Notice Periods</option>
+                {getUniqueNoticePeriods().map((np) => (
+                  <option key={np} value={np}>
+                    {np}
+                  </option>
+                ))}
+              </select>
+
+              {/* Salary Range */}
+              <select
+                value={salaryRangeFilter}
+                onChange={(e) => setSalaryRangeFilter(e.target.value)}
+                style={{
+                  padding: "7px 10px",
+                  border: "1px solid #e2e8f0",
+                  borderRadius: "6px",
+                  fontSize: "12px",
+                  background: "#ffffff",
+                  cursor: "pointer",
+                  minWidth: "120px",
+                }}
+              >
+                <option value="All">All Salary Ranges</option>
+                {getUniqueSalaryRanges().map((sr) => (
+                  <option key={sr} value={sr}>
+                    {sr}
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
 
           {/* JOBS TABLE */}
@@ -927,137 +1040,205 @@ const UploadResume: React.FC<IUploadResumeProps> = ({ service }) => {
             <table className={styles.table}>
               <thead>
                 <tr>
-                  <th>Job ID</th>
+                  <th style={{ width: "100px" }}>Job ID</th>
                   <th>Title</th>
                   <th>Department</th>
                   <th>Location</th>
                   <th>Salary Range</th>
                   <th>Notice Period</th>
-                  <th>Openings</th>
+                  <th style={{ width: "80px", textAlign: "center" }}>
+                    Openings
+                  </th>
                   <th>Deadline</th>
-                  <th>Status</th>
-                  <th>Action</th>
+                  <th style={{ width: "80px" }}>Status</th>
+                  <th style={{ width: "90px", textAlign: "center" }}>Action</th>
                 </tr>
               </thead>
               <tbody>
                 {currentJobs.length === 0 ? (
                   <tr>
-                    <td colSpan={10} className={styles.noData}>
-                      <span style={{ fontSize: "48px" }}>📭</span>
-                      <p style={{ fontSize: "16px", fontWeight: 600, margin: "12px 0 8px" }}>
-                        {hasActiveFilters() ? "No jobs match your filters" : "No open positions available"}
-                      </p>
-                      {hasActiveFilters() && (
-                        <button
-                          onClick={clearAllFilters}
+                    <td colSpan={10}>
+                      <div
+                        style={{
+                          display: "flex",
+                          flexDirection: "column",
+                          alignItems: "center",
+                          padding: "48px 20px",
+                        }}
+                      >
+                        <div
                           style={{
-                            background: "#3b82f6",
-                            color: "white",
-                            padding: "8px 16px",
-                            borderRadius: "8px",
-                            border: "none",
-                            cursor: "pointer",
-                            marginTop: "8px",
+                            width: "72px",
+                            height: "72px",
+                            background: "#f1f5f9",
+                            borderRadius: "50%",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            fontSize: "32px",
+                            marginBottom: "16px",
                           }}
                         >
-                          Clear Filters
-                        </button>
-                      )}
+                          📭
+                        </div>
+                        <p
+                          style={{
+                            color: "#64748b",
+                            fontSize: "15px",
+                            fontWeight: 500,
+                            margin: "0 0 12px",
+                          }}
+                        >
+                          {hasActiveFilters()
+                            ? "No jobs match your filters"
+                            : "No open positions available"}
+                        </p>
+                        {hasActiveFilters() && (
+                          <button
+                            onClick={clearAllFilters}
+                            style={{
+                              background: "#1e40af",
+                              color: "#ffffff",
+                              border: "none",
+                              borderRadius: "6px",
+                              padding: "8px 16px",
+                              cursor: "pointer",
+                              fontSize: "13px",
+                              fontWeight: 500,
+                            }}
+                          >
+                            Clear Filters
+                          </button>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 ) : (
-                  currentJobs.map((job) => (
-                    <tr key={job.Id} style={{ height: "56px", verticalAlign: "middle" }}>
-                      <td style={{ verticalAlign: "middle" }}>
-                        <span
-                          style={{
-                            background: "linear-gradient(135deg, #e0f2fe 0%, #bae6fd 100%)",
-                            color: "#0369a1",
-                            padding: "4px 10px",
-                            borderRadius: "8px",
-                            fontSize: "12px",
-                            fontWeight: 600,
-                          }}
-                        >
-                          {job.JobId || "N/A"}
-                        </span>
-                      </td>
-                      <td style={{ verticalAlign: "middle" }}>
-                        <strong>{job.Title}</strong>
-                      </td>
-                      <td style={{ verticalAlign: "middle" }}>{job.Department}</td>
-                      <td style={{ verticalAlign: "middle" }}>{job.Location}</td>
-                      <td style={{ verticalAlign: "middle" }}>
-                        <span
-                          style={{
-                            background: "linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%)",
-                            color: "#065f46",
-                            padding: "4px 10px",
-                            borderRadius: "12px",
-                            fontSize: "12px",
-                            fontWeight: 600,
-                            whiteSpace: "nowrap",
-                          }}
-                        >
-                          {job.SalaryRange || "Not specified"}
-                        </span>
-                      </td>
-                      <td style={{ verticalAlign: "middle" }}>
-                        <span
-                          style={{
-                            background: "linear-gradient(135deg, #fef3c7 0%, #fde68a 100%)",
-                            color: "#92400e",
-                            padding: "4px 10px",
-                            borderRadius: "12px",
-                            fontSize: "12px",
-                            fontWeight: 600,
-                            whiteSpace: "nowrap",
-                          }}
-                        >
-                          {job.NoticePeriod || "Not specified"}
-                        </span>
-                      </td>
-                      <td style={{ textAlign: "center", verticalAlign: "middle" }}>
-                        <span className={styles.openingBadge}>{job.Opening || 1}</span>
-                      </td>
-                      <td style={{ verticalAlign: "middle", whiteSpace: "nowrap" }}>
-                        <span
-                          style={{
-                            color: isDeadlinePassed(job.EndingDate) ? "#dc2626" : "#374151",
-                            fontWeight: isDeadlinePassed(job.EndingDate) ? 600 : 400,
-                          }}
-                        >
-                          {formatDate(job.EndingDate)}
-                        </span>
-                      </td>
-                      <td style={{ verticalAlign: "middle" }}>
-                        <span style={getStatusStyle(job.Status)}>{job.Status}</span>
-                      </td>
-                      <td style={{ verticalAlign: "middle" }}>
-                        <button
-                          style={
-                            isDeadlinePassed(job.EndingDate) || !currentUser
-                              ? applyBtnDisabledStyle
-                              : applyBtnStyle
-                          }
-                          onClick={() => handleUploadResume(job)}
-                          disabled={isDeadlinePassed(job.EndingDate) || !currentUser}
-                          onMouseEnter={(e) => {
-                            if (!isDeadlinePassed(job.EndingDate) && currentUser) {
-                              e.currentTarget.style.transform = "translateY(-2px)";
-                              e.currentTarget.style.boxShadow = "0 4px 12px rgba(59, 130, 246, 0.4)";
+                  currentJobs.map((job) => {
+                    const isDisabled =
+                      isDeadlinePassed(job.EndingDate) || !currentUser;
+                    const isRowHovered = hoveredRow === job.Id;
+
+                    return (
+                      <tr
+                        key={job.Id}
+                        style={{
+                          background: isRowHovered ? "#f8fafc" : "transparent",
+                          transition: "background 0.15s ease",
+                        }}
+                        onMouseEnter={() => setHoveredRow(job.Id || null)}
+                        onMouseLeave={() => setHoveredRow(null)}
+                      >
+                        {/* Job ID */}
+                        <td>
+                          <span
+                            style={{
+                              fontFamily: "'SF Mono', 'Consolas', monospace",
+                              fontSize: "12px",
+                              fontWeight: 600,
+                              color: "#475569",
+                              background: "#f1f5f9",
+                              padding: "4px 8px",
+                              borderRadius: "4px",
+                              display: "inline-block",
+                            }}
+                          >
+                            {job.JobId || "N/A"}
+                          </span>
+                        </td>
+
+                        {/* Title */}
+                        <td>
+                          <span style={{ fontWeight: 600, color: "#1e293b" }}>
+                            {job.Title}
+                          </span>
+                        </td>
+
+                        {/* Department */}
+                        <td style={{ color: "#475569" }}>{job.Department}</td>
+
+                        {/* Location */}
+                        <td style={{ color: "#475569" }}>{job.Location}</td>
+
+                        {/* Salary Range */}
+                        <td>
+                          <span style={{ fontSize: "13px", color: "#374151" }}>
+                            {job.SalaryRange || "-"}
+                          </span>
+                        </td>
+
+                        {/* Notice Period */}
+                        <td>
+                          <span style={{ fontSize: "13px", color: "#374151" }}>
+                            {job.NoticePeriod || "-"}
+                          </span>
+                        </td>
+
+                        {/* Openings */}
+                        <td style={{ textAlign: "center" }}>
+                          <span
+                            style={{
+                              display: "inline-flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              width: "26px",
+                              height: "26px",
+                              borderRadius: "6px",
+                              background: "#f1f5f9",
+                              color: "#334155",
+                              fontSize: "13px",
+                              fontWeight: 600,
+                            }}
+                          >
+                            {job.Opening || 1}
+                          </span>
+                        </td>
+
+                        {/* Deadline */}
+                        <td>
+                          <span
+                            style={{
+                              fontSize: "13px",
+                              color: isDeadlinePassed(job.EndingDate)
+                                ? "#dc2626"
+                                : "#64748b",
+                              fontWeight: isDeadlinePassed(job.EndingDate)
+                                ? 500
+                                : 400,
+                            }}
+                          >
+                            {formatDate(job.EndingDate)}
+                          </span>
+                        </td>
+
+                        {/* Status */}
+                        <td>{getStatusIndicator(job.Status)}</td>
+
+                        {/* Action - Apply Button */}
+                        <td style={{ textAlign: "center" }}>
+                          <button
+                            style={getApplyButtonStyle(
+                              isDisabled,
+                              isRowHovered && !isDisabled,
+                            )}
+                            onClick={() =>
+                              !isDisabled && handleUploadResume(job)
                             }
-                          }}
-                          onMouseLeave={(e) => {
-                            e.currentTarget.style.transform = "translateY(0)";
-                            e.currentTarget.style.boxShadow = "none";
-                          }}
-                        >
-                          📝 Apply
-                        </button>
-                      </td>
-                    </tr>
-                  ))
+                            disabled={isDisabled}
+                            title={
+                              isDeadlinePassed(job.EndingDate)
+                                ? "Application deadline passed"
+                                : !currentUser
+                                  ? "Please login to apply"
+                                  : "Apply for this position"
+                            }
+                          >
+                            Apply
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  })
                 )}
               </tbody>
             </table>
@@ -1065,17 +1246,25 @@ const UploadResume: React.FC<IUploadResumeProps> = ({ service }) => {
 
           {/* PAGINATION */}
           {totalPages > 1 && (
-            <div className={styles.pagination}>
-              <div className={styles.paginationInfo}>
-                Showing {startIndex + 1} - {Math.min(endIndex, filteredJobs.length)} of {filteredJobs.length} jobs
-              </div>
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "center",
+                alignItems: "center",
+                marginTop: "16px",
+                padding: "12px",
+                background: "#ffffff",
+                borderRadius: "8px",
+                border: "1px solid #e2e8f0",
+              }}
+            >
               <div className={styles.paginationControls}>
                 <button
                   className={styles.paginationBtn}
                   onClick={() => handlePageChange(currentPage - 1)}
                   disabled={currentPage === 1}
                 >
-                  ← Previous
+                  ← Prev
                 </button>
 
                 <div className={styles.pageNumbers}>
@@ -1085,7 +1274,9 @@ const UploadResume: React.FC<IUploadResumeProps> = ({ service }) => {
                       className={`${styles.pageNumber} ${
                         page === currentPage ? styles.activePage : ""
                       } ${page === "..." ? styles.ellipsis : ""}`}
-                      onClick={() => typeof page === "number" && handlePageChange(page)}
+                      onClick={() =>
+                        typeof page === "number" && handlePageChange(page)
+                      }
                       disabled={page === "..."}
                     >
                       {page}

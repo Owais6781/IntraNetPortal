@@ -9,14 +9,14 @@ import styles from "./RecruitmentPortal.module.scss";
 
 interface IJobOpeningProps {
   service: SPService;
-  initialJobIdFilter?: string;  // NEW PROP
-  onClearFilter?: () => void;   // NEW PROP
+  initialJobIdFilter?: string;
+  onClearFilter?: () => void;
 }
 
-const JobOpening: React.FC<IJobOpeningProps> = ({ 
-  service, 
+const JobOpening: React.FC<IJobOpeningProps> = ({
+  service,
   initialJobIdFilter = "",
-  onClearFilter 
+  onClearFilter,
 }) => {
   const [jobs, setJobs] = useState<IJobOpening[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
@@ -25,7 +25,7 @@ const JobOpening: React.FC<IJobOpeningProps> = ({
   const [selectedJob, setSelectedJob] = useState<IJobOpening | null>(null);
   const [submitting, setSubmitting] = useState<boolean>(false);
 
-  // Filter state - NEW
+  // Filter state
   const [jobIdFilter, setJobIdFilter] = useState<string>(initialJobIdFilter);
 
   // Pagination state
@@ -45,6 +45,10 @@ const JobOpening: React.FC<IJobOpeningProps> = ({
   // File attachment state for job form
   const [jobAttachmentFile, setJobAttachmentFile] = useState<File | null>(null);
   const jobFileInputRef = useRef<HTMLInputElement>(null);
+
+  // Hover states for action buttons
+  const [hoveredRow, setHoveredRow] = useState<number | null>(null);
+  const [hoveredAction, setHoveredAction] = useState<string | null>(null);
 
   // Job Form State
   const [jobForm, setJobForm] = useState<IJobOpening>({
@@ -97,7 +101,6 @@ const JobOpening: React.FC<IJobOpeningProps> = ({
     void loadJobs();
   }, [loadJobs]);
 
-  // Update filter when prop changes - NEW
   useEffect(() => {
     if (initialJobIdFilter) {
       setJobIdFilter(initialJobIdFilter);
@@ -105,7 +108,6 @@ const JobOpening: React.FC<IJobOpeningProps> = ({
     }
   }, [initialJobIdFilter]);
 
-  // Clear filter handler - NEW
   const handleClearFilter = (): void => {
     setJobIdFilter("");
     setCurrentPage(1);
@@ -114,26 +116,21 @@ const JobOpening: React.FC<IJobOpeningProps> = ({
     }
   };
 
-  // Filter jobs based on jobIdFilter - NEW
   const getFilteredJobs = (): IJobOpening[] => {
     if (!jobIdFilter) {
       return jobs;
     }
-    return jobs.filter((job) => 
-      job.JobId?.toLowerCase().includes(jobIdFilter.toLowerCase())
+    return jobs.filter((job) =>
+      job.JobId?.toLowerCase().includes(jobIdFilter.toLowerCase()),
     );
   };
 
-  // Get filtered jobs
   const filteredJobs = getFilteredJobs();
-
-  // Pagination calculations - Updated to use filteredJobs
   const totalPages = Math.ceil(filteredJobs.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
   const endIndex = startIndex + itemsPerPage;
   const currentJobs = filteredJobs.slice(startIndex, endIndex);
 
-  // Pagination handlers
   const handlePageChange = (page: number): void => {
     if (page >= 1 && page <= totalPages) {
       setCurrentPage(page);
@@ -292,7 +289,7 @@ const JobOpening: React.FC<IJobOpeningProps> = ({
   };
 
   const handleJobFileChange = (
-    e: React.ChangeEvent<HTMLInputElement>
+    e: React.ChangeEvent<HTMLInputElement>,
   ): void => {
     const files = e.target.files;
     if (files && files.length > 0) {
@@ -344,12 +341,12 @@ const JobOpening: React.FC<IJobOpeningProps> = ({
         await service.updateJob(
           selectedJob.Id,
           jobForm,
-          jobAttachmentFile || undefined
+          jobAttachmentFile || undefined,
         );
         alert("Job updated successfully!");
       } else {
         await service.createJob(jobForm, jobAttachmentFile || undefined);
-        alert("Job created successfully!");
+        alert("✅ Job posting created successfully.");
       }
       setShowForm(false);
       resetJobForm();
@@ -374,7 +371,7 @@ const JobOpening: React.FC<IJobOpeningProps> = ({
     try {
       await service.createRecruitmentApplication(
         applicationForm,
-        attachmentFile
+        attachmentFile,
       );
       alert("Application submitted successfully!");
       handleClose();
@@ -407,153 +404,338 @@ const JobOpening: React.FC<IJobOpeningProps> = ({
     return new Date(endDate) < new Date();
   };
 
-  const getStatusStyle = (status: string): React.CSSProperties => {
+  // Professional Status Indicator
+  const getStatusIndicator = (status: string): JSX.Element => {
     const statusLower = status.toLowerCase();
-    let textColor = "#065f46";
-    let borderColor = "rgba(16, 185, 129, 0.2)";
-    let background = "linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%)";
+    let dotColor = "#22c55e";
+    let textColor = "#166534";
 
     if (statusLower === "closed") {
+      dotColor = "#ef4444";
       textColor = "#991b1b";
-      borderColor = "rgba(239, 68, 68, 0.2)";
-      background = "linear-gradient(135deg, #fef2f2 0%, #fecaca 100%)";
     } else if (statusLower === "onhold") {
+      dotColor = "#f59e0b";
       textColor = "#92400e";
-      borderColor = "rgba(245, 158, 11, 0.2)";
-      background = "linear-gradient(135deg, #fffbeb 0%, #fde68a 100%)";
     }
 
-    return {
-      background: background,
-      color: textColor,
-      padding: "6px 14px",
-      borderRadius: "20px",
-      fontSize: "12px",
-      fontWeight: 600,
-      display: "inline-block",
-      border: `1px solid ${borderColor}`,
-      textTransform: "capitalize" as const,
+    return (
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: "6px",
+        }}
+      >
+        <span
+          style={{
+            width: "8px",
+            height: "8px",
+            borderRadius: "50%",
+            backgroundColor: dotColor,
+            display: "inline-block",
+            animation: statusLower === "open" ? "pulse 2s infinite" : "none",
+          }}
+        />
+        <span
+          style={{
+            fontSize: "13px",
+            fontWeight: 500,
+            color: textColor,
+            textTransform: "capitalize",
+          }}
+        >
+          {status}
+        </span>
+      </div>
+    );
+  };
+
+  // Icon-only Action Button Component
+  const ActionButton: React.FC<{
+    icon: string;
+    tooltip: string;
+    onClick: () => void;
+    variant: "view" | "edit" | "delete";
+    rowId: number;
+  }> = ({ icon, tooltip, onClick, variant, rowId }) => {
+    const isHovered = hoveredRow === rowId && hoveredAction === variant;
+
+    const getButtonStyles = (): React.CSSProperties => {
+      const baseStyles: React.CSSProperties = {
+        width: "36px",
+        height: "36px",
+        borderRadius: "8px",
+        border: "1px solid",
+        cursor: "pointer",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        fontSize: "16px",
+        transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
+        position: "relative",
+      };
+
+      switch (variant) {
+        case "view":
+          return {
+            ...baseStyles,
+            background: isHovered ? "#1e40af" : "#f8fafc",
+            borderColor: isHovered ? "#1e40af" : "#e2e8f0",
+            color: isHovered ? "#ffffff" : "#475569",
+            transform: isHovered ? "translateY(-2px)" : "translateY(0)",
+            boxShadow: isHovered
+              ? "0 4px 12px rgba(30, 64, 175, 0.25)"
+              : "none",
+          };
+        case "edit":
+          return {
+            ...baseStyles,
+            background: isHovered ? "#ca8a04" : "#f8fafc",
+            borderColor: isHovered ? "#ca8a04" : "#e2e8f0",
+            color: isHovered ? "#ffffff" : "#475569",
+            transform: isHovered ? "translateY(-2px)" : "translateY(0)",
+            boxShadow: isHovered
+              ? "0 4px 12px rgba(202, 138, 4, 0.25)"
+              : "none",
+          };
+        case "delete":
+          return {
+            ...baseStyles,
+            background: isHovered ? "#dc2626" : "#f8fafc",
+            borderColor: isHovered ? "#dc2626" : "#e2e8f0",
+            color: isHovered ? "#ffffff" : "#475569",
+            transform: isHovered ? "translateY(-2px)" : "translateY(0)",
+            boxShadow: isHovered
+              ? "0 4px 12px rgba(220, 38, 38, 0.25)"
+              : "none",
+          };
+        default:
+          return baseStyles;
+      }
     };
-  };
 
-  // Inline button styles for table row actions
-  const viewBtnStyle: React.CSSProperties = {
-    padding: "6px 12px",
-    fontSize: "12px",
-    fontWeight: 600,
-    border: "none",
-    borderRadius: "6px",
-    cursor: "pointer",
-    background: "linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)",
-    color: "#ffffff",
-    transition: "all 0.2s ease",
-    whiteSpace: "nowrap",
-  };
-
-  const editBtnStyle: React.CSSProperties = {
-    padding: "6px 12px",
-    fontSize: "12px",
-    fontWeight: 600,
-    border: "none",
-    borderRadius: "6px",
-    cursor: "pointer",
-    background: "linear-gradient(135deg, #f59e0b 0%, #d97706 100%)",
-    color: "#ffffff",
-    transition: "all 0.2s ease",
-    whiteSpace: "nowrap",
+    return (
+      <div style={{ position: "relative", display: "inline-block" }}>
+        <button
+          style={getButtonStyles()}
+          onClick={onClick}
+          onMouseEnter={() => {
+            setHoveredRow(rowId);
+            setHoveredAction(variant);
+          }}
+          onMouseLeave={() => {
+            setHoveredRow(null);
+            setHoveredAction(null);
+          }}
+          title={tooltip}
+        >
+          {icon}
+        </button>
+        {/* Tooltip */}
+        {isHovered && (
+          <div
+            style={{
+              position: "absolute",
+              bottom: "calc(100% + 8px)",
+              left: "50%",
+              transform: "translateX(-50%)",
+              background: "#1e293b",
+              color: "#ffffff",
+              padding: "6px 10px",
+              borderRadius: "6px",
+              fontSize: "11px",
+              fontWeight: 500,
+              whiteSpace: "nowrap",
+              zIndex: 1000,
+              boxShadow: "0 4px 12px rgba(0, 0, 0, 0.15)",
+              animation: "fadeIn 0.15s ease",
+            }}
+          >
+            {tooltip}
+            <div
+              style={{
+                position: "absolute",
+                top: "100%",
+                left: "50%",
+                transform: "translateX(-50%)",
+                width: 0,
+                height: 0,
+                borderLeft: "5px solid transparent",
+                borderRight: "5px solid transparent",
+                borderTop: "5px solid #1e293b",
+              }}
+            />
+          </div>
+        )}
+      </div>
+    );
   };
 
   if (loading) {
-    return <div className={styles.loading}>Loading Jobs...</div>;
+    return (
+      <div className={styles.loading}>
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            gap: "16px",
+          }}
+        >
+          <div
+            style={{
+              width: "48px",
+              height: "48px",
+              border: "3px solid #e2e8f0",
+              borderTopColor: "#1e40af",
+              borderRadius: "50%",
+              animation: "spin 0.8s linear infinite",
+            }}
+          />
+          <span style={{ color: "#64748b", fontWeight: 500 }}>
+            Loading Jobs...
+          </span>
+        </div>
+      </div>
+    );
   }
 
   return (
     <div className={styles.pageContainer}>
+      {/* CSS Animation Keyframes */}
+      <style>
+        {`
+          @keyframes fadeIn {
+            from { opacity: 0; transform: translateX(-50%) translateY(4px); }
+            to { opacity: 1; transform: translateX(-50%) translateY(0); }
+          }
+          @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+          }
+          @keyframes spin {
+            to { transform: rotate(360deg); }
+          }
+        `}
+      </style>
+
+      {/* Page Header */}
       <div className={styles.pageHeader}>
-        <h1>💼 Job Openings</h1>
+        <h1 style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+          <span
+            style={{
+              width: "40px",
+              height: "40px",
+              background: "linear-gradient(135deg, #1e40af 0%, #3b82f6 100%)",
+              borderRadius: "10px",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              fontSize: "20px",
+            }}
+          >
+            💼
+          </span>
+          Job Openings
+        </h1>
         {!showForm && !showApplyForm && (
           <button className={styles.addBtn} onClick={handleAddClick}>
-            <span>+</span> Add New Job
+            <span style={{ fontSize: "18px", fontWeight: 300 }}>+</span>
+            Add New Job
           </button>
         )}
       </div>
 
-      {/* FILTER BADGE - NEW */}
+      {/* Filter Badge */}
       {!showForm && !showApplyForm && jobIdFilter && (
         <div
           style={{
             display: "flex",
             alignItems: "center",
-            gap: "12px",
+            gap: "16px",
             marginBottom: "20px",
-            padding: "16px 20px",
-            background: "linear-gradient(135deg, #e0f2fe 0%, #bae6fd 100%)",
-            borderRadius: "12px",
-            border: "2px solid #0ea5e9",
-            boxShadow: "0 4px 12px rgba(14, 165, 233, 0.15)",
+            padding: "14px 20px",
+            background: "#ffffff",
+            borderRadius: "10px",
+            border: "1px solid #e2e8f0",
+            boxShadow: "0 1px 3px rgba(0, 0, 0, 0.05)",
           }}
         >
-          <span style={{ fontSize: "20px" }}>🔗</span>
+          <div
+            style={{
+              width: "40px",
+              height: "40px",
+              background: "#f0f9ff",
+              borderRadius: "8px",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              fontSize: "18px",
+            }}
+          >
+            🔍
+          </div>
           <div style={{ flex: 1 }}>
             <div
               style={{
-                fontSize: "12px",
-                color: "#0369a1",
+                fontSize: "11px",
+                color: "#64748b",
                 fontWeight: 500,
+                textTransform: "uppercase",
+                letterSpacing: "0.05em",
                 marginBottom: "2px",
               }}
             >
-              Filtered from Applicants
+              Filtered Result
             </div>
             <div
               style={{
-                fontSize: "16px",
-                fontWeight: 700,
-                color: "#0c4a6e",
+                fontSize: "15px",
+                fontWeight: 600,
+                color: "#1e293b",
               }}
             >
-              Job ID: {jobIdFilter}
+              {jobIdFilter}
             </div>
           </div>
           <div
             style={{
-              background: "#0ea5e9",
-              color: "white",
-              padding: "4px 12px",
-              borderRadius: "20px",
-              fontSize: "12px",
-              fontWeight: 600,
+              fontSize: "13px",
+              color: "#64748b",
+              fontWeight: 500,
             }}
           >
-            {filteredJobs.length} {filteredJobs.length === 1 ? "Job" : "Jobs"} Found
+            {filteredJobs.length}{" "}
+            {filteredJobs.length === 1 ? "result" : "results"}
           </div>
           <button
             onClick={handleClearFilter}
             style={{
-              background: "linear-gradient(135deg, #ef4444 0%, #dc2626 100%)",
-              color: "white",
-              border: "none",
-              borderRadius: "8px",
-              padding: "8px 16px",
+              background: "#f8fafc",
+              color: "#64748b",
+              border: "1px solid #e2e8f0",
+              borderRadius: "6px",
+              padding: "8px 14px",
               cursor: "pointer",
               fontSize: "13px",
-              fontWeight: 600,
+              fontWeight: 500,
               display: "flex",
               alignItems: "center",
               gap: "6px",
               transition: "all 0.2s ease",
             }}
             onMouseEnter={(e) => {
-              e.currentTarget.style.transform = "scale(1.02)";
-              e.currentTarget.style.boxShadow = "0 4px 12px rgba(239, 68, 68, 0.4)";
+              e.currentTarget.style.background = "#fee2e2";
+              e.currentTarget.style.borderColor = "#fecaca";
+              e.currentTarget.style.color = "#dc2626";
             }}
             onMouseLeave={(e) => {
-              e.currentTarget.style.transform = "scale(1)";
-              e.currentTarget.style.boxShadow = "none";
+              e.currentTarget.style.background = "#f8fafc";
+              e.currentTarget.style.borderColor = "#e2e8f0";
+              e.currentTarget.style.color = "#64748b";
             }}
-            title="Clear filter and show all jobs"
           >
-            ✕ Clear Filter
+            ✕ Clear
           </button>
         </div>
       )}
@@ -563,7 +745,24 @@ const JobOpening: React.FC<IJobOpeningProps> = ({
         <div className={styles.formCard}>
           <div className={styles.formHeader}>
             <h3>
-              {isEditMode ? "✏️ Edit Job Opening" : "📝 Create New Job Opening"}
+              <span
+                style={{
+                  width: "32px",
+                  height: "32px",
+                  background: isEditMode
+                    ? "linear-gradient(135deg, #f59e0b 0%, #d97706 100%)"
+                    : "linear-gradient(135deg, #1e40af 0%, #3b82f6 100%)",
+                  borderRadius: "8px",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  marginRight: "12px",
+                  fontSize: "16px",
+                }}
+              >
+                {isEditMode ? "✏️" : "📝"}
+              </span>
+              {isEditMode ? "Edit Job Opening" : "Create New Job Opening"}
             </h3>
             <button className={styles.closeBtn} onClick={handleClose}>
               ✕
@@ -643,10 +842,9 @@ const JobOpening: React.FC<IJobOpeningProps> = ({
               </div>
             </div>
 
-            {/* Salary Range & Notice Period */}
             <div className={styles.formRow}>
               <div className={styles.formGroup}>
-                <label>💰 Salary Range *</label>
+                <label>Salary Range *</label>
                 <input
                   type="text"
                   placeholder="e.g., ₹8,00,000 - ₹12,00,000 LPA"
@@ -658,7 +856,7 @@ const JobOpening: React.FC<IJobOpeningProps> = ({
                 />
               </div>
               <div className={styles.formGroup}>
-                <label>⏰ Notice Period *</label>
+                <label>Notice Period *</label>
                 <select
                   value={jobForm.NoticePeriod}
                   onChange={(e) =>
@@ -804,8 +1002,8 @@ const JobOpening: React.FC<IJobOpeningProps> = ({
                 {submitting
                   ? "Saving..."
                   : isEditMode
-                  ? "Update Job"
-                  : "Create Job"}
+                    ? "Update Job"
+                    : "Create Job"}
               </button>
             </div>
           </form>
@@ -817,7 +1015,23 @@ const JobOpening: React.FC<IJobOpeningProps> = ({
         <div className={styles.formCard}>
           <div className={styles.formHeader}>
             <h3>
-              {isViewMode ? "👁️ Job Details" : "📋 Submit Application"}
+              <span
+                style={{
+                  width: "32px",
+                  height: "32px",
+                  background:
+                    "linear-gradient(135deg, #1e40af 0%, #3b82f6 100%)",
+                  borderRadius: "8px",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  marginRight: "12px",
+                  fontSize: "16px",
+                }}
+              >
+                {isViewMode ? "👁️" : "📋"}
+              </span>
+              {isViewMode ? " Job Details " : "Submit Application"}
             </h3>
             <button className={styles.closeBtn} onClick={handleClose}>
               ✕
@@ -877,34 +1091,23 @@ const JobOpening: React.FC<IJobOpeningProps> = ({
               </div>
             </div>
 
-            {/* Salary Range & Notice Period in View */}
             <div className={styles.formRow}>
               <div className={styles.formGroup}>
-                <label>💰 Salary Range</label>
+                <label>Salary Range</label>
                 <input
                   type="text"
                   value={applicationForm.SalaryRange || "Not specified"}
                   readOnly
                   className={styles.readOnlyInput}
-                  style={{
-                    background: applicationForm.SalaryRange ? "#d1fae5" : "#f3f4f6",
-                    color: applicationForm.SalaryRange ? "#065f46" : "#6b7280",
-                    fontWeight: 600,
-                  }}
                 />
               </div>
               <div className={styles.formGroup}>
-                <label>⏰ Notice Period</label>
+                <label>Notice Period</label>
                 <input
                   type="text"
                   value={applicationForm.NoticePeriod || "Not specified"}
                   readOnly
                   className={styles.readOnlyInput}
-                  style={{
-                    background: applicationForm.NoticePeriod ? "#fef3c7" : "#f3f4f6",
-                    color: applicationForm.NoticePeriod ? "#92400e" : "#6b7280",
-                    fontWeight: 600,
-                  }}
                 />
               </div>
             </div>
@@ -927,22 +1130,6 @@ const JobOpening: React.FC<IJobOpeningProps> = ({
                   readOnly
                   className={styles.readOnlyInput}
                 />
-              </div>
-            </div>
-
-            <div className={styles.formGroup}>
-              <label>Status</label>
-              <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-                <input
-                  type="text"
-                  value={applicationForm.Status || "Open"}
-                  readOnly
-                  className={styles.readOnlyInput}
-                  style={{ flex: 1 }}
-                />
-                <span style={getStatusStyle(applicationForm.Status || "Open")}>
-                  {applicationForm.Status || "Open"}
-                </span>
               </div>
             </div>
 
@@ -1024,44 +1211,103 @@ const JobOpening: React.FC<IJobOpeningProps> = ({
         </div>
       )}
 
-      {/* JOBS TABLE - WITH INLINE ROW ACTION BUTTONS */}
+      {/* JOBS TABLE */}
       {!showForm && !showApplyForm && (
         <>
           <div className={styles.tableContainer}>
             <table className={styles.table}>
               <thead>
                 <tr>
-                  <th>Job ID</th>
+                  <th style={{ width: "110px" }}>Job ID</th>
                   <th>Title</th>
                   <th>Department</th>
                   <th>Location</th>
                   <th>Salary Range</th>
                   <th>Notice Period</th>
-                  <th>Openings</th>
+                  <th style={{ width: "80px", textAlign: "center" }}>
+                    Openings
+                  </th>
                   <th>Posted On</th>
                   <th>Deadline</th>
-                  <th>Status</th>
-                  <th>Actions</th>
+                  <th style={{ width: "90px" }}>Status</th>
+                  <th style={{ width: "100px", textAlign: "center" }}>
+                    Actions
+                  </th>
                 </tr>
               </thead>
               <tbody>
                 {currentJobs.length === 0 ? (
                   <tr>
                     <td colSpan={11} className={styles.noData}>
-                      <span>📭</span>
-                      <p>
-                        {jobIdFilter 
-                          ? `No job found with ID: ${jobIdFilter}` 
-                          : "No job openings found"
-                        }
-                      </p>
-                      {jobIdFilter ? (
-                        <button onClick={handleClearFilter}>
-                          Clear Filter & Show All Jobs
-                        </button>
-                      ) : (
-                        <button onClick={handleAddClick}>Add First Job</button>
-                      )}
+                      <div
+                        style={{
+                          display: "flex",
+                          flexDirection: "column",
+                          alignItems: "center",
+                          padding: "40px 20px",
+                        }}
+                      >
+                        <div
+                          style={{
+                            width: "80px",
+                            height: "80px",
+                            background: "#f1f5f9",
+                            borderRadius: "50%",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            fontSize: "36px",
+                            marginBottom: "16px",
+                          }}
+                        >
+                          📭
+                        </div>
+                        <p
+                          style={{
+                            color: "#64748b",
+                            fontSize: "15px",
+                            fontWeight: 500,
+                            margin: "0 0 16px",
+                          }}
+                        >
+                          {jobIdFilter
+                            ? `No job found with ID: ${jobIdFilter}`
+                            : "No job openings found"}
+                        </p>
+                        {jobIdFilter ? (
+                          <button
+                            onClick={handleClearFilter}
+                            style={{
+                              background: "#1e40af",
+                              color: "#ffffff",
+                              border: "none",
+                              borderRadius: "8px",
+                              padding: "10px 20px",
+                              cursor: "pointer",
+                              fontSize: "13px",
+                              fontWeight: 600,
+                            }}
+                          >
+                            Clear Filter & Show All Jobs
+                          </button>
+                        ) : (
+                          <button
+                            onClick={handleAddClick}
+                            style={{
+                              background: "#1e40af",
+                              color: "#ffffff",
+                              border: "none",
+                              borderRadius: "8px",
+                              padding: "10px 20px",
+                              cursor: "pointer",
+                              fontSize: "13px",
+                              fontWeight: 600,
+                            }}
+                          >
+                            Add First Job
+                          </button>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 ) : (
@@ -1069,131 +1315,139 @@ const JobOpening: React.FC<IJobOpeningProps> = ({
                     <tr
                       key={job.Id}
                       style={{
-                        height: "56px",
-                        verticalAlign: "middle",
-                        // Highlight the filtered job
-                        background: jobIdFilter && job.JobId === jobIdFilter
-                          ? "linear-gradient(135deg, #e0f2fe 0%, #bae6fd 100%)"
-                          : "transparent",
+                        background:
+                          jobIdFilter && job.JobId === jobIdFilter
+                            ? "#f0f9ff"
+                            : hoveredRow === job.Id
+                              ? "#f8fafc"
+                              : "transparent",
+                        transition: "background 0.15s ease",
                       }}
+                      onMouseEnter={() =>
+                        !hoveredAction && setHoveredRow(job.Id || null)
+                      }
+                      onMouseLeave={() => !hoveredAction && setHoveredRow(null)}
                     >
-                      <td style={{ verticalAlign: "middle" }}>
-                        <span 
-                          className={styles.jobIdCell}
+                      {/* Job ID */}
+                      <td>
+                        <span
                           style={{
-                            // Highlight Job ID if it matches filter
-                            background: jobIdFilter && job.JobId === jobIdFilter
-                              ? "linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%)"
-                              : undefined,
-                            color: jobIdFilter && job.JobId === jobIdFilter
-                              ? "white"
-                              : undefined,
+                            fontFamily: "'SF Mono', 'Consolas', monospace",
+                            fontSize: "12px",
+                            fontWeight: 600,
+                            color:
+                              jobIdFilter && job.JobId === jobIdFilter
+                                ? "#1e40af"
+                                : "#475569",
+                            background:
+                              jobIdFilter && job.JobId === jobIdFilter
+                                ? "#dbeafe"
+                                : "#f1f5f9",
+                            padding: "5px 10px",
+                            borderRadius: "6px",
+                            display: "inline-block",
                           }}
                         >
                           {job.JobId || "N/A"}
                         </span>
                       </td>
-                      <td style={{ verticalAlign: "middle" }}>
-                        <strong>{job.Title}</strong>
-                      </td>
-                      <td style={{ verticalAlign: "middle" }}>{job.Department}</td>
-                      <td style={{ verticalAlign: "middle" }}>{job.Location}</td>
-                      <td style={{ verticalAlign: "middle" }}>
-                        <span
-                          style={{
-                            background: "linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%)",
-                            color: "#065f46",
-                            padding: "4px 10px",
-                            borderRadius: "12px",
-                            fontSize: "12px",
-                            fontWeight: 600,
-                            whiteSpace: "nowrap",
-                            display: "inline-block",
-                          }}
-                        >
-                          {job.SalaryRange || "Not specified"}
+
+                      {/* Title */}
+                      <td>
+                        <span style={{ fontWeight: 600, color: "#1e293b" }}>
+                          {job.Title}
                         </span>
                       </td>
-                      <td style={{ verticalAlign: "middle" }}>
-                        <span
-                          style={{
-                            background: "linear-gradient(135deg, #fef3c7 0%, #fde68a 100%)",
-                            color: "#92400e",
-                            padding: "4px 10px",
-                            borderRadius: "12px",
-                            fontSize: "12px",
-                            fontWeight: 600,
-                            whiteSpace: "nowrap",
-                            display: "inline-block",
-                          }}
-                        >
-                          {job.NoticePeriod || "Not specified"}
+
+                      {/* Department */}
+                      <td style={{ color: "#475569" }}>{job.Department}</td>
+
+                      {/* Location */}
+                      <td style={{ color: "#475569" }}>{job.Location}</td>
+
+                      {/* Salary Range - Simple */}
+                      <td>
+                        <span style={{ fontSize: "13px", color: "#374151" }}>
+                          {job.SalaryRange || "-"}
                         </span>
                       </td>
-                      <td style={{ textAlign: "center", verticalAlign: "middle" }}>
-                        <span className={styles.openingBadge}>
+
+                      {/* Notice Period - Simple */}
+                      <td>
+                        <span style={{ fontSize: "13px", color: "#374151" }}>
+                          {job.NoticePeriod || "-"}
+                        </span>
+                      </td>
+
+                      {/* Openings */}
+                      <td style={{ textAlign: "center" }}>
+                        <span
+                          style={{
+                            display: "inline-flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            width: "28px",
+                            height: "28px",
+                            borderRadius: "6px",
+                            background: "#f1f5f9",
+                            color: "#334155",
+                            fontSize: "13px",
+                            fontWeight: 600,
+                          }}
+                        >
                           {job.Opening || 1}
                         </span>
                       </td>
-                      <td style={{ verticalAlign: "middle", whiteSpace: "nowrap" }}>
+
+                      {/* Posted On */}
+                      <td style={{ color: "#64748b", fontSize: "13px" }}>
                         {formatDate(job.CreatedOn)}
                       </td>
-                      <td style={{ verticalAlign: "middle", whiteSpace: "nowrap" }}>
+
+                      {/* Deadline */}
+                      <td>
                         <span
-                          className={
-                            isDeadlinePassed(job.EndingDate)
-                              ? styles.expiredDate
-                              : ""
-                          }
+                          style={{
+                            fontSize: "13px",
+                            color: isDeadlinePassed(job.EndingDate)
+                              ? "#dc2626"
+                              : "#64748b",
+                            fontWeight: isDeadlinePassed(job.EndingDate)
+                              ? 500
+                              : 400,
+                          }}
                         >
                           {formatDate(job.EndingDate)}
                         </span>
                       </td>
-                      <td style={{ verticalAlign: "middle" }}>
-                        <span style={getStatusStyle(job.Status)}>
-                          {job.Status}
-                        </span>
-                      </td>
-                      {/* ACTION BUTTONS - INLINE IN ROW */}
-                      <td style={{ verticalAlign: "middle" }}>
+
+                      {/* Status - Simple with dot */}
+                      <td>{getStatusIndicator(job.Status)}</td>
+
+                      {/* Actions - Icon only */}
+                      <td>
                         <div
                           style={{
                             display: "flex",
-                            gap: "8px",
+                            gap: "6px",
                             alignItems: "center",
                             justifyContent: "center",
                           }}
                         >
-                          <button
-                            style={viewBtnStyle}
+                          <ActionButton
+                            icon="👁️"
+                            tooltip="View Details"
                             onClick={() => handleView(job)}
-                            title="View job details"
-                            onMouseEnter={(e) => {
-                              e.currentTarget.style.transform = "translateY(-1px)";
-                              e.currentTarget.style.boxShadow = "0 4px 12px rgba(59, 130, 246, 0.4)";
-                            }}
-                            onMouseLeave={(e) => {
-                              e.currentTarget.style.transform = "translateY(0)";
-                              e.currentTarget.style.boxShadow = "none";
-                            }}
-                          >
-                            👁️ View
-                          </button>
-                          <button
-                            style={editBtnStyle}
+                            variant="view"
+                            rowId={job.Id || 0}
+                          />
+                          <ActionButton
+                            icon="✏️"
+                            tooltip="Edit Job"
                             onClick={() => handleEdit(job)}
-                            title="Edit this job"
-                            onMouseEnter={(e) => {
-                              e.currentTarget.style.transform = "translateY(-1px)";
-                              e.currentTarget.style.boxShadow = "0 4px 12px rgba(245, 158, 11, 0.4)";
-                            }}
-                            onMouseLeave={(e) => {
-                              e.currentTarget.style.transform = "translateY(0)";
-                              e.currentTarget.style.boxShadow = "none";
-                            }}
-                          >
-                            ✏️ Edit
-                          </button>
+                            variant="edit"
+                            rowId={job.Id || 0}
+                          />
                         </div>
                       </td>
                     </tr>
@@ -1203,14 +1457,22 @@ const JobOpening: React.FC<IJobOpeningProps> = ({
             </table>
           </div>
 
-          {/* PAGINATION - Updated to use filteredJobs */}
+          {/* PAGINATION */}
           {filteredJobs.length > itemsPerPage && (
             <div className={styles.pagination}>
               <div className={styles.paginationInfo}>
-                Showing {startIndex + 1} - {Math.min(endIndex, filteredJobs.length)} of {filteredJobs.length} jobs
+                Showing {startIndex + 1} -{" "}
+                {Math.min(endIndex, filteredJobs.length)} of{" "}
+                {filteredJobs.length} jobs
                 {jobIdFilter && (
-                  <span style={{ marginLeft: "8px", color: "#0ea5e9", fontWeight: 600 }}>
-                    (Filtered)
+                  <span
+                    style={{
+                      marginLeft: "8px",
+                      color: "#64748b",
+                      fontSize: "12px",
+                    }}
+                  >
+                    (filtered)
                   </span>
                 )}
               </div>
@@ -1221,7 +1483,7 @@ const JobOpening: React.FC<IJobOpeningProps> = ({
                   disabled={currentPage === 1}
                   title="Previous Page"
                 >
-                  ← Previous
+                  ← Prev
                 </button>
 
                 <div className={styles.pageNumbers}>
@@ -1231,7 +1493,9 @@ const JobOpening: React.FC<IJobOpeningProps> = ({
                       className={`${styles.pageNumber} ${
                         page === currentPage ? styles.activePage : ""
                       } ${page === "..." ? styles.ellipsis : ""}`}
-                      onClick={() => typeof page === "number" && handlePageChange(page)}
+                      onClick={() =>
+                        typeof page === "number" && handlePageChange(page)
+                      }
                       disabled={page === "..."}
                     >
                       {page}

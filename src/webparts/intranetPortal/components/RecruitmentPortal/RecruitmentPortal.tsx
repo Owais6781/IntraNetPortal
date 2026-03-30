@@ -8,7 +8,6 @@ import "@pnp/sp/items";
 import "@pnp/sp/attachments";
 import "@pnp/sp/site-users/web";
 import styles from "./RecruitmentPortal.module.scss";
-
 import JobOpening from "./JobOpening";
 import Applicant from "./Applicants";
 import Interview from "./Interview";
@@ -69,9 +68,34 @@ export interface IRecruitmentApplication {
   NoticePeriod?: string;
 }
 
-export interface IInterview {
+export interface IInterviewLog {
   Id?: number;
   Title: string;
+  JobDetailsId: string;
+  JobId: string;
+  CandidateName: string;
+  PhoneNumber: string;
+  EmailId: string;
+  Department: string;
+  Location: string;
+  Experience: string;
+  JobTitle: string;
+  RoundType: string;
+  InterviewDate: string;
+  StartTime: string;
+  EndTime: string;
+  InterviewerIds: number[];
+  InterviewerNames: string;
+  Status: string;
+  Comments: string;
+  FinalStatus: string;
+  FinalComments: string;
+  ReviewedBy: string;
+  CreatedOn?: string;
+}
+
+export interface IInterviewSummary {
+  JobDetailsId: string;
   JobId: string;
   CandidateName: string;
   PhoneNumber: string;
@@ -81,21 +105,10 @@ export interface IInterview {
   Experience: string;
   JobTitle: string;
   ReviewedBy: string;
-  Round1Date: string;
-  Round1StartTime: string;
-  Round1EndTime: string;
-  Round1Interviewer: string;
-  Round1Status: string;
-  Round1Comments: string;
-  Round2Date: string;
-  Round2StartTime: string;
-  Round2EndTime: string;
-  Round2Interviewer: string;
-  Round2Status: string;
-  Round2Comments: string;
+  Rounds: IInterviewLog[];
   FinalStatus: string;
   FinalComments: string;
-  CreatedOn?: string;
+  HasAttachment?: boolean;
 }
 
 export interface ICurrentUser {
@@ -104,6 +117,12 @@ export interface ICurrentUser {
   name: string;
   email: string;
   department: string;
+}
+
+export interface ISiteUser {
+  Id: number;
+  Title: string;
+  Email: string;
 }
 
 export interface IScreeningChecklist {
@@ -214,6 +233,26 @@ export class SPService {
       } catch {
         return null;
       }
+    }
+  }
+
+  public async getSiteUsers(): Promise<ISiteUser[]> {
+    try {
+      const users = await this.sp.web.siteUsers
+        .filter("PrincipalType eq 1")
+        .select("Id", "Title", "Email")
+        .top(500)();
+
+      return users
+        .filter((u) => u.Email && u.Title)
+        .map((u) => ({
+          Id: u.Id,
+          Title: u.Title,
+          Email: u.Email,
+        }));
+    } catch (error) {
+      console.error("Error fetching site users:", error);
+      return [];
     }
   }
 
@@ -797,61 +836,47 @@ export class SPService {
     }
   }
 
-  // ==================== INTERVIEW METHODS ====================
-  public async getInterviews(): Promise<IInterview[]> {
+  // ==================== INTERVIEW LOG METHODS ====================
+  public async getInterviewLogs(): Promise<IInterviewLog[]> {
     try {
       const items = await this.sp.web.lists
-        .getByTitle("Interviews")
-        .items.select("*")
+        .getByTitle("InterviewLogs")
+        .items.select(
+          "Id",
+          "Title",
+          "JobDetailsId",
+          "JobId",
+          "CandidateName",
+          "PhoneNumber",
+          "EmailId",
+          "Department",
+          "Location",
+          "Experience",
+          "JobTitle",
+          "RoundType",
+          "InterviewDate",
+          "StartTime",
+          "EndTime",
+          "Status",
+          "Comments",
+          "FinalStatus",
+          "FinalComments",
+          "ReviewedBy",
+          "Created",
+          "Interviewers/Id",
+          "Interviewers/Title",
+          "Interviewers/EMail"
+        )
+        .expand("Interviewers")
         .orderBy("Id", false)
-        .top(500)();
+        .top(1000)();
 
-      return items.map((item) => ({
-        Id: item.Id,
-        Title: item.Title || "",
-        JobId: item.JobId || "",
-        CandidateName: item.CandidateName || "",
-        PhoneNumber: item.PhoneNumber || "",
-        EmailId: item.EmailId || "",
-        Department: item.Department || "",
-        Location: item.Location || "",
-        Experience: item.Experience || "",
-        JobTitle: item.JobTitle || "",
-        ReviewedBy: item.ReviewedBy || "",
-        Round1Date: item.Round1Date || "",
-        Round1StartTime: item.Round1StartTime || "",
-        Round1EndTime: item.Round1EndTime || "",
-        Round1Interviewer: item.Round1Interviewer || "",
-        Round1Status: item.Round1Status || "Pending",
-        Round1Comments: item.Round1Comments || "",
-        Round2Date: item.Round2Date || "",
-        Round2StartTime: item.Round2StartTime || "",
-        Round2EndTime: item.Round2EndTime || "",
-        Round2Interviewer: item.Round2Interviewer || "",
-        Round2Status: item.Round2Status || "Pending",
-        Round2Comments: item.Round2Comments || "",
-        FinalStatus: item.FinalStatus || "Pending",
-        FinalComments: item.FinalComments || "",
-        CreatedOn: item.Created || "",
-      }));
-    } catch (error) {
-      console.error("Error fetching interviews:", error);
-      return [];
-    }
-  }
-
-  public async checkInterviewExists(jobDetailsId: string): Promise<IInterview | null> {
-    try {
-      const items = await this.sp.web.lists
-        .getByTitle("Interviews")
-        .items.filter(`Title eq '${jobDetailsId}'`)
-        .top(1)();
-
-      if (items.length > 0) {
-        const item = items[0];
+      return items.map((item) => {
+        const interviewers = item.Interviewers || [];
         return {
           Id: item.Id,
           Title: item.Title || "",
+          JobDetailsId: item.JobDetailsId || item.Title || "",
           JobId: item.JobId || "",
           CandidateName: item.CandidateName || "",
           PhoneNumber: item.PhoneNumber || "",
@@ -860,261 +885,291 @@ export class SPService {
           Location: item.Location || "",
           Experience: item.Experience || "",
           JobTitle: item.JobTitle || "",
-          ReviewedBy: item.ReviewedBy || "",
-          Round1Date: item.Round1Date || "",
-          Round1StartTime: item.Round1StartTime || "",
-          Round1EndTime: item.Round1EndTime || "",
-          Round1Interviewer: item.Round1Interviewer || "",
-          Round1Status: item.Round1Status || "Pending",
-          Round1Comments: item.Round1Comments || "",
-          Round2Date: item.Round2Date || "",
-          Round2StartTime: item.Round2StartTime || "",
-          Round2EndTime: item.Round2EndTime || "",
-          Round2Interviewer: item.Round2Interviewer || "",
-          Round2Status: item.Round2Status || "Pending",
-          Round2Comments: item.Round2Comments || "",
+          RoundType: item.RoundType || "",
+          InterviewDate: item.InterviewDate || "",
+          StartTime: item.StartTime || "",
+          EndTime: item.EndTime || "",
+          InterviewerIds: interviewers.map((i: { Id: number }) => i.Id),
+          InterviewerNames: interviewers.map((i: { Title: string }) => i.Title).join(", "),
+          Status: item.Status || "Pending",
+          Comments: item.Comments || "",
           FinalStatus: item.FinalStatus || "Pending",
           FinalComments: item.FinalComments || "",
+          ReviewedBy: item.ReviewedBy || "",
           CreatedOn: item.Created || "",
         };
-      }
-      return null;
+      });
     } catch (error) {
-      console.error("Error checking interview exists:", error);
-      return null;
+      console.error("Error fetching interview logs:", error);
+      return [];
     }
   }
 
-  public async createInterviewFromRecruitment(recruitment: IRecruitmentApplication): Promise<void> {
+  public async getInterviewLogsByJobDetailsId(jobDetailsId: string): Promise<IInterviewLog[]> {
+    try {
+      const items = await this.sp.web.lists
+        .getByTitle("InterviewLogs")
+        .items.select(
+          "Id",
+          "Title",
+          "JobDetailsId",
+          "JobId",
+          "CandidateName",
+          "PhoneNumber",
+          "EmailId",
+          "Department",
+          "Location",
+          "Experience",
+          "JobTitle",
+          "RoundType",
+          "InterviewDate",
+          "StartTime",
+          "EndTime",
+          "Status",
+          "Comments",
+          "FinalStatus",
+          "FinalComments",
+          "ReviewedBy",
+          "Created",
+          "Interviewers/Id",
+          "Interviewers/Title",
+          "Interviewers/EMail"
+        )
+        .expand("Interviewers")
+        .filter(`Title eq '${jobDetailsId}'`)
+        .orderBy("Id", true)();
+
+      return items.map((item) => {
+        const interviewers = item.Interviewers || [];
+        return {
+          Id: item.Id,
+          Title: item.Title || "",
+          JobDetailsId: item.JobDetailsId || item.Title || "",
+          JobId: item.JobId || "",
+          CandidateName: item.CandidateName || "",
+          PhoneNumber: item.PhoneNumber || "",
+          EmailId: item.EmailId || "",
+          Department: item.Department || "",
+          Location: item.Location || "",
+          Experience: item.Experience || "",
+          JobTitle: item.JobTitle || "",
+          RoundType: item.RoundType || "",
+          InterviewDate: item.InterviewDate || "",
+          StartTime: item.StartTime || "",
+          EndTime: item.EndTime || "",
+          InterviewerIds: interviewers.map((i: { Id: number }) => i.Id),
+          InterviewerNames: interviewers.map((i: { Title: string }) => i.Title).join(", "),
+          Status: item.Status || "Pending",
+          Comments: item.Comments || "",
+          FinalStatus: item.FinalStatus || "Pending",
+          FinalComments: item.FinalComments || "",
+          ReviewedBy: item.ReviewedBy || "",
+          CreatedOn: item.Created || "",
+        };
+      });
+    } catch (error) {
+      console.error("Error fetching interview logs by JobDetailsId:", error);
+      return [];
+    }
+  }
+
+  public async createInterviewLog(logData: {
+    JobDetailsId: string;
+    JobId: string;
+    CandidateName: string;
+    PhoneNumber: string;
+    EmailId: string;
+    Department: string;
+    Location: string;
+    Experience: string;
+    JobTitle: string;
+    RoundType: string;
+    InterviewDate: string;
+    StartTime: string;
+    EndTime: string;
+    InterviewerIds: number[];
+    Status: string;
+    Comments: string;
+    ReviewedBy: string;
+  }): Promise<void> {
     try {
       const itemData: Record<string, unknown> = {
-        Title: recruitment.JobDetailsId,
-        JobId: recruitment.JobId || "",
-        CandidateName: recruitment.CandidateName || "",
-        PhoneNumber: recruitment.PhoneNumber || "",
-        EmailId: recruitment.EmailId || "",
-        Department: recruitment.Department || "",
-        Location: recruitment.Location || "",
-        Experience: recruitment.Experience || "",
-        JobTitle: recruitment.Title || "",
-        ReviewedBy: recruitment.ReviewedByName || "",
-        Round1Status: "Pending",
-        Round2Status: "Pending",
+        Title: logData.JobDetailsId,
+        JobDetailsId: logData.JobDetailsId,
+        JobId: logData.JobId,
+        CandidateName: logData.CandidateName,
+        PhoneNumber: logData.PhoneNumber,
+        EmailId: logData.EmailId,
+        Department: logData.Department,
+        Location: logData.Location,
+        Experience: logData.Experience,
+        JobTitle: logData.JobTitle,
+        RoundType: logData.RoundType,
+        InterviewDate: logData.InterviewDate,
+        StartTime: logData.StartTime,
+        EndTime: logData.EndTime,
+        Status: logData.Status,
+        Comments: logData.Comments,
         FinalStatus: "Pending",
+        FinalComments: "",
+        ReviewedBy: logData.ReviewedBy,
       };
 
-      await this.sp.web.lists.getByTitle("Interviews").items.add(itemData);
-      console.log("✅ Interview created - Title (JobDetailsId):", recruitment.JobDetailsId);
+      if (logData.InterviewerIds && logData.InterviewerIds.length > 0) {
+        itemData.InterviewersId = logData.InterviewerIds;
+      }
+
+      console.log("📤 Creating interview log:", JSON.stringify(itemData, null, 2));
+      await this.sp.web.lists.getByTitle("InterviewLogs").items.add(itemData);
+      console.log("✅ Interview log created for:", logData.JobDetailsId, "-", logData.RoundType);
     } catch (error) {
-      console.error("Error creating interview:", error);
+      console.error("Error creating interview log:", error);
       throw error;
     }
   }
 
-  public async updateInterviewRound1(
+  public async updateInterviewLog(
     id: number,
     data: {
-      Round1Date: string;
-      Round1StartTime: string;
-      Round1EndTime: string;
-      Round1Interviewer: string;
-      Round1Status: string;
-      Round1Comments: string;
+      InterviewDate?: string;
+      StartTime?: string;
+      EndTime?: string;
+      InterviewerIds?: number[];
+      Status?: string;
+      Comments?: string;
     }
   ): Promise<void> {
     try {
-      await this.sp.web.lists.getByTitle("Interviews").items.getById(id).update(data);
-      console.log("✅ Round 1 updated for interview ID:", id);
+      const updateData: Record<string, unknown> = {};
+
+      if (data.InterviewDate !== undefined) updateData.InterviewDate = data.InterviewDate;
+      if (data.StartTime !== undefined) updateData.StartTime = data.StartTime;
+      if (data.EndTime !== undefined) updateData.EndTime = data.EndTime;
+      if (data.Status !== undefined) updateData.Status = data.Status;
+      if (data.Comments !== undefined) updateData.Comments = data.Comments;
+
+      if (data.InterviewerIds !== undefined && data.InterviewerIds.length > 0) {
+        updateData.InterviewersId = data.InterviewerIds;
+      }
+
+      console.log("📤 Updating interview log ID:", id, "Data:", JSON.stringify(updateData, null, 2));
+      await this.sp.web.lists.getByTitle("InterviewLogs").items.getById(id).update(updateData);
+      console.log("✅ Interview log updated - ID:", id);
     } catch (error) {
-      console.error("Error updating Round 1:", error);
+      console.error("Error updating interview log:", error);
       throw error;
     }
   }
 
-  public async updateInterviewRound2(
-    id: number,
-    data: {
-      Round2Date: string;
-      Round2StartTime: string;
-      Round2EndTime: string;
-      Round2Interviewer: string;
-      Round2Status: string;
-      Round2Comments: string;
-    }
-  ): Promise<void> {
-    try {
-      await this.sp.web.lists.getByTitle("Interviews").items.getById(id).update(data);
-      console.log("✅ Round 2 updated for interview ID:", id);
-    } catch (error) {
-      console.error("Error updating Round 2:", error);
-      throw error;
-    }
-  }
-
-  public async updateInterviewFinalStatus(
-    id: number,
+  public async updateInterviewLogFinalStatus(
+    jobDetailsId: string,
     finalStatus: string,
     finalComments: string
   ): Promise<void> {
     try {
-      await this.sp.web.lists.getByTitle("Interviews").items.getById(id).update({
-        FinalStatus: finalStatus,
-        FinalComments: finalComments,
-      });
-      console.log("✅ Final status updated for interview ID:", id);
+      const logs = await this.getInterviewLogsByJobDetailsId(jobDetailsId);
+      for (const log of logs) {
+        if (log.Id) {
+          await this.sp.web.lists.getByTitle("InterviewLogs").items.getById(log.Id).update({
+            FinalStatus: finalStatus,
+            FinalComments: finalComments,
+          });
+        }
+      }
+      console.log("✅ Final status updated for all logs of:", jobDetailsId);
     } catch (error) {
       console.error("Error updating final status:", error);
       throw error;
     }
   }
 
-  public async deleteInterview(id: number): Promise<void> {
+  public async deleteInterviewLog(id: number): Promise<void> {
     try {
-      await this.sp.web.lists.getByTitle("Interviews").items.getById(id).delete();
-      console.log("✅ Interview deleted - ID:", id);
+      await this.sp.web.lists.getByTitle("InterviewLogs").items.getById(id).delete();
+      console.log("✅ Interview log deleted - ID:", id);
     } catch (error) {
-      console.error("Error deleting interview:", error);
+      console.error("Error deleting interview log:", error);
       throw error;
     }
   }
 
-  public async getInterviewById(id: number): Promise<IInterview | null> {
+  public async deleteAllInterviewLogsForCandidate(jobDetailsId: string): Promise<void> {
     try {
-      const item = await this.sp.web.lists.getByTitle("Interviews").items.getById(id)();
-
-      return {
-        Id: item.Id,
-        Title: item.Title || "",
-        JobId: item.JobId || "",
-        CandidateName: item.CandidateName || "",
-        PhoneNumber: item.PhoneNumber || "",
-        EmailId: item.EmailId || "",
-        Department: item.Department || "",
-        Location: item.Location || "",
-        Experience: item.Experience || "",
-        JobTitle: item.JobTitle || "",
-        ReviewedBy: item.ReviewedBy || "",
-        Round1Date: item.Round1Date || "",
-        Round1StartTime: item.Round1StartTime || "",
-        Round1EndTime: item.Round1EndTime || "",
-        Round1Interviewer: item.Round1Interviewer || "",
-        Round1Status: item.Round1Status || "Pending",
-        Round1Comments: item.Round1Comments || "",
-        Round2Date: item.Round2Date || "",
-        Round2StartTime: item.Round2StartTime || "",
-        Round2EndTime: item.Round2EndTime || "",
-        Round2Interviewer: item.Round2Interviewer || "",
-        Round2Status: item.Round2Status || "Pending",
-        Round2Comments: item.Round2Comments || "",
-        FinalStatus: item.FinalStatus || "Pending",
-        FinalComments: item.FinalComments || "",
-        CreatedOn: item.Created || "",
-      };
+      const logs = await this.getInterviewLogsByJobDetailsId(jobDetailsId);
+      for (const log of logs) {
+        if (log.Id) {
+          await this.sp.web.lists.getByTitle("InterviewLogs").items.getById(log.Id).delete();
+        }
+      }
+      console.log("✅ All interview logs deleted for:", jobDetailsId);
     } catch (error) {
-      console.error("Error getting interview by ID:", error);
-      return null;
+      console.error("Error deleting all logs:", error);
+      throw error;
     }
   }
 
-  public async getInterviewsByStatus(status: string): Promise<IInterview[]> {
+  // ==================== GET INTERVIEW SUMMARIES ====================
+  public async getInterviewSummaries(): Promise<IInterviewSummary[]> {
     try {
-      const items = await this.sp.web.lists
-        .getByTitle("Interviews")
-        .items.filter(`FinalStatus eq '${status}'`)
-        .orderBy("Id", false)
-        .top(500)();
+      const allLogs = await this.getInterviewLogs();
+      const shortlisted = await this.getShortlistedRecruitments();
 
-      return items.map((item) => ({
-        Id: item.Id,
-        Title: item.Title || "",
-        JobId: item.JobId || "",
-        CandidateName: item.CandidateName || "",
-        PhoneNumber: item.PhoneNumber || "",
-        EmailId: item.EmailId || "",
-        Department: item.Department || "",
-        Location: item.Location || "",
-        Experience: item.Experience || "",
-        JobTitle: item.JobTitle || "",
-        ReviewedBy: item.ReviewedBy || "",
-        Round1Date: item.Round1Date || "",
-        Round1StartTime: item.Round1StartTime || "",
-        Round1EndTime: item.Round1EndTime || "",
-        Round1Interviewer: item.Round1Interviewer || "",
-        Round1Status: item.Round1Status || "Pending",
-        Round1Comments: item.Round1Comments || "",
-        Round2Date: item.Round2Date || "",
-        Round2StartTime: item.Round2StartTime || "",
-        Round2EndTime: item.Round2EndTime || "",
-        Round2Interviewer: item.Round2Interviewer || "",
-        Round2Status: item.Round2Status || "Pending",
-        Round2Comments: item.Round2Comments || "",
-        FinalStatus: item.FinalStatus || "Pending",
-        FinalComments: item.FinalComments || "",
-        CreatedOn: item.Created || "",
-      }));
+      const grouped: { [key: string]: IInterviewLog[] } = {};
+      allLogs.forEach((log) => {
+        const key = log.Title || log.JobDetailsId;
+        if (!grouped[key]) grouped[key] = [];
+        grouped[key].push(log);
+      });
+
+      const summaries: IInterviewSummary[] = [];
+
+      const keys = Object.keys(grouped);
+      for (let i = 0; i < keys.length; i++) {
+        const jobDetailsId = keys[i];
+        if (Object.prototype.hasOwnProperty.call(grouped, jobDetailsId)) {
+          const rounds = grouped[jobDetailsId];
+          const firstRound = rounds[0];
+          const candidate = shortlisted.find((c) => c.JobDetailsId === jobDetailsId);
+          const latestRound = rounds[rounds.length - 1];
+
+          summaries.push({
+            JobDetailsId: jobDetailsId,
+            JobId: firstRound.JobId,
+            CandidateName: firstRound.CandidateName,
+            PhoneNumber: firstRound.PhoneNumber,
+            EmailId: firstRound.EmailId,
+            Department: firstRound.Department,
+            Location: firstRound.Location,
+            Experience: firstRound.Experience,
+            JobTitle: firstRound.JobTitle,
+            ReviewedBy: firstRound.ReviewedBy,
+            Rounds: rounds,
+            FinalStatus: latestRound.FinalStatus,
+            FinalComments: latestRound.FinalComments,
+            HasAttachment: candidate?.HasAttachment || false,
+          });
+        }
+      }
+
+      return summaries;
     } catch (error) {
-      console.error("Error getting interviews by status:", error);
+      console.error("Error getting interview summaries:", error);
       return [];
-    }
-  }
-
-  public async getSelectedCandidates(): Promise<IInterview[]> {
-    return this.getInterviewsByStatus("Selected");
-  }
-
-  public async getRejectedCandidates(): Promise<IInterview[]> {
-    return this.getInterviewsByStatus("Rejected");
-  }
-
-  public async updateInterview(id: number, data: Partial<IInterview>): Promise<void> {
-    try {
-      const updateData: Record<string, unknown> = {};
-
-      if (data.JobId !== undefined) updateData.JobId = data.JobId;
-      if (data.CandidateName !== undefined) updateData.CandidateName = data.CandidateName;
-      if (data.PhoneNumber !== undefined) updateData.PhoneNumber = data.PhoneNumber;
-      if (data.EmailId !== undefined) updateData.EmailId = data.EmailId;
-      if (data.Department !== undefined) updateData.Department = data.Department;
-      if (data.Location !== undefined) updateData.Location = data.Location;
-      if (data.Experience !== undefined) updateData.Experience = data.Experience;
-      if (data.JobTitle !== undefined) updateData.JobTitle = data.JobTitle;
-      if (data.ReviewedBy !== undefined) updateData.ReviewedBy = data.ReviewedBy;
-      if (data.Round1Date !== undefined) updateData.Round1Date = data.Round1Date;
-      if (data.Round1StartTime !== undefined) updateData.Round1StartTime = data.Round1StartTime;
-      if (data.Round1EndTime !== undefined) updateData.Round1EndTime = data.Round1EndTime;
-      if (data.Round1Interviewer !== undefined) updateData.Round1Interviewer = data.Round1Interviewer;
-      if (data.Round1Status !== undefined) updateData.Round1Status = data.Round1Status;
-      if (data.Round1Comments !== undefined) updateData.Round1Comments = data.Round1Comments;
-      if (data.Round2Date !== undefined) updateData.Round2Date = data.Round2Date;
-      if (data.Round2StartTime !== undefined) updateData.Round2StartTime = data.Round2StartTime;
-      if (data.Round2EndTime !== undefined) updateData.Round2EndTime = data.Round2EndTime;
-      if (data.Round2Interviewer !== undefined) updateData.Round2Interviewer = data.Round2Interviewer;
-      if (data.Round2Status !== undefined) updateData.Round2Status = data.Round2Status;
-      if (data.Round2Comments !== undefined) updateData.Round2Comments = data.Round2Comments;
-      if (data.FinalStatus !== undefined) updateData.FinalStatus = data.FinalStatus;
-      if (data.FinalComments !== undefined) updateData.FinalComments = data.FinalComments;
-
-      await this.sp.web.lists.getByTitle("Interviews").items.getById(id).update(updateData);
-      console.log("✅ Interview updated - ID:", id);
-    } catch (error) {
-      console.error("Error updating interview:", error);
-      throw error;
     }
   }
 }
 
-// ==================== MAIN COMPONENT WITH PAGE PERSISTENCE & NAVIGATION ====================
+// ==================== MAIN COMPONENT ====================
 export interface IRecruitmentPortalProps {
   context: WebPartContext;
 }
 
 type PageType = "jobs" | "applicants" | "interviews" | "upload";
 
-// Storage keys
 const STORAGE_KEY = "recruitmentPortal_currentPage";
 const JOB_FILTER_KEY = "recruitmentPortal_jobIdFilter";
+const JOB_DETAILS_FILTER_KEY = "recruitmentPortal_jobDetailsIdFilter";
 
-// Helper function to get saved page from localStorage
 const getSavedPage = (): PageType => {
   try {
     const savedPage = localStorage.getItem(STORAGE_KEY);
@@ -1127,7 +1182,6 @@ const getSavedPage = (): PageType => {
   return "jobs";
 };
 
-// Helper function to save page to localStorage
 const savePage = (page: PageType): void => {
   try {
     localStorage.setItem(STORAGE_KEY, page);
@@ -1136,7 +1190,7 @@ const savePage = (page: PageType): void => {
   }
 };
 
-// Helper function to set job filter
+// Job ID Filter functions
 const setJobIdFilter = (jobId: string): void => {
   try {
     localStorage.setItem(JOB_FILTER_KEY, jobId);
@@ -1145,7 +1199,6 @@ const setJobIdFilter = (jobId: string): void => {
   }
 };
 
-// Helper function to get and clear job filter
 const getAndClearJobIdFilter = (): string => {
   try {
     const jobId = localStorage.getItem(JOB_FILTER_KEY) || "";
@@ -1157,22 +1210,52 @@ const getAndClearJobIdFilter = (): string => {
   }
 };
 
+// Job Details ID Filter functions (NEW)
+const setJobDetailsIdFilter = (jobDetailsId: string): void => {
+  try {
+    localStorage.setItem(JOB_DETAILS_FILTER_KEY, jobDetailsId);
+  } catch (error) {
+    console.error("Error saving job details filter:", error);
+  }
+};
+
+const getAndClearJobDetailsIdFilter = (): string => {
+  try {
+    const jobDetailsId = localStorage.getItem(JOB_DETAILS_FILTER_KEY) || "";
+    localStorage.removeItem(JOB_DETAILS_FILTER_KEY);
+    return jobDetailsId;
+  } catch (error) {
+    console.error("Error reading job details filter:", error);
+    return "";
+  }
+};
+
 const RecruitmentPortal: React.FC<IRecruitmentPortalProps> = ({ context }) => {
   const [currentPage, setCurrentPage] = useState<PageType>(getSavedPage);
   const [jobIdFilterForJobPage, setJobIdFilterForJobPage] = useState<string>("");
+  const [jobDetailsIdFilterForApplicantPage, setJobDetailsIdFilterForApplicantPage] = useState<string>("");
   const service = React.useMemo(() => new SPService(context), [context]);
 
-  // Save to localStorage whenever page changes
   useEffect(() => {
     savePage(currentPage);
   }, [currentPage]);
 
-  // Check for job filter when navigating to jobs page
+  // Handle Job ID filter for Job Openings page
   useEffect(() => {
     if (currentPage === "jobs") {
       const filter = getAndClearJobIdFilter();
       if (filter) {
         setJobIdFilterForJobPage(filter);
+      }
+    }
+  }, [currentPage]);
+
+  // Handle Job Details ID filter for Applicants page (NEW)
+  useEffect(() => {
+    if (currentPage === "applicants") {
+      const filter = getAndClearJobDetailsIdFilter();
+      if (filter) {
+        setJobDetailsIdFilterForApplicantPage(filter);
       }
     }
   }, [currentPage]);
@@ -1185,20 +1268,31 @@ const RecruitmentPortal: React.FC<IRecruitmentPortalProps> = ({ context }) => {
   ];
 
   const handlePageChange = (page: PageType): void => {
-    setJobIdFilterForJobPage(""); // Clear filter when manually changing pages
+    setJobIdFilterForJobPage("");
+    setJobDetailsIdFilterForApplicantPage("");
     setCurrentPage(page);
   };
 
-  // Navigation function to pass to child components
+  // Navigate to Job Openings with Job ID filter
   const navigateToJobWithFilter = useCallback((jobId: string): void => {
     setJobIdFilter(jobId);
     setJobIdFilterForJobPage(jobId);
     setCurrentPage("jobs");
   }, []);
 
-  // Clear filter function
+  // Navigate to Applicants with Job Details ID filter (NEW)
+  const navigateToApplicantWithFilter = useCallback((jobDetailsId: string): void => {
+    setJobDetailsIdFilter(jobDetailsId);
+    setJobDetailsIdFilterForApplicantPage(jobDetailsId);
+    setCurrentPage("applicants");
+  }, []);
+
   const clearJobFilter = useCallback((): void => {
     setJobIdFilterForJobPage("");
+  }, []);
+
+  const clearJobDetailsIdFilter = useCallback((): void => {
+    setJobDetailsIdFilterForApplicantPage("");
   }, []);
 
   const renderPage = (): JSX.Element => {
@@ -1218,6 +1312,8 @@ const RecruitmentPortal: React.FC<IRecruitmentPortalProps> = ({ context }) => {
           <Applicant
             service={service}
             onNavigateToJob={navigateToJobWithFilter}
+            initialJobDetailsIdFilter={jobDetailsIdFilterForApplicantPage}
+            onClearFilter={clearJobDetailsIdFilter}
           />
         );
       case "interviews":
@@ -1225,6 +1321,7 @@ const RecruitmentPortal: React.FC<IRecruitmentPortalProps> = ({ context }) => {
           <Interview
             service={service}
             onNavigateToJob={navigateToJobWithFilter}
+            onNavigateToApplicant={navigateToApplicantWithFilter}
           />
         );
       default:

@@ -1,16 +1,30 @@
 // ==================== VARIABLES ====================
-$primary-color: #2563eb;
-$primary-dark: #1d4ed8;
+// Primary Corporate Colors
+$primary-color: #1e40af;
+$primary-dark: #1e3a8a;
 $primary-light: #3b82f6;
-$secondary-color: #64748b;
-$success-color: #10b981;
-$success-dark: #059669;
-$danger-color: #ef4444;
-$danger-dark: #dc2626;
-$warning-color: #f59e0b;
-$warning-dark: #d97706;
-$purple-color: #8b5cf6;
+$primary-lighter: #60a5fa;
+// Secondary Colors
+$secondary-color: #475569;
+$secondary-light: #64748b;
+// Status Colors
+$success-color: #059669;
+$success-light: #10b981;
+$success-bg: #ecfdf5;
+$danger-color: #dc2626;
+$danger-light: #ef4444;
+$danger-bg: #fef2f2;
+$warning-color: #d97706;
+$warning-light: #f59e0b;
+$warning-bg: #fffbeb;
+$info-color: #0284c7;
+$info-bg: #f0f9ff;
+// Accent Color
+$purple-color: #7c3aed;
+$purple-light: #8b5cf6;
+$purple-bg: #f5f3ff;
 // Neutral Colors
+$white: #ffffff;
 $gray-50: #f8fafc;
 $gray-100: #f1f5f9;
 $gray-200: #e2e8f0;
@@ -22,136 +36,133 @@ $gray-700: #334155;
 $gray-800: #1e293b;
 $gray-900: #0f172a;
 // Layout
-$nav-width: 280px;
-$nav-bg: linear-gradient(180deg, #0f172a 0%, #1e293b 50%, #334155 100%);
-$border-radius: 12px;
-$border-radius-sm: 8px;
-$border-radius-lg: 16px;
+$nav-height: 64px;
+$border-radius: 8px;
+$border-radius-sm: 6px;
+$border-radius-lg: 12px;
+$border-radius-xl: 16px;
 // Shadows
-$shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-$shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1),
-0 2px 4px -2px rgba(0, 0, 0, 0.1);
-$shadow-md: 0 10px 15px -3px rgba(0, 0, 0, 0.1),
-0 4px 6px -4px rgba(0, 0, 0, 0.1);
+$shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.04);
+$shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.06),
+0 1px 2px rgba(0, 0, 0, 0.04);
+$shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.07),
+0 2px 4px -2px rgba(0, 0, 0, 0.04);
+$shadow-md: 0 10px 15px -3px rgba(0, 0, 0, 0.08),
+0 4px 6px -4px rgba(0, 0, 0, 0.04);
 $shadow-lg: 0 20px 25px -5px rgba(0, 0, 0, 0.1),
-0 8px 10px -6px rgba(0, 0, 0, 0.1);
+0 8px 10px -6px rgba(0, 0, 0, 0.04);
 // Typography
-$font-family: 'Inter',
-'Segoe UI',
+$font-family: 'Segoe UI',
+'Inter',
 -apple-system,
 BlinkMacSystemFont,
+'Roboto',
 sans-serif;
 $font-size-xs: 0.75rem;
-$font-size-sm: 0.875rem;
-$font-size-base: 1rem;
-$font-size-lg: 1.125rem;
-$font-size-xl: 1.25rem;
-$font-size-2xl: 1.5rem;
-$font-size-3xl: 1.875rem;
+$font-size-sm: 0.8125rem;
+$font-size-base: 0.875rem;
+$font-size-lg: 1rem;
+$font-size-xl: 1.125rem;
+$font-size-2xl: 1.375rem;
 // ==================== MAIN LAYOUT ====================
 .portal {
     display: flex;
+    flex-direction: column;
     min-height: 100vh;
     font-family: $font-family;
-    background: $gray-100;
+    background: $gray-50;
     width: 100%;
-    // This makes both nav and main have equal height
-    align-items: stretch;
     font-size: $font-size-base;
     color: $gray-700;
-    line-height: 1.6;
+    line-height: 1.5;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
 }
 
-// ==================== NAVIGATION - HEIGHT DEPENDS ON RIGHT CONTENT ====================
+// ==================== TOP NAVIGATION ====================
 .nav {
-    width: $nav-width;
-    min-width: $nav-width;
-    max-width: $nav-width;
-    background: $nav-bg;
-    color: white;
-    padding: 0;
-    box-shadow: 4px 0 24px rgba(0, 0, 0, 0.15);
-    overflow-y: auto;
-    z-index: 100;
-    flex-shrink: 0;
+    width: 100%;
+    height: $nav-height;
+    background: $primary-dark;
+    color: $white;
+    padding: 0 24px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    position: sticky;
+    top: 0;
+    z-index: 1000;
     display: flex;
-    flex-direction: column;
-    // REMOVED: position: sticky;
-    // REMOVED: top: 0;
-    // REMOVED: height: 100vh;
-    // Now the height will be determined by the right content
+    align-items: center;
+    justify-content: space-between;
+    box-sizing: border-box;
     ul {
         list-style: none;
-        padding: 16px;
+        padding: 0;
         margin: 0;
-        flex: 1;
         display: flex;
-        flex-direction: column;
-        gap: 8px;
+        align-items: center;
+        gap: 4px;
+        height: 100%;
     }
     li {
-        padding: 14px 20px;
+        padding: 10px 18px;
         cursor: pointer;
         transition: all 0.2s ease;
         font-size: $font-size-sm;
         font-weight: 500;
         display: flex;
         align-items: center;
-        gap: 12px;
+        gap: 6px;
         border-radius: $border-radius-sm;
-        color: rgba(255, 255, 255, 0.7);
-        letter-spacing: 0.01em;
+        color: rgba(255, 255, 255, 0.8);
         position: relative;
+        white-space: nowrap;
+        height: 38px;
         &:hover {
             background: rgba(255, 255, 255, 0.1);
-            color: white;
-            transform: translateX(4px);
+            color: $white;
         }
         &.active {
             background: rgba(255, 255, 255, 0.15);
-            color: white;
+            color: $white;
             font-weight: 600;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-            &::before {
+            &::after {
                 content: '';
                 position: absolute;
-                left: 0;
-                top: 50%;
-                transform: translateY(-50%);
-                width: 4px;
-                height: 60%;
-                background: $primary-light;
-                border-radius: 0 4px 4px 0;
+                bottom: -13px;
+                left: 50%;
+                transform: translateX(-50%);
+                width: 40%;
+                height: 2px;
+                background: $white;
+                border-radius: 2px 2px 0 0;
             }
         }
     }
 }
 
 .logo {
-    padding: 24px;
+    padding: 0;
     margin: 0;
     font-size: $font-size-lg;
     font-weight: 700;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-    background: rgba(0, 0, 0, 0.2);
     display: flex;
     align-items: center;
-    gap: 12px;
-    letter-spacing: -0.02em;
+    gap: 10px;
+    letter-spacing: -0.01em;
+    color: $white;
     flex-shrink: 0;
-    color: white;
 }
 
 // ==================== MAIN CONTENT ====================
 .main {
     flex: 1;
-    padding: 32px;
-    background: $gray-100;
+    padding: 24px 32px;
+    background: transparent;
     overflow-x: hidden;
     box-sizing: border-box;
-    // No min-height needed - flexbox handles it
+    max-width: 1400px;
+    margin: 0 auto;
+    width: 100%;
 }
 
 // ==================== LOADING ====================
@@ -160,20 +171,11 @@ $font-size-3xl: 1.875rem;
     flex-direction: column;
     justify-content: center;
     align-items: center;
-    min-height: 400px;
+    min-height: 300px;
     font-size: $font-size-base;
     color: $gray-500;
-    gap: 16px;
+    gap: 12px;
     font-weight: 500;
-    &::before {
-        content: "";
-        width: 48px;
-        height: 48px;
-        border: 3px solid $gray-200;
-        border-top-color: $primary-color;
-        border-radius: 50%;
-        animation: spin 0.8s linear infinite;
-    }
 }
 
 @keyframes spin {
@@ -194,175 +196,163 @@ $font-size-3xl: 1.875rem;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 24px;
-    padding: 24px 28px;
-    background: white;
+    margin-bottom: 20px;
+    padding: 18px 24px;
+    background: $white;
     border-radius: $border-radius-lg;
-    box-shadow: $shadow;
+    box-shadow: $shadow-sm;
     flex-wrap: wrap;
-    gap: 16px;
+    gap: 14px;
     box-sizing: border-box;
     border: 1px solid $gray-200;
     h1 {
         margin: 0;
-        color: $gray-900;
-        font-size: $font-size-2xl;
+        color: $gray-800;
+        font-size: $font-size-xl;
         font-weight: 700;
         display: flex;
         align-items: center;
-        gap: 12px;
-        letter-spacing: -0.02em;
+        gap: 10px;
+        letter-spacing: -0.01em;
     }
 }
 
-// ==================== BUTTONS ====================
+// ==================== BUTTONS - CLEAN & SIMPLE ====================
 .addBtn {
-    padding: 12px 24px;
+    padding: 9px 18px;
     border: none;
     background: $primary-color;
-    color: white;
+    color: $white;
     border-radius: $border-radius-sm;
     cursor: pointer;
     font-size: $font-size-sm;
     font-weight: 600;
     display: inline-flex;
     align-items: center;
-    gap: 8px;
-    transition: all 0.2s ease;
-    box-shadow: 0 1px 3px rgba(37, 99, 235, 0.3);
+    gap: 6px;
+    transition: all 0.15s ease;
     font-family: $font-family;
     &:hover {
         background: $primary-dark;
-        transform: translateY(-1px);
-        box-shadow: 0 4px 12px rgba(37, 99, 235, 0.4);
     }
     &:active {
-        transform: translateY(0);
+        transform: scale(0.98);
     }
 }
 
 .viewBtn {
-    padding: 8px 16px;
+    padding: 6px 12px;
     background: $gray-100;
-    color: $primary-color;
+    color: $gray-600;
     border: 1px solid $gray-200;
     border-radius: $border-radius-sm;
     cursor: pointer;
     font-size: $font-size-xs;
     font-weight: 600;
-    transition: all 0.2s ease;
+    transition: all 0.15s ease;
     display: inline-flex;
     align-items: center;
-    gap: 6px;
+    gap: 4px;
     font-family: $font-family;
     &:hover {
         background: $primary-color;
-        color: white;
+        color: $white;
         border-color: $primary-color;
     }
 }
 
 .editBtn {
-    padding: 8px 16px;
+    padding: 6px 12px;
     background: $gray-100;
-    color: $warning-color;
+    color: $gray-600;
     border: 1px solid $gray-200;
     border-radius: $border-radius-sm;
     cursor: pointer;
     font-size: $font-size-xs;
     font-weight: 600;
-    transition: all 0.2s ease;
+    transition: all 0.15s ease;
     display: inline-flex;
     align-items: center;
-    gap: 6px;
+    gap: 4px;
     font-family: $font-family;
     &:hover {
         background: $warning-color;
-        color: white;
+        color: $white;
         border-color: $warning-color;
     }
 }
 
 .applyBtn {
-    padding: 12px 24px;
+    padding: 9px 18px;
     background: $success-color;
-    color: white;
+    color: $white;
     border: none;
     border-radius: $border-radius-sm;
     cursor: pointer;
     font-size: $font-size-sm;
     font-weight: 600;
-    transition: all 0.2s ease;
+    transition: all 0.15s ease;
     display: inline-flex;
     align-items: center;
-    gap: 8px;
+    gap: 6px;
     font-family: $font-family;
-    box-shadow: 0 1px 3px rgba(16, 185, 129, 0.3);
     &:hover {
-        background: $success-dark;
-        transform: translateY(-1px);
-        box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
+        background: darken($success-color, 8%);
     }
 }
 
 .submitBtn {
-    padding: 12px 28px;
+    padding: 10px 22px;
     background: $success-color;
-    color: white;
+    color: $white;
     border: none;
     border-radius: $border-radius-sm;
     cursor: pointer;
     font-weight: 600;
     font-size: $font-size-sm;
-    transition: all 0.2s ease;
-    box-shadow: 0 1px 3px rgba(16, 185, 129, 0.3);
+    transition: all 0.15s ease;
     display: inline-flex;
     align-items: center;
-    gap: 8px;
+    gap: 6px;
     font-family: $font-family;
     &:hover {
-        background: $success-dark;
-        transform: translateY(-1px);
-        box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
+        background: darken($success-color, 8%);
     }
     &:disabled {
         background: $gray-300;
         cursor: not-allowed;
-        transform: none;
-        box-shadow: none;
     }
 }
 
 .cancelBtn {
-    padding: 12px 28px;
-    background: white;
+    padding: 10px 22px;
+    background: $white;
     color: $gray-600;
     border: 1px solid $gray-300;
     border-radius: $border-radius-sm;
     cursor: pointer;
     font-weight: 600;
     font-size: $font-size-sm;
-    transition: all 0.2s ease;
+    transition: all 0.15s ease;
     font-family: $font-family;
     &:hover {
         background: $gray-50;
         border-color: $gray-400;
-        color: $gray-700;
     }
 }
 
 .closeBtn {
     background: $gray-100;
     border: 1px solid $gray-200;
-    width: 40px;
-    height: 40px;
-    min-width: 40px;
-    min-height: 40px;
+    width: 34px;
+    height: 34px;
+    min-width: 34px;
+    min-height: 34px;
     border-radius: 50%;
     cursor: pointer;
-    font-size: $font-size-lg;
+    font-size: $font-size-base;
     color: $gray-500;
-    transition: all 0.2s ease;
+    transition: all 0.15s ease;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -370,25 +360,24 @@ $font-size-3xl: 1.875rem;
     &:hover {
         background: $danger-color;
         border-color: $danger-color;
-        color: white;
-        transform: rotate(90deg);
+        color: $white;
     }
 }
 
 .backBtn {
-    padding: 12px 24px;
-    background: white;
+    padding: 10px 20px;
+    background: $white;
     color: $gray-600;
     border: 1px solid $gray-300;
     border-radius: $border-radius-sm;
     cursor: pointer;
-    margin-top: 24px;
+    margin-top: 20px;
     font-weight: 600;
     font-size: $font-size-sm;
-    transition: all 0.2s ease;
+    transition: all 0.15s ease;
     display: inline-flex;
     align-items: center;
-    gap: 8px;
+    gap: 6px;
     font-family: $font-family;
     &:hover {
         background: $gray-50;
@@ -397,21 +386,46 @@ $font-size-3xl: 1.875rem;
     }
 }
 
+.deleteBtn {
+    padding: 6px 12px;
+    background: $gray-100;
+    color: $danger-color;
+    border: 1px solid $gray-200;
+    border-radius: $border-radius-sm;
+    cursor: pointer;
+    font-size: $font-size-xs;
+    font-weight: 600;
+    transition: all 0.15s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-family: $font-family;
+    &:hover {
+        background: $danger-color;
+        color: $white;
+        border-color: $danger-color;
+    }
+    &:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+}
+
 // ==================== ACTION BUTTONS ====================
 .actionButtons {
     display: flex;
-    gap: 8px;
+    gap: 6px;
     justify-content: center;
     flex-wrap: wrap;
 }
 
 // ==================== FORMS ====================
 .formCard {
-    background: white;
+    background: $white;
     border-radius: $border-radius-lg;
-    padding: 32px;
-    margin-bottom: 24px;
-    box-shadow: $shadow;
+    padding: 24px;
+    margin-bottom: 20px;
+    box-shadow: $shadow-sm;
     border: 1px solid $gray-200;
     box-sizing: border-box;
     overflow: visible;
@@ -423,54 +437,52 @@ $font-size-3xl: 1.875rem;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 28px;
-    padding-bottom: 20px;
+    margin-bottom: 20px;
+    padding-bottom: 16px;
     border-bottom: 1px solid $gray-200;
-    gap: 16px;
+    gap: 14px;
     flex-wrap: wrap;
     h3 {
         margin: 0;
-        color: $gray-900;
-        font-size: $font-size-xl;
+        color: $gray-800;
+        font-size: $font-size-lg;
         font-weight: 700;
         display: flex;
         align-items: center;
-        gap: 12px;
+        gap: 8px;
         flex: 1;
         min-width: 0;
-        letter-spacing: -0.01em;
     }
 }
 
 .formGroup {
-    margin-bottom: 20px;
+    margin-bottom: 16px;
     width: 100%;
     box-sizing: border-box;
     label {
         display: block;
-        margin-bottom: 8px;
+        margin-bottom: 6px;
         font-weight: 600;
         color: $gray-700;
         font-size: $font-size-sm;
-        letter-spacing: 0.01em;
     }
     input,
     select,
     textarea {
         width: 100%;
-        padding: 12px 16px;
+        padding: 10px 12px;
         border: 1px solid $gray-300;
         border-radius: $border-radius-sm;
         font-size: $font-size-sm;
         box-sizing: border-box;
-        transition: all 0.2s ease;
-        background: white;
+        transition: all 0.15s ease;
+        background: $white;
         color: $gray-700;
         font-family: $font-family;
         &:focus {
             outline: none;
             border-color: $primary-color;
-            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+            box-shadow: 0 0 0 2px rgba($primary-color, 0.1);
         }
         &::placeholder {
             color: $gray-400;
@@ -481,13 +493,13 @@ $font-size-3xl: 1.875rem;
         appearance: none;
         background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%2364748b' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
         background-repeat: no-repeat;
-        background-position: right 16px center;
-        padding-right: 40px;
+        background-position: right 12px center;
+        padding-right: 32px;
     }
     textarea {
         resize: vertical;
-        min-height: 120px;
-        line-height: 1.6;
+        min-height: 100px;
+        line-height: 1.5;
     }
 }
 
@@ -496,14 +508,13 @@ $font-size-3xl: 1.875rem;
     color: $gray-600 !important;
     cursor: not-allowed;
     font-weight: 500;
-    border-style: dashed !important;
-    border-color: $gray-300 !important;
+    border-color: $gray-200 !important;
 }
 
 .formRow {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
-    gap: 20px;
+    gap: 16px;
     width: 100%;
     box-sizing: border-box;
     @media (max-width: 768px) {
@@ -514,19 +525,19 @@ $font-size-3xl: 1.875rem;
 .formActions {
     display: flex;
     justify-content: flex-end;
-    gap: 12px;
-    margin-top: 28px;
-    padding-top: 24px;
+    gap: 10px;
+    margin-top: 20px;
+    padding-top: 16px;
     border-top: 1px solid $gray-200;
     flex-wrap: wrap;
 }
 
-// ==================== TABLE ====================
+// ==================== TABLE - CLEAN & SIMPLE ====================
 .tableContainer {
     overflow-x: auto;
-    background: white;
+    background: $white;
     border-radius: $border-radius-lg;
-    box-shadow: $shadow;
+    box-shadow: $shadow-sm;
     border: 1px solid $gray-200;
     -webkit-overflow-scrolling: touch;
     width: 100%;
@@ -535,12 +546,12 @@ $font-size-3xl: 1.875rem;
 
 .table {
     width: 100%;
-    min-width: 900px;
+    min-width: 800px;
     border-collapse: collapse;
     table-layout: auto;
     th,
     td {
-        padding: 16px 14px;
+        padding: 12px 14px;
         text-align: left;
         border-bottom: 1px solid $gray-100;
         white-space: nowrap;
@@ -553,14 +564,14 @@ $font-size-3xl: 1.875rem;
         font-size: $font-size-xs;
         text-transform: uppercase;
         color: $gray-500;
-        letter-spacing: 0.05em;
+        letter-spacing: 0.03em;
         position: sticky;
         top: 0;
         z-index: 10;
         border-bottom: 1px solid $gray-200;
     }
     tbody tr {
-        transition: all 0.15s ease;
+        transition: background 0.1s ease;
         &:hover {
             background: $gray-50;
         }
@@ -571,85 +582,82 @@ $font-size-3xl: 1.875rem;
     td {
         color: $gray-600;
         strong {
-            color: $gray-900;
+            color: $gray-800;
             font-weight: 600;
         }
     }
 }
 
+// Simple Job ID Cell
 .jobIdCell {
-    background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
-    color: $primary-color;
-    padding: 6px 12px;
-    border-radius: 6px;
+    background: $gray-100;
+    color: $gray-700;
+    padding: 4px 8px;
+    border-radius: 4px;
     font-size: $font-size-xs;
-    font-weight: 700;
+    font-weight: 600;
     font-family: 'SF Mono', 'Consolas', monospace;
-    letter-spacing: 0.02em;
     display: inline-block;
-    border: 1px solid rgba(37, 99, 235, 0.2);
 }
 
+// Simple Opening Badge
 .openingBadge {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
-    color: $success-color;
-    padding: 6px 14px;
-    border-radius: 20px;
-    font-weight: 700;
+    background: $gray-100;
+    color: $gray-700;
+    padding: 4px 10px;
+    border-radius: 4px;
+    font-weight: 600;
     font-size: $font-size-xs;
-    min-width: 32px;
-    border: 1px solid rgba(16, 185, 129, 0.2);
+    min-width: 24px;
 }
 
 .expiredDate {
     color: $danger-color;
-    font-weight: 600;
+    font-weight: 500;
 }
 
 .noData {
     text-align: center;
-    padding: 80px 40px !important;
+    padding: 60px 30px !important;
     span {
-        font-size: 56px;
+        font-size: 48px;
         display: block;
-        margin-bottom: 20px;
-        opacity: 0.6;
+        margin-bottom: 16px;
+        opacity: 0.4;
     }
     p {
         color: $gray-500;
-        margin: 0 0 24px;
+        margin: 0 0 16px;
         font-size: $font-size-base;
         font-weight: 500;
     }
     button {
-        padding: 12px 24px;
+        padding: 10px 20px;
         background: $primary-color;
-        color: white;
+        color: $white;
         border: none;
         border-radius: $border-radius-sm;
         cursor: pointer;
         font-weight: 600;
         font-size: $font-size-sm;
-        transition: all 0.2s ease;
+        transition: all 0.15s ease;
         font-family: $font-family;
         &:hover {
             background: $primary-dark;
-            transform: translateY(-1px);
         }
     }
 }
 
-// ==================== STATUS BADGES ====================
+// ==================== STATUS BADGES - SIMPLE ====================
 .statusBadge {
-    padding: 6px 14px;
-    border-radius: 20px;
+    padding: 4px 10px;
+    border-radius: 4px;
     font-size: $font-size-xs;
     font-weight: 600;
     text-transform: capitalize;
-    letter-spacing: 0.02em;
     display: inline-block;
 }
 
@@ -657,26 +665,25 @@ $font-size-3xl: 1.875rem;
 .attachmentSection {
     display: flex;
     flex-direction: column;
-    gap: 12px;
-    padding: 20px;
+    gap: 10px;
+    padding: 16px;
     background: $gray-50;
     border-radius: $border-radius;
-    border: 2px dashed $gray-300;
-    transition: all 0.2s ease;
+    border: 1px dashed $gray-300;
+    transition: all 0.15s ease;
     &:hover {
         border-color: $primary-color;
-        background: rgba(37, 99, 235, 0.02);
     }
 }
 
 .fileInput {
-    padding: 12px;
+    padding: 10px;
     border: 1px solid $gray-300;
     border-radius: $border-radius-sm;
-    background: white;
+    background: $white;
     cursor: pointer;
     font-size: $font-size-sm;
-    transition: all 0.2s ease;
+    transition: all 0.15s ease;
     width: 100%;
     box-sizing: border-box;
     font-family: $font-family;
@@ -687,19 +694,18 @@ $font-size-3xl: 1.875rem;
     &:focus {
         outline: none;
         border-color: $primary-color;
-        box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
     }
     &::file-selector-button {
-        padding: 8px 16px;
+        padding: 6px 12px;
         background: $primary-color;
-        color: white;
+        color: $white;
         border: none;
-        border-radius: 6px;
+        border-radius: 4px;
         cursor: pointer;
         font-weight: 600;
         font-size: $font-size-xs;
-        margin-right: 12px;
-        transition: all 0.2s ease;
+        margin-right: 10px;
+        transition: all 0.15s ease;
         font-family: $font-family;
         &:hover {
             background: $primary-dark;
@@ -710,13 +716,12 @@ $font-size-3xl: 1.875rem;
 .fileInfo {
     display: flex;
     align-items: center;
-    gap: 12px;
-    padding: 14px 16px;
-    background: white;
+    gap: 10px;
+    padding: 10px 12px;
+    background: $white;
     border-radius: $border-radius-sm;
     font-size: $font-size-sm;
     border: 1px solid $gray-200;
-    box-shadow: $shadow-sm;
     flex-wrap: wrap;
     color: $gray-700;
     font-weight: 500;
@@ -730,19 +735,19 @@ $font-size-3xl: 1.875rem;
 
 .removeFileBtn {
     margin-left: auto;
-    padding: 6px 14px;
-    background: #fef2f2;
+    padding: 4px 10px;
+    background: $white;
     color: $danger-color;
-    border: 1px solid #fecaca;
-    border-radius: 6px;
+    border: 1px solid $gray-200;
+    border-radius: 4px;
     cursor: pointer;
     font-size: $font-size-xs;
     font-weight: 600;
-    transition: all 0.2s ease;
+    transition: all 0.15s ease;
     font-family: $font-family;
     &:hover {
         background: $danger-color;
-        color: white;
+        color: $white;
         border-color: $danger-color;
     }
 }
@@ -751,21 +756,20 @@ $font-size-3xl: 1.875rem;
     margin: 0;
     font-size: $font-size-xs;
     color: $gray-500;
-    font-style: normal;
 }
 
 // ==================== DETAILS CARD ====================
 .detailsCard {
-    background: white;
+    background: $white;
     border-radius: $border-radius-lg;
-    box-shadow: $shadow;
+    box-shadow: $shadow-sm;
     overflow: hidden;
     border: 1px solid $gray-200;
     box-sizing: border-box;
 }
 
 .detailsContent {
-    padding: 32px;
+    padding: 24px;
     box-sizing: border-box;
 }
 
@@ -773,47 +777,44 @@ $font-size-3xl: 1.875rem;
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
-    margin-bottom: 28px;
-    padding-bottom: 24px;
+    margin-bottom: 20px;
+    padding-bottom: 16px;
     border-bottom: 1px solid $gray-200;
     flex-wrap: wrap;
-    gap: 20px;
+    gap: 16px;
     h2 {
-        margin: 12px 0 8px;
-        color: $gray-900;
+        margin: 8px 0 4px;
+        color: $gray-800;
         font-size: $font-size-2xl;
         font-weight: 700;
-        letter-spacing: -0.02em;
     }
 }
 
 .jobIdBadge {
-    background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
-    color: $primary-color;
-    padding: 8px 16px;
+    background: $gray-100;
+    color: $gray-700;
+    padding: 6px 12px;
     border-radius: $border-radius-sm;
     font-size: $font-size-sm;
-    font-weight: 700;
+    font-weight: 600;
     font-family: 'SF Mono', 'Consolas', monospace;
-    letter-spacing: 0.02em;
     display: inline-block;
-    border: 1px solid rgba(37, 99, 235, 0.2);
 }
 
 .metaInfo {
     display: flex;
-    gap: 12px;
+    gap: 8px;
     flex-wrap: wrap;
-    margin-top: 8px;
+    margin-top: 6px;
     span {
         color: $gray-600;
         font-size: $font-size-sm;
         display: flex;
         align-items: center;
-        gap: 6px;
+        gap: 4px;
         background: $gray-100;
-        padding: 8px 14px;
-        border-radius: 20px;
+        padding: 6px 10px;
+        border-radius: 4px;
         font-weight: 500;
     }
 }
@@ -821,8 +822,8 @@ $font-size-3xl: 1.875rem;
 .datesRow {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
-    gap: 20px;
-    margin-bottom: 28px;
+    gap: 16px;
+    margin-bottom: 20px;
     @media (max-width: 768px) {
         grid-template-columns: 1fr;
     }
@@ -830,17 +831,12 @@ $font-size-3xl: 1.875rem;
 
 .dateBox {
     background: $gray-50;
-    padding: 20px 24px;
+    padding: 16px 18px;
     border-radius: $border-radius;
-    border-left: 4px solid $primary-color;
-    transition: all 0.2s ease;
-    &:hover {
-        transform: translateY(-2px);
-        box-shadow: $shadow-md;
-    }
+    border-left: 3px solid $primary-color;
     &.expired {
         border-left-color: $danger-color;
-        background: #fef2f2;
+        background: $danger-bg;
     }
 }
 
@@ -849,49 +845,48 @@ $font-size-3xl: 1.875rem;
     color: $gray-500;
     font-size: $font-size-xs;
     text-transform: uppercase;
-    margin-bottom: 6px;
+    margin-bottom: 4px;
     font-weight: 600;
-    letter-spacing: 0.05em;
+    letter-spacing: 0.03em;
 }
 
 .dateValue {
-    color: $gray-900;
-    font-weight: 700;
+    color: $gray-800;
+    font-weight: 600;
     font-size: $font-size-lg;
 }
 
 .expiredTag {
     display: inline-block;
     background: $danger-color;
-    color: white;
-    padding: 4px 10px;
-    border-radius: 6px;
+    color: $white;
+    padding: 2px 6px;
+    border-radius: 4px;
     font-size: $font-size-xs;
     font-weight: 600;
-    margin-left: 12px;
+    margin-left: 8px;
     text-transform: uppercase;
-    letter-spacing: 0.03em;
 }
 
 .section {
-    margin-bottom: 28px;
+    margin-bottom: 20px;
     h4 {
-        color: $gray-900;
-        margin: 0 0 14px;
+        color: $gray-800;
+        margin: 0 0 10px;
         font-size: $font-size-base;
-        font-weight: 700;
+        font-weight: 600;
         display: flex;
         align-items: center;
-        gap: 10px;
+        gap: 6px;
     }
 }
 
 .descriptionBox {
     background: $gray-50;
-    padding: 24px;
+    padding: 16px;
     border-radius: $border-radius;
     color: $gray-600;
-    line-height: 1.8;
+    line-height: 1.6;
     white-space: pre-wrap;
     word-wrap: break-word;
     font-size: $font-size-sm;
@@ -901,22 +896,20 @@ $font-size-3xl: 1.875rem;
 .attachmentLink {
     display: inline-flex;
     align-items: center;
-    gap: 10px;
-    background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+    gap: 6px;
+    background: $gray-100;
     color: $primary-color;
-    padding: 14px 24px;
+    padding: 10px 16px;
     border-radius: $border-radius-sm;
     text-decoration: none;
     font-weight: 600;
     font-size: $font-size-sm;
-    transition: all 0.2s ease;
-    box-shadow: $shadow-sm;
-    border: 1px solid rgba(37, 99, 235, 0.2);
+    transition: all 0.15s ease;
+    border: 1px solid $gray-200;
     &:hover {
         background: $primary-color;
-        color: white;
-        transform: translateY(-2px);
-        box-shadow: $shadow-md;
+        color: $white;
+        border-color: $primary-color;
     }
 }
 
@@ -924,8 +917,8 @@ $font-size-3xl: 1.875rem;
 .statsRow {
     display: grid;
     grid-template-columns: repeat(5, 1fr);
-    gap: 16px;
-    margin-bottom: 24px;
+    gap: 14px;
+    margin-bottom: 20px;
     @media (max-width: 1200px) {
         grid-template-columns: repeat(3, 1fr);
     }
@@ -938,26 +931,20 @@ $font-size-3xl: 1.875rem;
 }
 
 .miniCard {
-    background: white;
-    padding: 20px;
+    background: $white;
+    padding: 16px;
     border-radius: $border-radius;
     text-align: center;
-    box-shadow: $shadow;
+    box-shadow: $shadow-sm;
     border: 1px solid $gray-200;
-    border-left: 4px solid;
-    transition: all 0.2s ease;
+    border-left: 3px solid;
     box-sizing: border-box;
-    &:hover {
-        transform: translateY(-2px);
-        box-shadow: $shadow-md;
-    }
     span {
-        font-size: 28px;
-        font-weight: 800;
-        color: $gray-900;
+        font-size: 24px;
+        font-weight: 700;
+        color: $gray-800;
         display: block;
-        margin-bottom: 6px;
-        letter-spacing: -0.02em;
+        margin-bottom: 4px;
     }
     p {
         margin: 0;
@@ -965,7 +952,7 @@ $font-size-3xl: 1.875rem;
         font-size: $font-size-xs;
         font-weight: 600;
         text-transform: uppercase;
-        letter-spacing: 0.03em;
+        letter-spacing: 0.02em;
     }
 }
 
@@ -973,11 +960,11 @@ $font-size-3xl: 1.875rem;
 .filterContainer {
     display: flex;
     align-items: center;
-    gap: 14px;
-    background: white;
-    padding: 14px 20px;
+    gap: 10px;
+    background: $white;
+    padding: 10px 16px;
     border-radius: $border-radius-sm;
-    box-shadow: $shadow-sm;
+    box-shadow: $shadow-xs;
     flex-wrap: wrap;
     border: 1px solid $gray-200;
     label {
@@ -986,21 +973,20 @@ $font-size-3xl: 1.875rem;
         font-weight: 600;
     }
     select {
-        padding: 10px 16px;
+        padding: 8px 12px;
         border: 1px solid $gray-300;
         border-radius: $border-radius-sm;
         font-size: $font-size-sm;
         font-weight: 500;
         cursor: pointer;
-        background: white;
-        min-width: 140px;
-        transition: all 0.2s ease;
+        background: $white;
+        min-width: 120px;
+        transition: all 0.15s ease;
         font-family: $font-family;
         color: $gray-700;
         &:focus {
             outline: none;
             border-color: $primary-color;
-            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
         }
     }
 }
@@ -1008,12 +994,12 @@ $font-size-3xl: 1.875rem;
 .filterRow {
     display: flex;
     flex-wrap: wrap;
-    gap: 16px;
-    margin-bottom: 20px;
-    padding: 20px;
-    background: white;
+    gap: 12px;
+    margin-bottom: 16px;
+    padding: 16px;
+    background: $white;
     border-radius: $border-radius;
-    box-shadow: $shadow;
+    box-shadow: $shadow-sm;
     box-sizing: border-box;
     border: 1px solid $gray-200;
 }
@@ -1021,7 +1007,7 @@ $font-size-3xl: 1.875rem;
 .filterItem {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 6px;
     label {
         font-weight: 600;
         color: $gray-600;
@@ -1030,126 +1016,73 @@ $font-size-3xl: 1.875rem;
     }
     select,
     input {
-        padding: 10px 14px;
+        padding: 8px 10px;
         border: 1px solid $gray-300;
         border-radius: $border-radius-sm;
         font-size: $font-size-sm;
-        min-width: 140px;
-        transition: all 0.2s ease;
+        min-width: 120px;
+        transition: all 0.15s ease;
         font-family: $font-family;
         color: $gray-700;
         &:focus {
             outline: none;
             border-color: $primary-color;
-            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
         }
     }
 }
 
 .searchInput {
-    min-width: 220px !important;
+    min-width: 180px !important;
 }
 
-// ==================== TODAY HIGHLIGHT ====================
-.todayRow {
-    background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%) !important;
-    border-left: 4px solid $warning-color;
-}
-
-.todayTag {
-    display: inline-block;
-    background: $warning-color;
-    color: white;
-    padding: 4px 10px;
-    border-radius: 6px;
-    font-size: $font-size-xs;
-    font-weight: 600;
-    margin-left: 10px;
-    text-transform: uppercase;
-    letter-spacing: 0.03em;
-    animation: pulse 2s infinite;
-}
-
-@keyframes pulse {
-    0%,
-    100% {
-        opacity: 1;
-    }
-    50% {
-        opacity: 0.7;
-    }
-}
-
-.statusSelect {
-    padding: 8px 12px;
-    border: 1px solid $gray-300;
-    border-radius: 6px;
-    font-size: $font-size-xs;
-    cursor: pointer;
-    font-weight: 500;
-    background: white;
-    transition: all 0.2s ease;
-    min-width: 110px;
-    font-family: $font-family;
-    color: $gray-700;
-    &:focus {
-        outline: none;
-        border-color: $primary-color;
-        box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
-    }
-    &:hover {
-        border-color: $primary-color;
-    }
-}
-
-// ==================== PAGINATION ====================
+// ==================== PAGINATION - SIMPLE ====================
 .pagination {
     display: flex;
-    justify-content: space-between;
+    justify-content: center;
     align-items: center;
-    margin-top: 20px;
-    padding: 16px 24px;
-    background: white;
+    margin-top: 16px;
+    padding: 12px 16px;
+    background: $white;
     border-radius: $border-radius;
-    box-shadow: $shadow;
+    box-shadow: $shadow-sm;
     border: 1px solid $gray-200;
-    flex-wrap: wrap;
-    gap: 16px;
+    gap: 12px;
 }
 
 .paginationInfo {
     color: $gray-600;
     font-size: $font-size-sm;
     font-weight: 500;
+    display: none;
 }
 
 .paginationControls {
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 8px;
 }
 
 .paginationBtn {
-    padding: 8px 16px;
-    background: white;
+    padding: 6px 12px;
+    background: $white;
     color: $gray-700;
     border: 1px solid $gray-300;
     border-radius: $border-radius-sm;
     cursor: pointer;
     font-size: $font-size-sm;
     font-weight: 500;
-    transition: all 0.2s ease;
+    transition: all 0.15s ease;
     font-family: $font-family;
     display: inline-flex;
     align-items: center;
-    gap: 6px;
+    gap: 4px;
     &:hover:not(:disabled) {
         background: $primary-color;
-        color: white;
+        color: $white;
         border-color: $primary-color;
     }
     &:disabled {
-        background: $gray-100;
+        background: $gray-50;
         color: $gray-400;
         cursor: not-allowed;
         border-color: $gray-200;
@@ -1163,28 +1096,27 @@ $font-size-3xl: 1.875rem;
 }
 
 .pageNumber {
-    width: 36px;
-    height: 36px;
+    width: 32px;
+    height: 32px;
     display: flex;
     align-items: center;
     justify-content: center;
-    background: white;
+    background: $white;
     color: $gray-700;
     border: 1px solid $gray-300;
     border-radius: $border-radius-sm;
     cursor: pointer;
     font-size: $font-size-sm;
     font-weight: 500;
-    transition: all 0.2s ease;
+    transition: all 0.15s ease;
     font-family: $font-family;
     &:hover:not(:disabled):not(.activePage) {
         background: $gray-100;
-        border-color: $primary-color;
-        color: $primary-color;
+        border-color: $gray-400;
     }
     &.activePage {
         background: $primary-color;
-        color: white;
+        color: $white;
         border-color: $primary-color;
     }
     &.ellipsis {
@@ -1198,133 +1130,90 @@ $font-size-3xl: 1.875rem;
     }
 }
 
-// Responsive pagination
-@media (max-width: 768px) {
-    .pagination {
-        flex-direction: column;
-        text-align: center;
-    }
-    .paginationControls {
-        flex-wrap: wrap;
-        justify-content: center;
-    }
-    .paginationBtn {
-        padding: 8px 12px;
-        font-size: $font-size-xs;
-    }
-    .pageNumber {
-        width: 32px;
-        height: 32px;
-        font-size: $font-size-xs;
-    }
-}
-
-@media (max-width: 480px) {
-    .paginationInfo {
-        font-size: $font-size-xs;
-    }
-    .paginationBtn {
-        padding: 6px 10px;
-    }
-    .pageNumbers {
-        gap: 2px;
-    }
-    .pageNumber {
-        width: 28px;
-        height: 28px;
-    }
-}
-
 // ==================== UPLOAD BUTTON ====================
 .uploadBtn {
-    padding: 8px 16px;
-    background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
-    color: white;
+    padding: 6px 12px;
+    background: $purple-color;
+    color: $white;
     border: none;
     border-radius: $border-radius-sm;
     cursor: pointer;
     font-size: $font-size-xs;
     font-weight: 600;
-    transition: all 0.2s ease;
+    transition: all 0.15s ease;
     display: inline-flex;
     align-items: center;
-    gap: 6px;
+    gap: 4px;
     font-family: $font-family;
-    box-shadow: 0 2px 8px rgba(139, 92, 246, 0.3);
     &:hover:not(:disabled) {
-        background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%);
-        transform: translateY(-1px);
-        box-shadow: 0 4px 12px rgba(139, 92, 246, 0.4);
+        background: darken($purple-color, 10%);
     }
     &:disabled {
         background: $gray-300;
         cursor: not-allowed;
-        box-shadow: none;
         opacity: 0.6;
     }
 }
 
-// ==================== EMPLOYEE INFO SECTION ====================
+// ==================== INFO SECTIONS ====================
 .employeeInfoSection {
-    background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
-    border: 1px solid #bae6fd;
-    border-radius: $border-radius;
-    padding: 24px;
-    margin-bottom: 24px;
-    h4 {
-        margin: 0 0 20px;
-        color: $primary-color;
-        font-size: $font-size-base;
-        font-weight: 700;
-        display: flex;
-        align-items: center;
-        gap: 10px;
-    }
-}
-
-// ==================== JOB INFO SECTION ====================
-.jobInfoSection {
-    background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+    background: $gray-50;
     border: 1px solid $gray-200;
     border-radius: $border-radius;
-    padding: 24px;
-    margin-bottom: 24px;
+    padding: 18px;
+    margin-bottom: 18px;
     h4 {
-        margin: 0 0 20px;
+        margin: 0 0 14px;
         color: $gray-800;
         font-size: $font-size-base;
-        font-weight: 700;
+        font-weight: 600;
         display: flex;
         align-items: center;
-        gap: 10px;
+        gap: 6px;
     }
 }
 
-// ==================== UPLOAD SECTION ====================
-.uploadSection {
-    background: linear-gradient(135deg, #faf5ff 0%, #f3e8ff 100%);
-    border: 1px solid #e9d5ff;
+.jobInfoSection {
+    background: $gray-50;
+    border: 1px solid $gray-200;
     border-radius: $border-radius;
-    padding: 24px;
-    margin-bottom: 24px;
+    padding: 18px;
+    margin-bottom: 18px;
+    h4 {
+        margin: 0 0 14px;
+        color: $gray-800;
+        font-size: $font-size-base;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+}
+
+.uploadSection {
+    background: $gray-50;
+    border: 1px solid $gray-200;
+    border-radius: $border-radius;
+    padding: 18px;
+    margin-bottom: 18px;
     .formGroup {
         margin-bottom: 0;
     }
 }
 
-// ==================== ERROR BOX ====================
+// ==================== MESSAGE BOXES ====================
 .errorBox {
-    background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
+    background: $danger-bg;
     border: 1px solid #fecaca;
     border-radius: $border-radius;
-    padding: 32px;
+    padding: 24px;
     text-align: center;
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 16px;
+    gap: 12px;
     .errorIcon {
-        font-size: 48px;
+        font-size: 40px;
         display: block;
     }
     p {
@@ -1332,62 +1221,59 @@ $font-size-3xl: 1.875rem;
         font-size: $font-size-base;
         font-weight: 500;
         margin: 0;
-        max-width: 400px;
-        line-height: 1.6;
+        max-width: 360px;
+        line-height: 1.5;
     }
     button {
-        margin-top: 8px;
+        margin-top: 6px;
     }
 }
 
-// ==================== SUCCESS BOX ====================
 .successBox {
-    background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+    background: $success-bg;
     border: 1px solid #bbf7d0;
     border-radius: $border-radius;
-    padding: 32px;
+    padding: 24px;
     text-align: center;
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 16px;
+    gap: 12px;
     .successIcon {
-        font-size: 48px;
+        font-size: 40px;
         display: block;
     }
     p {
-        color: $success-dark;
+        color: $success-color;
         font-size: $font-size-base;
         font-weight: 500;
         margin: 0;
-        max-width: 400px;
-        line-height: 1.6;
+        max-width: 360px;
+        line-height: 1.5;
     }
     .generatedId {
-        background: white;
-        padding: 16px 24px;
+        background: $white;
+        padding: 12px 18px;
         border-radius: $border-radius-sm;
         font-family: 'SF Mono', 'Consolas', monospace;
         font-size: $font-size-lg;
         font-weight: 700;
         color: $success-color;
         border: 2px solid $success-color;
-        letter-spacing: 0.05em;
     }
 }
 
-// ==================== INFO BOX ====================
 .infoBox {
-    background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+    background: $info-bg;
     border: 1px solid #bfdbfe;
     border-radius: $border-radius;
-    padding: 16px 20px;
+    padding: 12px 16px;
     display: flex;
     align-items: center;
-    gap: 12px;
-    margin-bottom: 20px;
+    gap: 8px;
+    margin-bottom: 16px;
     .infoIcon {
-        font-size: 24px;
+        font-size: 20px;
         flex-shrink: 0;
     }
     p {
@@ -1395,60 +1281,57 @@ $font-size-3xl: 1.875rem;
         font-size: $font-size-sm;
         font-weight: 500;
         margin: 0;
-        line-height: 1.5;
+        line-height: 1.4;
     }
 }
 
-// ==================== WARNING BOX ====================
 .warningBox {
-    background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
+    background: $warning-bg;
     border: 1px solid #fde68a;
     border-radius: $border-radius;
-    padding: 16px 20px;
+    padding: 12px 16px;
     display: flex;
     align-items: center;
-    gap: 12px;
-    margin-bottom: 20px;
+    gap: 8px;
+    margin-bottom: 16px;
     .warningIcon {
-        font-size: 24px;
+        font-size: 20px;
         flex-shrink: 0;
     }
     p {
-        color: $warning-dark;
+        color: $warning-color;
         font-size: $font-size-sm;
         font-weight: 500;
         margin: 0;
-        line-height: 1.5;
+        line-height: 1.4;
     }
 }
 
 // ==================== APPLICANT ID BADGE ====================
 .applicantIdBadge {
-    background: linear-gradient(135deg, #faf5ff 0%, #f3e8ff 100%);
-    color: $purple-color;
-    padding: 8px 16px;
+    background: $gray-100;
+    color: $gray-700;
+    padding: 6px 12px;
     border-radius: $border-radius-sm;
     font-size: $font-size-sm;
-    font-weight: 700;
+    font-weight: 600;
     font-family: 'SF Mono', 'Consolas', monospace;
-    letter-spacing: 0.02em;
     display: inline-block;
-    border: 1px solid rgba(139, 92, 246, 0.2);
 }
 
 // ==================== LOADING SPINNER SMALL ====================
 .loadingSmall {
     display: flex;
     align-items: center;
-    gap: 12px;
-    padding: 16px;
+    gap: 8px;
+    padding: 12px;
     color: $gray-500;
     font-size: $font-size-sm;
     font-weight: 500;
     &::before {
         content: "";
-        width: 20px;
-        height: 20px;
+        width: 16px;
+        height: 16px;
         border: 2px solid $gray-200;
         border-top-color: $primary-color;
         border-radius: 50%;
@@ -1459,183 +1342,159 @@ $font-size-3xl: 1.875rem;
 // ==================== SECTION DIVIDER ====================
 .sectionDivider {
     height: 1px;
-    background: linear-gradient(90deg, transparent 0%, $gray-300 50%, transparent 100%);
-    margin: 24px 0;
+    background: $gray-200;
+    margin: 18px 0;
 }
 
 // ==================== FORM SECTION TITLE ====================
 .formSectionTitle {
     display: flex;
     align-items: center;
-    gap: 10px;
-    margin-bottom: 20px;
-    padding-bottom: 12px;
-    border-bottom: 2px solid $gray-200;
+    gap: 6px;
+    margin-bottom: 14px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid $gray-200;
     h4 {
         margin: 0;
         color: $gray-800;
         font-size: $font-size-base;
-        font-weight: 700;
+        font-weight: 600;
     }
     .icon {
-        font-size: 20px;
+        font-size: 16px;
     }
 }
 
-// ==================== DELETE BUTTON ====================
-.deleteBtn {
-    padding: 8px 16px;
-    background: $gray-100;
-    color: $danger-color;
-    border: 1px solid $gray-200;
-    border-radius: $border-radius-sm;
-    cursor: pointer;
+// ==================== TODAY HIGHLIGHT ====================
+.todayRow {
+    background: $warning-bg !important;
+    border-left: 3px solid $warning-color;
+}
+
+.todayTag {
+    display: inline-block;
+    background: $warning-color;
+    color: $white;
+    padding: 2px 6px;
+    border-radius: 4px;
     font-size: $font-size-xs;
     font-weight: 600;
-    transition: all 0.2s ease;
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
+    margin-left: 6px;
+    text-transform: uppercase;
+}
+
+.statusSelect {
+    padding: 6px 10px;
+    border: 1px solid $gray-300;
+    border-radius: $border-radius-sm;
+    font-size: $font-size-xs;
+    cursor: pointer;
+    font-weight: 500;
+    background: $white;
+    transition: all 0.15s ease;
+    min-width: 100px;
     font-family: $font-family;
+    color: $gray-700;
+    &:focus {
+        outline: none;
+        border-color: $primary-color;
+    }
     &:hover {
-        background: $danger-color;
-        color: white;
-        border-color: $danger-color;
-    }
-    &:disabled {
-        opacity: 0.5;
-        cursor: not-allowed;
-    }
-}
-
-// ==================== RESPONSIVE ADJUSTMENTS ====================
-@media (max-width: 768px) {
-    .employeeInfoSection,
-    .jobInfoSection,
-    .uploadSection {
-        padding: 16px;
-        h4 {
-            font-size: $font-size-sm;
-        }
-    }
-    .errorBox,
-    .successBox {
-        padding: 24px 16px;
-        .errorIcon,
-        .successIcon {
-            font-size: 36px;
-        }
-        p {
-            font-size: $font-size-sm;
-        }
-    }
-}
-
-@media (max-width: 480px) {
-    .employeeInfoSection,
-    .jobInfoSection,
-    .uploadSection {
-        padding: 12px;
-        margin-bottom: 16px;
-    }
-    .applicantIdBadge {
-        font-size: $font-size-xs;
-        padding: 6px 12px;
+        border-color: $gray-400;
     }
 }
 
 // ==================== RESPONSIVE ====================
 @media (max-width: 1200px) {
-    .nav {
-        width: 240px;
-        min-width: 240px;
-        max-width: 240px;
-    }
     .main {
-        padding: 24px;
+        padding: 20px 24px;
     }
     .pageHeader h1 {
-        font-size: $font-size-xl;
+        font-size: $font-size-lg;
+    }
+    .nav {
+        padding: 0 20px;
+        li {
+            padding: 8px 14px;
+            font-size: $font-size-xs;
+        }
+    }
+    .logo {
+        font-size: $font-size-base;
     }
 }
 
 @media (max-width: 992px) {
-    .nav {
-        width: 220px;
-        min-width: 220px;
-        max-width: 220px;
-        li {
-            padding: 12px 18px;
-            font-size: $font-size-sm;
-        }
-    }
     .main {
-        padding: 20px;
+        padding: 16px 20px;
     }
     .formCard {
-        padding: 24px;
-    }
-}
-
-@media (max-width: 768px) {
-    .portal {
-        flex-direction: column;
+        padding: 20px;
     }
     .nav {
-        width: 100%;
-        min-width: 100%;
-        max-width: 100%;
+        padding: 0 16px;
         height: auto;
-        min-height: auto;
-        position: relative;
-        padding: 12px 0;
+        min-height: $nav-height;
+        flex-wrap: wrap;
+        padding-top: 10px;
+        padding-bottom: 10px;
         ul {
-            display: flex;
             flex-wrap: wrap;
             justify-content: center;
-            gap: 8px;
-            padding: 12px;
-            flex-direction: row;
         }
         li {
-            padding: 10px 16px;
-            margin: 0;
-            border-radius: $border-radius-sm;
-            font-size: $font-size-sm;
-            &.active {
-                &::before {
-                    display: none;
-                }
+            padding: 6px 12px;
+            font-size: $font-size-xs;
+            &.active::after {
+                display: none;
             }
         }
     }
     .logo {
-        text-align: center;
+        width: 100%;
         justify-content: center;
-        padding: 16px 20px;
-        font-size: $font-size-base;
+        margin-bottom: 8px;
+    }
+}
+
+@media (max-width: 768px) {
+    .nav {
+        padding: 10px 14px;
+        flex-direction: column;
+        height: auto;
+        gap: 6px;
+        ul {
+            gap: 4px;
+        }
+        li {
+            padding: 6px 10px;
+            font-size: $font-size-xs;
+        }
+    }
+    .logo {
+        font-size: $font-size-sm;
+        padding: 6px 0;
     }
     .main {
         width: 100%;
         max-width: 100%;
-        padding: 16px;
-        min-height: auto;
+        padding: 14px;
     }
     .pageHeader {
         flex-direction: column;
         text-align: center;
-        padding: 20px;
+        padding: 14px;
         h1 {
-            font-size: $font-size-lg;
+            font-size: $font-size-base;
             justify-content: center;
         }
     }
     .formCard {
-        padding: 20px;
+        padding: 16px;
     }
     .formRow {
         grid-template-columns: 1fr;
-        gap: 16px;
+        gap: 12px;
     }
     .formActions {
         flex-direction: column;
@@ -1652,14 +1511,14 @@ $font-size-3xl: 1.875rem;
         justify-content: center;
     }
     .detailsContent {
-        padding: 20px;
+        padding: 16px;
     }
     .datesRow {
         grid-template-columns: 1fr;
     }
     .filterRow {
         flex-direction: column;
-        gap: 12px;
+        gap: 8px;
     }
     .filterItem {
         width: 100%;
@@ -1677,14 +1536,129 @@ $font-size-3xl: 1.875rem;
             justify-content: center;
         }
     }
+    .pagination {
+        flex-direction: column;
+        text-align: center;
+    }
+    .paginationControls {
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+    .paginationBtn {
+        padding: 6px 10px;
+        font-size: $font-size-xs;
+    }
+    .pageNumber {
+        width: 28px;
+        height: 28px;
+        font-size: $font-size-xs;
+    }
+    .employeeInfoSection,
+    .jobInfoSection,
+    .uploadSection {
+        padding: 12px;
+        h4 {
+            font-size: $font-size-sm;
+        }
+    }
+    .errorBox,
+    .successBox {
+        padding: 20px 12px;
+        .errorIcon,
+        .successIcon {
+            font-size: 32px;
+        }
+        p {
+            font-size: $font-size-sm;
+        }
+    }
 }
 
-// Add consistent row height for tables
+@media (max-width: 480px) {
+    .main {
+        padding: 10px;
+    }
+    .pageHeader {
+        padding: 12px;
+        h1 {
+            font-size: $font-size-sm;
+        }
+    }
+    .miniCard {
+        padding: 12px;
+        span {
+            font-size: 20px;
+        }
+        p {
+            font-size: 10px;
+        }
+    }
+    .table {
+        min-width: 700px;
+        th,
+        td {
+            padding: 8px 6px;
+            font-size: $font-size-xs;
+        }
+    }
+    .addBtn {
+        width: 100%;
+        justify-content: center;
+        padding: 8px 16px;
+    }
+    .formCard {
+        padding: 12px;
+    }
+    .formGroup {
+        margin-bottom: 12px;
+        input,
+        select,
+        textarea {
+            padding: 8px 10px;
+        }
+    }
+    .noData {
+        padding: 40px 16px !important;
+        span {
+            font-size: 32px;
+        }
+        p {
+            font-size: $font-size-sm;
+        }
+    }
+    .nav li {
+        padding: 5px 8px;
+        font-size: 10px;
+    }
+    .employeeInfoSection,
+    .jobInfoSection,
+    .uploadSection {
+        padding: 10px;
+        margin-bottom: 12px;
+    }
+    .applicantIdBadge {
+        font-size: $font-size-xs;
+        padding: 4px 8px;
+    }
+    .paginationBtn {
+        padding: 4px 8px;
+    }
+    .pageNumbers {
+        gap: 2px;
+    }
+    .pageNumber {
+        width: 24px;
+        height: 24px;
+        font-size: 10px;
+    }
+}
+
+// ==================== TABLE ROW HEIGHT ====================
 .table {
     tbody {
         tr {
-            height: 56px;
-            min-height: 56px;
+            height: 48px;
+            min-height: 48px;
             td {
                 vertical-align: middle;
                 padding: 8px 12px;
@@ -1694,56 +1668,13 @@ $font-size-3xl: 1.875rem;
     }
 }
 
-@media (max-width: 480px) {
-    .main {
-        padding: 12px;
+// ==================== KEYFRAMES ====================
+@keyframes pulse {
+    0%,
+    100% {
+        opacity: 1;
     }
-    .pageHeader {
-        padding: 16px;
-        h1 {
-            font-size: $font-size-base;
-        }
-    }
-    .miniCard {
-        padding: 16px;
-        span {
-            font-size: 24px;
-        }
-        p {
-            font-size: 10px;
-        }
-    }
-    .table {
-        min-width: 800px;
-        th,
-        td {
-            padding: 12px 10px;
-            font-size: $font-size-xs;
-        }
-    }
-    .addBtn {
-        width: 100%;
-        justify-content: center;
-        padding: 12px 20px;
-    }
-    .formCard {
-        padding: 16px;
-    }
-    .formGroup {
-        margin-bottom: 16px;
-        input,
-        select,
-        textarea {
-            padding: 12px 14px;
-        }
-    }
-    .noData {
-        padding: 48px 20px !important;
-        span {
-            font-size: 40px;
-        }
-        p {
-            font-size: $font-size-sm;
-        }
+    50% {
+        opacity: 0.6;
     }
 }
