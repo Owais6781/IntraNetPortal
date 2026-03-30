@@ -346,7 +346,7 @@ const JobOpening: React.FC<IJobOpeningProps> = ({
         alert("Job updated successfully!");
       } else {
         await service.createJob(jobForm, jobAttachmentFile || undefined);
-        alert("Job created successfully!");
+        alert("✅ Job posting created successfully.");
       }
       setShowForm(false);
       resetJobForm();

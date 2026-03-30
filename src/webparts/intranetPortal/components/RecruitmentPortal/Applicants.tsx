@@ -26,7 +26,9 @@ const Applicant: React.FC<IApplicantProps> = ({
   const [loading, setLoading] = useState<boolean>(true);
   const [selectedRecruitment, setSelectedRecruitment] =
     useState<IRecruitmentApplication | null>(null);
-  const [attachments, setAttachments] = useState<{ FileName: string; ServerRelativeUrl: string }[]>([]);
+  const [attachments, setAttachments] = useState<
+    { FileName: string; ServerRelativeUrl: string }[]
+  >([]);
   const [updating, setUpdating] = useState<boolean>(false);
 
   // Current User State
@@ -2040,7 +2042,7 @@ const Applicant: React.FC<IApplicantProps> = ({
                               }}
                               title="View Resume"
                             >
-                              📄 View
+                                 📄
                             </button>
                           ) : (
                             <span

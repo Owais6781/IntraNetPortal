@@ -34,7 +34,7 @@ const Interview: React.FC<IInterviewProps> = ({ service, onNavigateToJob, onNavi
   const [departmentFilter, setDepartmentFilter] = useState<string>("All");
   const [statusFilter, setStatusFilter] = useState<string>("All");
   const [currentPage, setCurrentPage] = useState<number>(1);
-  const itemsPerPage = 7;
+  const itemsPerPage = 5;
 
   // New Round Form state
   const [showAddRoundForm, setShowAddRoundForm] = useState<boolean>(false);
@@ -57,7 +57,7 @@ const Interview: React.FC<IInterviewProps> = ({ service, onNavigateToJob, onNavi
   });
 
   // People picker state
-  const [userSearchTerm, setUserSearchTerm] = useState<string>("");
+   const [userSearchTerm, setUserSearchTerm] = useState<string>("");
   const [showUserDropdown, setShowUserDropdown] = useState<boolean>(false);
 
   // ==================== DATA LOADING ====================

@@ -359,10 +359,11 @@ const UploadResume: React.FC<IUploadResumeProps> = ({ service }) => {
       );
 
       alert(
-        `✅ Resume uploaded successfully!\n\n` +
-          `📋 Application ID: ${applicantId}\n` +
-          `🧑‍💼 Candidate Name: ${candidateName.trim()}\n` +
-          `💼 Job: ${applicationForm.JobTitle}`,
+       `🎉 Your job application has been submitted successfully!\n\n` +
+       `📋 Application ID: ${applicantId}\n` +
+       `👤 Candidate Name: ${candidateName.trim()}\n` +
+       `💼 Position: ${applicationForm.JobTitle}\n\n` +
+       `Our recruitment team will review your application.`
       );
       handleClose();
       void loadJobs();
