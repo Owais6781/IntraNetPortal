@@ -1490,9 +1490,8 @@ const JobOpening: React.FC<IJobOpeningProps> = ({
                   {getPageNumbers().map((page, index) => (
                     <button
                       key={index}
-                      className={`${styles.pageNumber} ${
-                        page === currentPage ? styles.activePage : ""
-                      } ${page === "..." ? styles.ellipsis : ""}`}
+                      className={`${styles.pageNumber} ${page === currentPage ? styles.activePage : ""
+                        } ${page === "..." ? styles.ellipsis : ""}`}
                       onClick={() =>
                         typeof page === "number" && handlePageChange(page)
                       }

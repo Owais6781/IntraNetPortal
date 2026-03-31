@@ -1,5 +1,6 @@
 
 import * as React from "react";
+import "./NewOpenings.css";
 import { useEffect, useState } from "react";
 import { SPFI } from "@pnp/sp";
 
@@ -87,7 +88,7 @@ const GlobalCompanyEvents: React.FC<Props> = ({ sp }) => {
       </h2>
 
       {/* EVENTS */}
-      <div className="flex flex-col gap-4 max-h-[260px] overflow-y-auto pr-1">
+      <div className="flex flex-col gap-4 max-h-[260px] overflow-y-auto pr-2 custom-scrollbar-grey">
         {events.map((event) => {
           const style = getColorStyle(event.Color);
           const date = new Date(event.EventDate);

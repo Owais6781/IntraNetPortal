@@ -1,17 +1,17 @@
 .heroWrapper {
-    padding: 60px 10% 16px;
-    background: #d7dbea;
+    padding: 60px 10% 20px;
+    background: #f8fafc;
 }
 
 .heroCard {
     position: relative;
-    height: 340px;
-    border-radius: 28px;
+    height: 400px;
+    border-radius: 32px;
     overflow: hidden;
     background-image: url("https://cdn.prod.website-files.com/6442419dcf656a81da76b503/65ac7bcca32da2cb975b2f72_modern-office-with-skyline-zoom-background.webp");
     background-size: cover;
     background-position: center;
-    box-shadow: 0 30px 60px rgba(0, 0, 0, 0.25);
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.1);
 }
 
 .heroOverlay {
@@ -65,18 +65,20 @@
 }
 
 .companyProfile {
-    background: linear-gradient(135deg, #f6f8ff, #ffffff);
-    border-radius: 26px;
-    padding: 32px 36px 36px;
+    background: #ffffff;
+    border-radius: 30px;
+    padding: 48px;
     margin: auto;
-    border: 2px solid #e3e7f5;
+    border: 1px solid rgba(227, 231, 245, 0.8);
     cursor: pointer;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .companyProfile:hover {
-    border-color: #bac6fb;
-    transform: none;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+    border-color: #6366f1;
+    transform: translateY(-4px);
+    box-shadow: 0 20px 40px rgba(99, 102, 241, 0.12);
 }
 
 .heading {
@@ -189,12 +191,12 @@
 .executiveCard {
     background: #ffffff;
     border-radius: 24px;
-    padding: 24px 20px;
+    padding: 32px 24px;
     text-align: center;
-    border: 1px solid rgba(227, 231, 245, 0.8);
+    border: 1px solid rgba(227, 231, 245, 0.6);
     cursor: pointer;
-    transition: all 0.3s ease;
-    min-height: 220px;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    min-height: 240px;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -202,9 +204,9 @@
 }
 
 .executiveCard:hover {
-    border-color: #bac6fb;
-    transform: translateY(-4px);
-    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.08);
+    border-color: #6366f1;
+    transform: translateY(-8px);
+    box-shadow: 0 20px 40px rgba(99, 102, 241, 0.1);
 }
 
 .executiveAvatar {
@@ -268,17 +270,26 @@
     transform: translateY(-50%);
     width: 44px;
     height: 44px;
-    border-radius: none;
-    background: none;
-    border: none;
+    background: #ffffff;
+    border: 1px solid rgba(227, 231, 245, 1);
+    border-radius: 100%;
     cursor: pointer;
-    font-size: 42px;
+    font-size: 24px;
     font-weight: bold;
     z-index: 20;
-    color: #9d53eb;
+    color: #6366f1;
     display: flex;
     align-items: center;
     justify-content: center;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    transition: all 0.2s ease;
+}
+
+.orgSliderArrowLeft:hover,
+.orgSliderArrowRight:hover {
+    background: #6366f1;
+    color: #ffffff;
+    box-shadow: 0 10px 20px rgba(99, 102, 241, 0.2);
 }
 
 

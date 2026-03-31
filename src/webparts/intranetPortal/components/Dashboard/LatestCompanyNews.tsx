@@ -38,7 +38,7 @@ const LatestCompanyNews: React.FC<Props> = ({ sp }) => {
         )
         .expand("AttachmentFiles")
         .orderBy("Created", false)
-        .top(2)(); 
+        .top(2)();
 
       const mapped = items.map((item) => ({
         id: item.ID,
@@ -64,7 +64,7 @@ const LatestCompanyNews: React.FC<Props> = ({ sp }) => {
   };
 
   useEffect(() => {
-   void fetchLatestNews();
+    void fetchLatestNews();
   }, []);
 
   if (loading) {
@@ -73,7 +73,7 @@ const LatestCompanyNews: React.FC<Props> = ({ sp }) => {
 
   return (
     <div className="rounded-3xl bg-white/70 backdrop-blur-xl border border-white/50 shadow-xl shadow-slate-200/50 p-6">
-      
+
       {/* Header */}
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-xl font-bold text-slate-800 flex items-center gap-3">

@@ -1,0 +1,5 @@
+src/webparts/intranetPortal/components/RecruitmentPortal/JobOpening.tsx(11,32): error TS6133: 'MessageBar' is declared but its value is never read.
+src/webparts/intranetPortal/components/RecruitmentPortal/JobOpening.tsx(11,44): error TS6133: 'MessageBarType' is declared but its value is never read.
+src/webparts/intranetPortal/components/RecruitmentPortal/JobOpening.tsx(116,116): error TS2322: Type '{ textTransform: string; fontSize: number; fontWeight: string; color: string; letterSpacing: number; marginTop: number; }' is not assignable to type 'string | false | DeepPartialObject<IRawStyle> | IDeepPartialArray<IStyle> | null | undefined'.
+  Types of property 'letterSpacing' are incompatible.
+    Type 'number' is not assignable to type 'string'.

@@ -41,10 +41,10 @@ const PersonalQuickAccess: React.FC = () => {
                 🌴 Apply Leave
               </button>
             </Link>
-            <Link to ="/it-support">
-            <button className="px-4 py-2 rounded-full bg-slate-50 border border-slate-200 text-sm font-medium hover:bg-indigo-50 hover:border-indigo-200 hover:text-indigo-700 transition-colors">
-              💻 IT Support
-            </button>
+            <Link to="/it-support">
+              <button className="px-4 py-2 rounded-full bg-slate-50 border border-slate-200 text-sm font-medium hover:bg-indigo-50 hover:border-indigo-200 hover:text-indigo-700 transition-colors">
+                💻 IT Support
+              </button>
             </Link>
           </div>
         </div>

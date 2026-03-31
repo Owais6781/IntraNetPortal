@@ -1,4 +1,5 @@
 import * as React from "react";
+import "./NewOpenings.css";
 import { useEffect, useState } from "react";
 import { SPFI } from "@pnp/sp";
 
@@ -70,7 +71,7 @@ const NewOpenings: React.FC<Props> = ({ sp }) => {
           </h3>
 
           {/* SHOW ONLY 2 JOBS */}
-          <div className="space-y-3 max-h-[220px] overflow-y-auto pr-1">
+          <div className="space-y-3 max-h-[220px] overflow-y-auto pr-1 custom-scrollbar">
             {jobs.slice(0, 2).map((job) => (
               <div
                 key={job.Id}

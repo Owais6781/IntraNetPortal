@@ -10,7 +10,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({ userName, loading }) => {
     <div className="relative max-w-7xl mx-auto flex flex-col lg:flex-row gap-4 sm:gap-6">
       {/* LEFT BIG CARD */}
       <div
-        
+
         className="flex-[2] min-h-[340px] lg:min-w-[640px] relative rounded-3xl overflow-hidden shadow-2xl group cursor-pointer"
         style={{
           backgroundImage:
@@ -23,8 +23,8 @@ const HeroSection: React.FC<HeroSectionProps> = ({ userName, loading }) => {
         <div className="absolute inset-0 opacity-20 bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIzMDAiIGhlaWdodD0iMzAwIj48ZmlsdGVyIGlkPSJhIiB4PSIwIiB5PSIwIj48ZmVUdXJidWxlbmNlIGJhc2VGcmVxdWVuY3k9Ii43NSIgc3RpdGNoVGlsZXM9InN0aXRjaCIgdHlwZT0iZnJhY3RhbE5vaXNlIi8+PGZlQ29sb3JNYXRyaXggdHlwZT0ic2F0dXJhdGUiIHZhbHVlcz0iMCIvPjwvZmlsdGVyPjxyZWN0IHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIGZpbHRlcj0idXJsKCNhKSIvPjwvc3ZnPg==')]" />
 
         {/* Content */}
-        <div className="relative z-10 p-6 sm:p-8 text-white h-full flex flex-col justify-end " style={{marginTop:"-60px"}}>
-      
+        <div className="relative z-10 p-6 sm:p-8 text-white h-full flex flex-col justify-end " style={{ marginTop: "-60px" }}>
+
 
           <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold leading-tight">
             Innovation Starts <br /> with You.
@@ -78,9 +78,9 @@ const HeroSection: React.FC<HeroSectionProps> = ({ userName, loading }) => {
         </div>
 
         {/* CALENDAR CARD */}
-     
+
         <div className="group rounded-3xl bg-white/70 backdrop-blur-xl border border-white/50 p-5 shadow-xl shadow-slate-200/50 hover:shadow-2xl hover:shadow-indigo-200/50 hover:-translate-y-1 transition-all duration-300 ">
-   
+
           <div className="flex items-center justify-between mb-3">
             <h3 className="text-base font-bold text-slate-800 flex items-center gap-2">
               <span className="w-7 h-7 rounded-xl bg-indigo-100 flex items-center justify-center text-sm">
@@ -94,8 +94,8 @@ const HeroSection: React.FC<HeroSectionProps> = ({ userName, loading }) => {
           </div>
 
           <div className="space-y-2 ">
-     
-            <div className="flex items-center gap-3 p-3 rounded-xl bg-gradient-to-r from-indigo-50 to-violet-50 border border-indigo-100 hover:border-indigo-200 hover:shadow-md transition-all duration-300 cursor-pointer group/item" style={{marginBottom:"2px"}}>
+
+            <div className="flex items-center gap-3 p-3 rounded-xl bg-gradient-to-r from-indigo-50 to-violet-50 border border-indigo-100 hover:border-indigo-200 hover:shadow-md transition-all duration-300 cursor-pointer group/item" style={{ marginBottom: "2px" }}>
               <div className="text-center py-1  px-2 rounded-lg bg-white shadow-sm">
                 <p className="text-[9px] font-bold text-indigo-500 uppercase tracking-wider">
                   Jan
@@ -133,7 +133,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({ userName, loading }) => {
             </div>
           </div>
         </div>
-        
+
       </div>
     </div>
   );

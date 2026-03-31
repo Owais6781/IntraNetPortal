@@ -249,15 +249,19 @@ const News: React.FC<IProps> = ({ sp }) => {
                     
 
                     <div className="news-desc-wrapper">
-                      {/* Use text version for card view */}
                       <p className="news-desc-clamped">
-                        {stripHtml(item.fullDescription)}
+                        {(() => {
+                          const words = stripHtml(item.fullDescription).split(/\s+/);
+                          if (words.length > 20) {
+                            return words.slice(0, 20).join(" ") + "... ";
+                          }
+                          return words.join(" ");
+                        })()}
+                        <span className="read-more-link" onClick={() => openDetailPage(item)}>
+                          Read more
+                        </span>
                       </p>
                     </div>
-
-                    <button className="read-more" onClick={() => openDetailPage(item)}>
-                      Read More →
-                    </button>
                   </div>
                 </article>
               ))}
