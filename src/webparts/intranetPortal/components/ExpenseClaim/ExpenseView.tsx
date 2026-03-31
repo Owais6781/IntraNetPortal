@@ -8,7 +8,7 @@ import "@pnp/sp/items";
 import "@pnp/sp/attachments";
 import { Icon } from "@fluentui/react/lib/Icon";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
-import EmpDetails from "./EmpDetails";
+import EmpViewDetails from "./EmpViewDetails";
 
 type FieldType = "text" | "number" | "date" | "textarea";
 
@@ -40,17 +40,16 @@ type ClaimHeader = {
   Created?: string;
   Status?: string;
 
+  EmpID?: string;
   Name?: string;
   Department?: string;
   Designation?: string;
   Email?: string;
   PhoneNumber?: string | number;
-  EmployeeId?: string;
-  EmployeeID?: string;
 
+  /** Approvers coming from ExpenseEmpData list */
   Manager?: string;
   Director?: string;
-
   TotalAmount?: number;
   SubmitterRemarks?: string;
 };
@@ -231,10 +230,58 @@ const getSendBackStageFromHeaderStatus = (status: string): "Manager" | "Director
   return "Manager";
 };
 
-const getNextStageAfterApproval = (current: "Manager" | "Director" | "HR", totalAmt: number): "Manager" | "Director" | "HR" | null => {
+const getNextStageAfterApproval = (
+  current: "Manager" | "Director" | "HR",
+  totalAmt: number
+): "Manager" | "Director" | "HR" | null => {
   if (current === "Manager") return totalAmt > 5000 ? "Director" : "HR";
   if (current === "Director") return "HR";
   return null;
+};
+
+/** Approver matching using ExpenseEmpData fields (name OR email) */
+const splitApprovers = (text: string) =>
+  (text || "")
+    .split(/[;,]/g)
+    .map((x) => x.trim())
+    .filter(Boolean);
+
+const isMeApprover = (approverText: string, myEmail: string, myTitle: string) => {
+  const parts = splitApprovers(approverText);
+  if (!parts.length) return false;
+
+  const myE = (myEmail || "").toLowerCase();
+  const myT = normalizeKey(myTitle || "");
+
+  return parts.some((p) => {
+    const pl = p.toLowerCase();
+    if (pl.includes("@")) return pl === myE; // email stored
+    return normalizeKey(p) === myT; // name stored
+  });
+};
+
+
+const getNextPendingTitleGlobal = async (empList: any, draftTitle: string): Promise<string> => {
+  const raw = String(draftTitle || "").trim();
+  const parts = raw.split("-");
+
+  if (parts.length < 5) throw new Error("Invalid Draft Title format.");
+
+  // Example: EC-06-Draft-2028-4  => prefixWithoutDraft: EC-06-2028-
+  const prefixWithoutDraft = `${parts[0]}-${parts[1]}-${parts[3]}-`;
+
+  const items: any[] = await empList.items.filter("startswith(Status,'Pending')").select("Title").top(5000)();
+
+  let maxNumber = 0;
+  for (const it of items || []) {
+    const title = String(it?.Title || "");
+    const match = title.match(/(\d+)$/);
+    if (!match) continue;
+    const num = parseInt(match[1], 10);
+    if (Number.isFinite(num) && num > maxNumber) maxNumber = num;
+  }
+
+  return `${prefixWithoutDraft}${maxNumber + 1}`;
 };
 
 /** ===================== Styles ===================== */
@@ -423,17 +470,6 @@ const ExpenseView = ({
   }, [subCategoryOptionsByCategory]);
 
   const [rows, setRows] = React.useState<LineItemRow[]>([]);
-  const [employeeValues, setEmployeeValues] = React.useState({
-    empId: "",
-    name: "",
-    designation: "",
-    department: "",
-    phone: "",
-    email: "",
-    manager: "",
-    director: "",
-  });
-
   const [approvalHistory, setApprovalHistory] = React.useState<ApproverLogView[]>([]);
 
   const totalAmount = React.useMemo(
@@ -502,7 +538,6 @@ const ExpenseView = ({
     return approverFieldCachePromise.current;
   }, []);
 
-  /** logs created ONLY on Approve/Reject */
   const addApproverLogRow = React.useCallback(
     async (claimId: string, payload: { stage: string; status: string; approver?: string; remarks?: string }) => {
       const list = sp.web.lists.getByTitle("ExpenseApproverData");
@@ -514,6 +549,40 @@ const ExpenseView = ({
         [f.statusInternal]: payload.status,
         [f.approverInternal]: payload.approver || "",
         [f.remarksInternal]: payload.remarks || "",
+      });
+    },
+    [sp, resolveApproverFields]
+  );
+
+  /**
+   * Pending log inserted as NEW row AFTER last log,
+   * but avoid duplicate if LATEST log for that stage is already Pending.
+   */
+  const ensurePendingLogAfterLast = React.useCallback(
+    async (claimId: string, stage: "Manager" | "Director" | "HR", initiator: string, remarks?: string) => {
+      const list = sp.web.lists.getByTitle("ExpenseApproverData");
+      const f = await resolveApproverFields(list);
+
+      const safeTitle = escapeOData(claimId);
+      const safeStage = escapeOData(stage);
+
+      const last: any[] = await list.items
+        .filter(`Title eq '${safeTitle}' and ${f.stageInternal} eq '${safeStage}'`)
+        .select("Id", f.statusInternal)
+        .orderBy("Id", false)
+        .top(1)();
+
+      if (last?.length) {
+        const lastStatus = norm(last[0]?.[f.statusInternal]);
+        if (lastStatus === "pending") return;
+      }
+
+      await list.items.add({
+        Title: claimId,
+        [f.stageInternal]: stage,
+        [f.statusInternal]: "Pending",
+        [f.approverInternal]: initiator,
+        [f.remarksInternal]: remarks || "",
       });
     },
     [sp, resolveApproverFields]
@@ -532,17 +601,17 @@ const ExpenseView = ({
         .top(5000)();
 
       const mapped: ApproverLogView[] = (items || [])
-        .map((it) => ({
-          id: it.Id,
-          created: it.Created,
-          stage: toText(it[f.stageInternal]).trim(),
-          status: toText(it[f.statusInternal]).trim(),
-          approver: toText(it[f.approverInternal]).trim(),
-          remarks: toText(it[f.remarksInternal]).trim(),
+        .map((i) => ({
+          id: i.Id,
+          created: i.Created,
+          stage: toText(i[f.stageInternal]).trim(),
+          status: toText(i[f.statusInternal]).trim(),
+          approver: toText(i[f.approverInternal]).trim(),
+          remarks: toText(i[f.remarksInternal]).trim(),
         }))
         .filter((x) => {
           const s = norm(x.status);
-          return s === "approved" || s === "rejected";
+          return s === "pending" || s === "approved" || s === "rejected" || s === "send back";
         });
 
       setApprovalHistory(mapped);
@@ -550,7 +619,7 @@ const ExpenseView = ({
     [sp, resolveApproverFields]
   );
 
-  /** ===================== Detect role + approver names ===================== */
+  /** ===================== Detect role ONLY from ExpenseEmpData (Manager/Director/HR) ===================== */
   React.useEffect(() => {
     const detectRole = async () => {
       try {
@@ -559,46 +628,28 @@ const ExpenseView = ({
 
         if (!header) return;
 
-        const me = await sp.web.currentUser.select("Email")();
-        const myEmail = (me?.Email || "").toLowerCase();
+        const me = await sp.web.currentUser.select("Title", "Email")();
+        const myEmail = String(me?.Email || "").toLowerCase();
+        const myTitle = String(me?.Title || "").trim();
 
-        const claimantEmail = (header.Email || "").toLowerCase();
-        if (!myEmail || !claimantEmail) return;
-
-        const dirList = sp.web.lists.getByTitle("EmployeeDirectory");
-        const safeClaimantEmail = escapeOData(claimantEmail);
-
-        const dirRows: any[] = await dirList.items
-          .select(
-            "Id",
-            "Email/EMail",
-            "Manager/EMail",
-            "Manager/Title",
-            "Director/EMail",
-            "Director/Title",
-            "HR/EMail",
-            "HR/Title"
-          )
-          .expand("Email", "Manager", "Director", "HR")
-          .filter(`Email/EMail eq '${safeClaimantEmail}'`)
-          .top(1)();
-
-        const claimantRow = dirRows?.[0];
-        if (!claimantRow) return;
-
-        const mgrEmail = claimantRow.Manager?.EMail?.toLowerCase();
-        const dirEmail = claimantRow.Director?.EMail?.toLowerCase();
-        const hrEmail = claimantRow.HR?.EMail?.toLowerCase();
+        const mgr = String(header.Manager || "").trim();
+        const dir = String(header.Director || "").trim();
+        const hr = String((header as any).HR || "").trim();
 
         setApproverNames({
-          manager: toText(claimantRow.Manager?.Title || ""),
-          director: toText(claimantRow.Director?.Title || ""),
-          hr: toText(claimantRow.HR?.Title || ""),
+          manager: mgr || "",
+          director: dir || "",
+          hr: hr || "HR",
         });
 
-        if (mgrEmail && mgrEmail === myEmail) return setMyRole("Manager");
-        if (dirEmail && dirEmail === myEmail) return setMyRole("Director");
-        if (hrEmail && hrEmail === myEmail) return setMyRole("HR");
+        const pending = getPendingStageFromHeaderStatus(header.Status || "");
+        if (!pending) return setMyRole(null);
+
+        if (pending === "Manager" && isMeApprover(mgr, myEmail, myTitle)) return setMyRole("Manager");
+        if (pending === "Director" && isMeApprover(dir, myEmail, myTitle)) return setMyRole("Director");
+        if (pending === "HR" && hr && isMeApprover(hr, myEmail, myTitle)) return setMyRole("HR");
+
+        setMyRole(null);
       } catch {
         setMyRole(null);
         setApproverNames({});
@@ -615,7 +666,6 @@ const ExpenseView = ({
     const load = async () => {
       try {
         setIsLoading(true);
-
 
         if (!claimTitle) throw new Error("Missing claim title");
         const safeTitle = escapeOData(claimTitle);
@@ -681,7 +731,11 @@ const ExpenseView = ({
 
         // Items
         const resolveClaimField = await buildClaimFieldResolver(claimList);
-        const claimItems: any[] = await claimList.items.filter(`Title eq '${safeTitle}'`).select("*").orderBy("Id", true).top(5000)();
+        const claimItems: any[] = await claimList.items
+          .filter(`Title eq '${safeTitle}'`)
+          .select("*")
+          .orderBy("Id", true)
+          .top(5000)();
 
         const mappedRows: LineItemRow[] = await Promise.all(
           claimItems.map(async (it) => {
@@ -734,19 +788,9 @@ const ExpenseView = ({
         setHeader(hdr);
         setRows(mappedRows);
 
-        setEmployeeValues({
-          empId: String(hdr.EmployeeId || hdr.EmployeeID || ""),
-          name: String(hdr.Name || ""),
-          designation: String(hdr.Designation || ""),
-          department: String(hdr.Department || ""),
-          phone: String(hdr.PhoneNumber || ""),
-          email: String(hdr.Email || ""),
-          manager: String(hdr.Manager || ""),
-          director: String(hdr.Director || ""),
-        });
-
         await loadApprovalHistory(hdr.Title);
-      } catch (e: any) {
+      } catch {
+        // keep existing behavior
       } finally {
         if (mounted) setIsLoading(false);
       }
@@ -759,12 +803,10 @@ const ExpenseView = ({
   }, [sp]);
 
   /** ===================== ACTIONS ===================== */
-
-  // Employee Submit for Draft or Send Back:
-  // IMPORTANT: NO NEW REQUEST ID, keep same Title
   const [isSubmitting, setIsSubmitting] = React.useState(false);
   const [submitError, setSubmitError] = React.useState("");
 
+  
   const onSubmit = async () => {
     if (!header) return;
 
@@ -773,9 +815,53 @@ const ExpenseView = ({
       setSubmitError("");
 
       const empList = sp.web.lists.getByTitle(empListTitle);
+      const claimList = sp.web.lists.getByTitle(claimListTitle);
+      const approverList = sp.web.lists.getByTitle("ExpenseApproverData");
 
+      const oldTitle = String(header.Title || "").trim();
+      const isHdrDraft = norm(header.Status) === "draft";
+
+      const me = await sp.web.currentUser.select("Title", "Email")();
+      const initiatorText = String(me?.Title || me?.Email || header.Name || header.Email || "Employee").trim();
+
+      if (isHdrDraft) {
+        // === SAME DRAFT SUBMIT FLOW AS ExpenseEdit ===
+        const newTitle = await getNextPendingTitleGlobal(empList, oldTitle);
+
+        const safeOldTitle = escapeOData(oldTitle);
+
+        // 1) Update ALL line items Title -> newTitle
+        const lineItems: any[] = await claimList.items.filter(`Title eq '${safeOldTitle}'`).select("Id").top(5000)();
+        for (const li of lineItems || []) {
+          await claimList.items.getById(li.Id).update({ Title: newTitle });
+        }
+
+        // 2) (Optional but recommended) Update existing approver logs Title -> newTitle
+        try {
+          const logItems: any[] = await approverList.items.filter(`Title eq '${safeOldTitle}'`).select("Id").top(5000)();
+          for (const lg of logItems || []) {
+            await approverList.items.getById(lg.Id).update({ Title: newTitle });
+          }
+        } catch {
+          // ignore if list/permissions not available
+        }
+
+        // 3) Update header Title + Status
+        await empList.items.getById(header.Id).update({ Title: newTitle, Status: "Pending" });
+        setHeader((p) => (p ? { ...p, Title: newTitle, Status: "Pending" } : p));
+
+        // 4) Add pending log for Manager (avoid duplicate)
+        await ensurePendingLogAfterLast(newTitle, "Manager", initiatorText, header.SubmitterRemarks || "");
+
+        navigate(dashboardRoute, { replace: true });
+        return;
+      }
+
+      // === Send Back submit (keep your existing behavior) ===
       const sendBackStage = getSendBackStageFromHeaderStatus(header.Status || "") || "Manager";
-      const newStatus = norm(header.Status) === "draft" ? "Pending - Manager" : `Pending - ${sendBackStage}`;
+      const newStatus = `Pending - ${sendBackStage}`;
+
+      await ensurePendingLogAfterLast(oldTitle, sendBackStage, initiatorText, header.SubmitterRemarks || "");
 
       await empList.items.getById(header.Id).update({ Status: newStatus });
       setHeader((p) => (p ? { ...p, Status: newStatus } : p));
@@ -788,8 +874,6 @@ const ExpenseView = ({
     }
   };
 
-  // Approver Modify: status = "Send Back - <role>", redirect dashboard
-  // Employee will edit in Edit page based on Status startsWith("Send Back")
   const onModify = async () => {
     if (!header || !myRole) return;
 
@@ -799,11 +883,21 @@ const ExpenseView = ({
       const empList = sp.web.lists.getByTitle(empListTitle);
       const newStatus = `Send Back - ${myRole}`;
 
+      const me = await sp.web.currentUser.select("Title", "Email")();
+      const approverText = String(me?.Title || me?.Email || "").trim();
+
+      await addApproverLogRow(header.Title, {
+        stage: myRole,
+        status: "Send Back",
+        approver: approverText,
+        remarks: approvalRemarks || "",
+      });
+
       await empList.items.getById(header.Id).update({ Status: newStatus });
       setHeader((p) => (p ? { ...p, Status: newStatus } : p));
 
+      setApprovalRemarks("");
       navigate(dashboardRoute, { replace: true });
-    } catch (e: any) {
     } finally {
       setIsModifying(false);
     }
@@ -826,9 +920,9 @@ const ExpenseView = ({
 
   const handleApproval = async (action: "Approved" | "Rejected") => {
     if (!header || !myRole) return;
+
     try {
       setIsApproving(true);
-
 
       const total = header.TotalAmount ?? totalAmount;
       const empList = sp.web.lists.getByTitle(empListTitle);
@@ -836,7 +930,7 @@ const ExpenseView = ({
       const me = await sp.web.currentUser.select("Title", "Email")();
       const approverText = (me?.Title || me?.Email || "").trim();
 
-      // Log row only on action
+      // 1) Add action log
       await addApproverLogRow(header.Title, {
         stage: myRole,
         status: action,
@@ -845,20 +939,26 @@ const ExpenseView = ({
       });
 
       let newHeaderStatus = header.Status || "";
+      let nextStage: "Manager" | "Director" | "HR" | null = null;
+
       if (action === "Rejected") {
         newHeaderStatus = "Rejected";
       } else {
-        const nextStage = getNextStageAfterApproval(myRole, total);
+        nextStage = getNextStageAfterApproval(myRole, total);
         newHeaderStatus = nextStage ? `Pending - ${nextStage}` : "Approved";
       }
 
+      // 2) Update header status
       await empList.items.getById(header.Id).update({ Status: newHeaderStatus });
       setHeader((p) => (p ? { ...p, Status: newHeaderStatus } : p));
 
-      setApprovalRemarks("");
+      // 3) If moved to next stage, insert Pending log as NEW row (after last)
+      if (action === "Approved" && nextStage) {
+        await ensurePendingLogAfterLast(header.Title, nextStage, approverText, "");
+      }
 
+      setApprovalRemarks("");
       navigate(dashboardRoute, { replace: true });
-    } catch (e: any) {
     } finally {
       setIsApproving(false);
     }
@@ -872,7 +972,6 @@ const ExpenseView = ({
     const needsDirector = amount > 5000;
     const workflowStages: Array<"Manager" | "Director" | "HR"> = needsDirector ? ["Manager", "Director", "HR"] : ["Manager", "HR"];
 
-    // latest per stage
     const latestByStage: Record<string, ApproverLogView> = {};
     for (const l of approvalHistory) {
       const k = norm(l.stage);
@@ -884,14 +983,19 @@ const ExpenseView = ({
     const pendingStage = getPendingStageFromHeaderStatus(header.Status || "");
     const hs = norm(header.Status);
 
-    // ===================== ONLY CHANGE YOU ASKED (HIDE LATER STEPS AFTER REJECT) =====================
     const firstRejectedIndex = workflowStages.findIndex((st) => {
       const log = latestByStage[norm(st)];
       return log && norm(log.status) === "rejected";
     });
 
     const visibleStages = firstRejectedIndex >= 0 ? workflowStages.slice(0, firstRejectedIndex + 1) : workflowStages;
-    // ===================== END CHANGE =====================
+
+    const mgrName = approverNames.manager || toText(header.Manager || "");
+    const dirName = approverNames.director || toText(header.Director || "");
+    const hrName = approverNames.hr || toText((header as any).HR || "HR");
+
+    const stageAssignedBy = (stage: "Manager" | "Director" | "HR") =>
+      stage === "Manager" ? mgrName : stage === "Director" ? dirName : hrName;
 
     const steps: TrackerStep[] = [];
 
@@ -900,14 +1004,13 @@ const ExpenseView = ({
 
     steps.push({
       key: "submitted",
-      label: "Submitted",
+      label: "Employee",
       status: submittedStatus,
       by: header.Name ? String(header.Name) : "Employee",
       time: fmtDateTime(header.Created),
       note: submittedNote,
     });
 
-    // ===================== ONLY CHANGE YOU ASKED: use visibleStages (not workflowStages) =====================
     for (const stage of visibleStages) {
       const stageKey = norm(stage);
       const log = latestByStage[stageKey];
@@ -917,7 +1020,7 @@ const ExpenseView = ({
           key: stageKey,
           label: stageLabel(stage),
           status: "completed",
-          by: log.approver,
+          by: log.approver || stageAssignedBy(stage),
           time: fmtDateTime(log.created),
           note: "Completed",
         });
@@ -929,7 +1032,7 @@ const ExpenseView = ({
           key: stageKey,
           label: stageLabel(stage),
           status: "rejected",
-          by: log.approver,
+          by: log.approver || stageAssignedBy(stage),
           time: fmtDateTime(log.created),
           note: "Rejected",
         });
@@ -941,7 +1044,7 @@ const ExpenseView = ({
           key: stageKey,
           label: stageLabel(stage),
           status: "sendback",
-          by: stage === "Manager" ? approverNames.manager : stage === "Director" ? approverNames.director : approverNames.hr,
+          by: stageAssignedBy(stage),
           note: "Send Back",
         });
         continue;
@@ -952,7 +1055,7 @@ const ExpenseView = ({
           key: stageKey,
           label: stageLabel(stage),
           status: "current",
-          by: stage === "Manager" ? approverNames.manager : stage === "Director" ? approverNames.director : approverNames.hr,
+          by: stageAssignedBy(stage),
           note: "Pending",
         });
         continue;
@@ -962,21 +1065,15 @@ const ExpenseView = ({
         key: stageKey,
         label: stageLabel(stage),
         status: "pending",
-        by: stage === "Manager" ? approverNames.manager : stage === "Director" ? approverNames.director : approverNames.hr,
+        by: stageAssignedBy(stage),
         note: "Pending",
       });
     }
-    // ===================== END CHANGE =====================
 
-    if (hs === "approved") {
-      steps.push({ key: "done", label: "Completed", status: "completed", note: "Completed" });
-    } else if (hs === "rejected") {
-      steps.push({ key: "done", label: "Completed", status: "rejected", note: "Rejected" });
-    } else if (hs.startsWith("send back")) {
-      steps.push({ key: "done", label: "Completed", status: "pending", note: "Send Back" });
-    } else {
-      steps.push({ key: "done", label: "Completed", status: "pending", note: "Pending" });
-    }
+    if (hs === "approved") steps.push({ key: "done", label: "Completed", status: "completed", note: "Completed" });
+    else if (hs === "rejected") steps.push({ key: "done", label: "Completed", status: "rejected", note: "Rejected" });
+    else if (hs.startsWith("send back")) steps.push({ key: "done", label: "Completed", status: "pending", note: "Send Back" });
+    else steps.push({ key: "done", label: "Completed", status: "pending", note: "Pending" });
 
     return steps;
   }, [header, totalAmount, approvalHistory, approverNames]);
@@ -1015,6 +1112,7 @@ const ExpenseView = ({
               </div>
             )}
           </div>
+
           {submitError && (
             <div className="mt-3 bg-rose-50 border border-rose-200 rounded-lg p-3 text-sm text-rose-700 flex items-center gap-2">
               <Icon iconName="Warning" />
@@ -1038,7 +1136,7 @@ const ExpenseView = ({
                 <div className="text-sm font-semibold text-slate-800">Employee Details</div>
               </div>
 
-              <EmpDetails context={context} value={employeeValues} onChange={setEmployeeValues} controlClassName={inputClass} />
+              <EmpViewDetails context={context} empListTitle={empListTitle} itemId={header.Id} />
 
               <div className="mt-4 flex flex-wrap items-center justify-between gap-3 bg-slate-50 border border-slate-200 rounded-lg p-3">
                 <div>
@@ -1142,7 +1240,7 @@ const ExpenseView = ({
                           <div className="flex-1 min-w-[120px]">
                             <label className={labelClass}>Amount (₹)</label>
                             <input
-                              type="number"
+                              type="text"
                               value={row.values[COMMON_FIELD_KEYS.amount] || ""}
                               onChange={() => {}}
                               disabled
@@ -1219,7 +1317,7 @@ const ExpenseView = ({
               </div>
             </div>
 
-            {/* ===================== REMARKS + APPROVER INPUT (NO DIVIDER LINE) ===================== */}
+            {/* Remarks + Approver Input */}
             {(approvalRemarksOnly.length > 0 || shouldShowApprovalPanel) && (
               <div className="mt-6 bg-white border border-slate-200 rounded-xl p-4">
                 <div className="flex items-center gap-2 mb-3">
@@ -1253,11 +1351,21 @@ const ExpenseView = ({
                     </div>
 
                     <div className="flex justify-center gap-3 flex-wrap">
-                      <button type="button" disabled={!canApprove} onClick={() => handleApproval("Approved")} className={btnApprove}>
+                      <button
+                        type="button"
+                        disabled={!canApprove}
+                        onClick={() => handleApproval("Approved")}
+                        className={btnApprove}
+                      >
                         {isApproving ? "Processing..." : "Approve"}
                       </button>
 
-                      <button type="button" disabled={!canApprove} onClick={() => handleApproval("Rejected")} className={btnReject}>
+                      <button
+                        type="button"
+                        disabled={!canApprove}
+                        onClick={() => handleApproval("Rejected")}
+                        className={btnReject}
+                      >
                         Reject
                       </button>
 
@@ -1271,8 +1379,8 @@ const ExpenseView = ({
               </div>
             )}
 
-            {/* ===================== TRACKER (BOTTOM) ===================== */}
-            {trackerSteps.length > 0 && (
+            {/* Tracker (hide in Draft) */}
+            {trackerSteps.length > 0 && !isDraft && (
               <div className="mt-6">
                 <Tracker steps={trackerSteps} />
               </div>
@@ -1285,7 +1393,8 @@ const ExpenseView = ({
                 Back to Dashboard
               </button>
 
-              {showEmployeeSubmit && !readOnly && (
+              {/* Submit button for employee in Draft/SendBack */}
+              {showEmployeeSubmit && (
                 <button type="button" onClick={onSubmit} disabled={isSubmitting} className={btnSubmit}>
                   <Icon iconName="Send" />
                   {isSubmitting ? "Submitting..." : "Submit"}

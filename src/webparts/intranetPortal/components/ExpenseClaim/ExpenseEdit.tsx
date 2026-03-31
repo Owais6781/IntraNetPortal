@@ -8,12 +8,12 @@ import "@pnp/sp/items";
 import "@pnp/sp/attachments";
 import { Icon } from "@fluentui/react/lib/Icon";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
-import EmpDetails from "./EmpDetails";
+import EmpViewDetails from "./EmpViewDetails";
 
 type FieldType = "text" | "number" | "date" | "textarea";
 
 type CategoryFieldDefinition = {
-  id: string; 
+  id: string;
   label: string;
   type: FieldType;
 };
@@ -28,13 +28,12 @@ type AttachmentInfo = { FileName: string; ServerRelativeUrl: string };
 
 type LineItemRow = {
   id: string;
-  spItemId: number;
+  spItemId: number; // 0 = new
   categoryKey: string;
   values: Record<string, string>;
   attachments: AttachmentInfo[];
-
   removedFileNames: string[];
-  newFiles: File[];
+  newFile: File | null;
 };
 
 type ClaimHeader = {
@@ -59,18 +58,14 @@ type ClaimHeader = {
 
 type Props = {
   context: WebPartContext;
-
   empListTitle?: string;
   claimListTitle?: string;
-
   masterListTitle?: string;
   categoryInternalName?: string;
-
   subCategoryListTitle?: string;
   subCategoryCategoryInternalName?: string;
   subCategoryStatusInternalName?: string;
   subCategoryActiveValue?: string;
-
   dashboardRoute?: string;
 };
 
@@ -83,6 +78,8 @@ const COMMON_FIELD_KEYS = {
 };
 
 const createRowId = (spId: number) => `row_${spId}`;
+const createTempRowId = () => `row_tmp_${Date.now()}_${Math.floor(Math.random() * 1000000)}`;
+
 const normalizeKey = (text: string) => (text || "").toLowerCase().replace(/\s+/g, "").trim();
 const escapeOData = (s: string) => String(s || "").replace(/'/g, "''");
 
@@ -91,6 +88,7 @@ const toText = (value: unknown) => {
   if (Array.isArray(value)) return value.join(", ");
   return String(value);
 };
+
 const norm = (v: any) => toText(v).trim().toLowerCase();
 
 const getSendBackStageFromStatus = (status?: string): "Manager" | "Director" | "HR" | null => {
@@ -120,7 +118,7 @@ const toInputDate = (value: any) => {
 
 const parseMoney = (value: string) => {
   if (!value) return 0;
-  const n = parseFloat(String(value).replace(/,/g, ""));
+  const n = parseFloat(String(value).replace(/,/g, "").replace(/[^\d.]/g, ""));
   return Number.isFinite(n) ? n : 0;
 };
 
@@ -179,6 +177,69 @@ const buildEmptyValuesForCategory = (categoryConfiguration: CategoryConfiguratio
   return values;
 };
 
+/** ===== DATE FIX ===== */
+const parseYMD = (yyyyMmDd: string) => {
+  const [y, m, d] = (yyyyMmDd || "").split("-").map(Number);
+  if (!y || !m || !d) return null;
+  return { y, m, d };
+};
+
+// store date-only as UTC noon to avoid timezone shifts
+const dateOnlyToSPDate = (yyyyMmDd: string) => {
+  const p = parseYMD(yyyyMmDd);
+  if (!p) return null;
+  return new Date(Date.UTC(p.y, p.m - 1, p.d, 12, 0, 0));
+};
+/** ==================== */
+
+type WritableFieldInfo = { internalName: string; typeAsString: string };
+
+const getFieldInfoSafe = async (list: any, internalNameOrTitle: string): Promise<WritableFieldInfo | null> => {
+  try {
+    const f: any = await list.fields.getByInternalNameOrTitle(internalNameOrTitle).select("InternalName", "TypeAsString")();
+    return {
+      internalName: String(f.InternalName),
+      typeAsString: String(f.TypeAsString || "Text"),
+    };
+  } catch {
+    return null;
+  }
+};
+
+const coerceValueForField = (typeAsString: string, value: any) => {
+  if (value === undefined || value === null) return null;
+  const t = (typeAsString || "").toLowerCase();
+
+  if (t.includes("datetime")) {
+    if (value instanceof Date) return value;
+    const s = String(value).trim();
+    if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return dateOnlyToSPDate(s);
+    return new Date(s);
+  }
+
+  if (t.includes("number") || t.includes("currency") || t.includes("integer")) {
+    const n = typeof value === "number" ? value : parseFloat(String(value).replace(/,/g, ""));
+    return isFinite(n) ? n : null;
+  }
+
+  return String(value);
+};
+
+const buildWritableFieldResolver = async (list: any) => {
+  const raw: any[] = await list.fields.select("InternalName", "Title", "Hidden", "ReadOnlyField", "TypeAsString")();
+  const writable = raw.filter((f) => !f.Hidden && !f.ReadOnlyField);
+
+  const titleToInfo: Record<string, WritableFieldInfo> = {};
+  for (const f of writable) {
+    titleToInfo[normalizeKey(String(f.Title))] = {
+      internalName: String(f.InternalName),
+      typeAsString: String(f.TypeAsString || "Text"),
+    };
+  }
+
+  return (displayTitle: string): WritableFieldInfo | null => titleToInfo[normalizeKey(displayTitle)] || null;
+};
+
 const buildClaimFieldResolver = async (list: any) => {
   const raw: any[] = await list.fields.select("InternalName", "Title", "TypeAsString", "Hidden", "ReadOnlyField")();
   const claimFields = raw.filter((f) => !f.Hidden && !f.ReadOnlyField);
@@ -204,42 +265,28 @@ const buildClaimFieldResolver = async (list: any) => {
   };
 };
 
-/** ===== Draft -> Pending title helpers (optional submit) ===== */
-const getPendingBaseFromDraftTitle = (title: string): string | null => {
-  const raw = String(title || "").trim();
-  if (!raw) return null;
+/** ===== Draft -> Pending title helpers ===== */
+const getNextPendingTitleGlobal = async (empList: any, draftTitle: string): Promise<string> => {
+  const raw = String(draftTitle || "").trim();
+  const parts = raw.split("-");
 
-  const parts = raw.split("-").filter(Boolean);
-  const draftIndex = parts.findIndex((p) => p.toLowerCase() === "draft");
+  if (parts.length < 5) throw new Error("Invalid Draft Title format.");
 
-  if (draftIndex >= 0 && parts.length >= draftIndex + 3) {
-    const prefix = parts.slice(0, draftIndex).join("-");
-    const year = parts[draftIndex + 1];
-    if (prefix && year) return `${prefix}-${year}-`;
-  }
+  // Example: EC-06-Draft-2028-4
+  const prefixWithoutDraft = `${parts[0]}-${parts[1]}-${parts[3]}-`; // EC-06-2028-
 
-  const m = raw.match(/^(.*)-(\d{4})-(\d+)$/);
-  if (m) return `${m[1]}-${m[2]}-`;
+  const items: any[] = await empList.items.filter("startswith(Status,'Pending')").select("Title").top(5000)();
 
-  return null;
-};
-
-const getNextPendingTitle = async (empList: any, pendingBase: string): Promise<string> => {
-  const safeBase = escapeOData(pendingBase);
-  const items: any[] = await empList.items.filter(`startswith(Title,'${safeBase}')`).select("Id", "Title").top(5000)();
-
-  let maxN = 0;
+  let maxNumber = 0;
   for (const it of items || []) {
-    const t = String(it?.Title || "");
-    if (!t.startsWith(pendingBase)) continue;
-
-    const suffix = t.slice(pendingBase.length);
-    if (!/^\d+$/.test(suffix)) continue;
-
-    const n = parseInt(suffix, 10);
-    if (Number.isFinite(n) && n > maxN) maxN = n;
+    const title = String(it?.Title || "");
+    const match = title.match(/(\d+)$/);
+    if (!match) continue;
+    const num = parseInt(match[1], 10);
+    if (Number.isFinite(num) && num > maxNumber) maxNumber = num;
   }
-  return `${pendingBase}${maxN + 1}`;
+
+  return `${prefixWithoutDraft}${maxNumber + 1}`;
 };
 
 /** ===================== Styles ===================== */
@@ -278,18 +325,14 @@ const StatusBadge = ({ value }: { value?: string }) => {
 /** ===================== Component ===================== */
 const ExpenseEdit = ({
   context,
-
   empListTitle = "ExpenseEmpData",
   claimListTitle = "ExpenseClaim",
-
   masterListTitle = "ExpenseMasterList",
   categoryInternalName = "Category",
-
   subCategoryListTitle = "ExpenseSubCategory",
   subCategoryCategoryInternalName = "Category",
   subCategoryStatusInternalName = "Status",
   subCategoryActiveValue = "Active",
-
   dashboardRoute = "/expense-claims",
 }: Props): JSX.Element => {
   const sp = React.useMemo(() => spfi().using(SPFx(context)), [context]);
@@ -302,7 +345,9 @@ const ExpenseEdit = ({
   let claimTitle = claimTitleFromRoute;
   try {
     claimTitle = decodeURIComponent(claimTitleFromRoute);
-  } catch { }
+  } catch {
+    // ignore
+  }
 
   const [isLoading, setIsLoading] = React.useState(true);
   const [header, setHeader] = React.useState<ClaimHeader | null>(null);
@@ -371,6 +416,19 @@ const ExpenseEdit = ({
   }, [canEdit, header?.TotalAmount, totalAmount]);
 
   const [reloadToken, setReloadToken] = React.useState(0);
+  const deletedSpItemIdsRef = React.useRef<number[]>([]);
+
+  // store internal names for common fields
+  type CommonClaimFields = {
+    category: WritableFieldInfo;
+    subCategory: WritableFieldInfo | null;
+    date: WritableFieldInfo;
+    amount: WritableFieldInfo;
+    description: WritableFieldInfo;
+  };
+  const commonClaimFieldsRef = React.useRef<CommonClaimFields | null>(null);
+
+  const [amountIsNumericColumn, setAmountIsNumericColumn] = React.useState(false);
 
   React.useEffect(() => {
     let mounted = true;
@@ -384,6 +442,31 @@ const ExpenseEdit = ({
         const masterList = sp.web.lists.getByTitle(masterListTitle);
         const claimList = sp.web.lists.getByTitle(claimListTitle);
 
+        // read internal names once
+        const categoryF = await getFieldInfoSafe(claimList, "Category");
+        const subCategoryF = await getFieldInfoSafe(claimList, "SubCategory"); // optional
+        const dateF = await getFieldInfoSafe(claimList, "Date");
+        const amountF = await getFieldInfoSafe(claimList, "Amount");
+        const descF = await getFieldInfoSafe(claimList, "Description");
+
+        if (!categoryF) throw new Error(`Field "Category" not found in ${claimListTitle}`);
+        if (!dateF) throw new Error(`Field "Date" not found in ${claimListTitle}`);
+        if (!amountF) throw new Error(`Field "Amount" not found in ${claimListTitle}`);
+        if (!descF) throw new Error(`Field "Description" not found in ${claimListTitle}`);
+
+        commonClaimFieldsRef.current = {
+          category: categoryF,
+          subCategory: subCategoryF,
+          date: dateF,
+          amount: amountF,
+          description: descF,
+        };
+
+        const amountType = (amountF.typeAsString || "").toLowerCase();
+        const isNumeric = amountType.includes("number") || amountType.includes("currency") || amountType.includes("integer");
+        if (mounted) setAmountIsNumericColumn(isNumeric);
+
+        // dynamic config
         const rawFields: any[] = await masterList.fields.select("InternalName", "Hidden", "ReadOnlyField", "TypeAsString")();
         const usableFields = rawFields
           .filter((f) => !f.Hidden && !f.ReadOnlyField)
@@ -413,6 +496,7 @@ const ExpenseEdit = ({
         }
         const sortedCategories = Object.values(byCategory).sort((a, b) => a.label.localeCompare(b.label));
 
+        // sub categories
         const subItems: any[] = await sp.web.lists
           .getByTitle(subCategoryListTitle)
           .items.select("Id", "Title", subCategoryCategoryInternalName, subCategoryStatusInternalName)
@@ -432,44 +516,46 @@ const ExpenseEdit = ({
         }
         for (const k of Object.keys(subMap)) subMap[k].sort((a, b) => a.label.localeCompare(b.label));
 
-        const getSubOptionsFromSubMap = (categoryKey: string) => {
-          const key = (categoryKey || "").trim();
-          if (subMap[key]) return subMap[key];
-          const match = Object.keys(subMap).find((k) => normalizeKey(k) === normalizeKey(key));
-          return match ? subMap[match] : [];
-        };
-
+        // header
         const empList = sp.web.lists.getByTitle(empListTitle);
         const hdrRows: any[] = await empList.items.filter(`Title eq '${safeTitle}'`).select("*").top(1)();
         if (!hdrRows.length) throw new Error("Header not found.");
         const hdr: ClaimHeader = { ...hdrRows[0] };
 
+        // line items
         const resolveClaimField = await buildClaimFieldResolver(claimList);
-        const claimItems: any[] = await claimList.items.filter(`Title eq '${safeTitle}'`).select("*").orderBy("Id", true).top(5000)();
+        const claimItems: any[] = await claimList.items
+          .filter(`Title eq '${safeTitle}'`)
+          .select("*")
+          .orderBy("Id", true)
+          .top(5000)();
 
+        const common = commonClaimFieldsRef.current!;
         const mappedRows: LineItemRow[] = await Promise.all(
           claimItems.map(async (it) => {
-            const categoryKey = getCategoryValue(it.Category).trim();
+            const categoryKey = getCategoryValue(it[common.category.internalName]).trim();
             const config = categoryKey ? byCategory[categoryKey] : undefined;
 
             const values = buildEmptyValuesForCategory(config);
 
-            const rawSub = toText(it.SubCategory).trim();
-            const subOptions = getSubOptionsFromSubMap(categoryKey);
+            const subOptions = subMap[categoryKey] || [];
             const hasSubcategory = subOptions.length > 0;
+            const rawSub = common.subCategory ? toText(it[common.subCategory.internalName]).trim() : "";
             const isValidSub = hasSubcategory ? subOptions.some((o) => o.value === rawSub) : false;
-
             values[COMMON_FIELD_KEYS.subcategory] = hasSubcategory && isValidSub ? rawSub : "";
-            values[COMMON_FIELD_KEYS.date] = toInputDate(it.Date);
-            values[COMMON_FIELD_KEYS.amount] = it.Amount !== undefined && it.Amount !== null ? String(it.Amount) : "";
-            values[COMMON_FIELD_KEYS.description] = toText(it.Description);
+
+            values[COMMON_FIELD_KEYS.date] = toInputDate(it[common.date.internalName]); // optional in validation now
+            values[COMMON_FIELD_KEYS.amount] =
+              it[common.amount.internalName] !== undefined && it[common.amount.internalName] !== null
+                ? String(it[common.amount.internalName])
+                : "";
+            values[COMMON_FIELD_KEYS.description] = toText(it[common.description.internalName]);
 
             if (config?.fields?.length) {
               for (const f of config.fields) {
                 const target = resolveClaimField(f);
                 if (!target) continue;
-                const internal = target.internal;
-                const rawVal = it[internal];
+                const rawVal = it[target.internal];
                 if (rawVal === undefined || rawVal === null) continue;
                 values[f.id] = (target.typeAsString || "").toLowerCase().includes("datetime") ? toInputDate(rawVal) : toText(rawVal);
               }
@@ -484,7 +570,9 @@ const ExpenseEdit = ({
                   ServerRelativeUrl: String(f.ServerRelativeUrl),
                 }));
               }
-            } catch { }
+            } catch {
+              // ignore
+            }
 
             return {
               id: createRowId(it.Id),
@@ -493,18 +581,34 @@ const ExpenseEdit = ({
               values,
               attachments,
               removedFileNames: [],
-              newFiles: [],
+              newFile: null,
             };
           })
         );
 
+        const rowsOrBlank: LineItemRow[] =
+          mappedRows.length > 0
+            ? mappedRows
+            : [
+                {
+                  id: createTempRowId(),
+                  spItemId: 0,
+                  categoryKey: "",
+                  values: buildEmptyValuesForCategory(undefined),
+                  attachments: [],
+                  removedFileNames: [],
+                  newFile: null,
+                },
+              ];
+
         if (!mounted) return;
 
+        deletedSpItemIdsRef.current = [];
         setCategoryConfigurations(sortedCategories);
         setSubCategoryOptionsByCategory(subMap);
 
         setHeader(hdr);
-        setRows(mappedRows);
+        setRows(rowsOrBlank);
 
         setEmployeeValues({
           empId: String(hdr.EmployeeId || hdr.EmployeeID || ""),
@@ -517,7 +621,7 @@ const ExpenseEdit = ({
           director: String(hdr.Director || ""),
         });
       } catch {
-        // ignore
+        // keep existing behavior: show "No data found"
       } finally {
         if (mounted) setIsLoading(false);
       }
@@ -527,19 +631,46 @@ const ExpenseEdit = ({
     return () => {
       mounted = false;
     };
-  }, [
-    sp,
-    claimTitle,
-    reloadToken,
-    empListTitle,
-    claimListTitle,
-    masterListTitle,
-    categoryInternalName,
-    subCategoryListTitle,
-    subCategoryCategoryInternalName,
-    subCategoryStatusInternalName,
-    subCategoryActiveValue,
-  ]);
+  }, [sp,reloadToken]);
+
+  const addRow = React.useCallback(() => {
+    setRows((prev) => [
+      ...prev,
+      {
+        id: createTempRowId(),
+        spItemId: 0,
+        categoryKey: "",
+        values: buildEmptyValuesForCategory(undefined),
+        attachments: [],
+        removedFileNames: [],
+        newFile: null,
+      },
+    ]);
+  }, []);
+
+  const removeRow = React.useCallback((rowId: string) => {
+    setRows((prev) => {
+      const row = prev.find((r) => r.id === rowId);
+      if (row?.spItemId && row.spItemId > 0) {
+        deletedSpItemIdsRef.current = Array.from(new Set([...deletedSpItemIdsRef.current, row.spItemId]));
+      }
+
+      const remaining = prev.filter((r) => r.id !== rowId);
+      return remaining.length
+        ? remaining
+        : [
+            {
+              id: createTempRowId(),
+              spItemId: 0,
+              categoryKey: "",
+              values: buildEmptyValuesForCategory(undefined),
+              attachments: [],
+              removedFileNames: [],
+              newFile: null,
+            },
+          ];
+    });
+  }, []);
 
   const setRowField = (rowId: string, key: string, value: string) => {
     setRows((prev) => prev.map((r) => (r.id === rowId ? { ...r, values: { ...r.values, [key]: value } } : r)));
@@ -558,6 +689,7 @@ const ExpenseEdit = ({
         const hasSub = subOpts.length > 0;
         const isPrevValid = hasSub ? subOpts.some((o) => o.value === prevSub) : false;
 
+        // keep common values
         nextValues[COMMON_FIELD_KEYS.date] = r.values[COMMON_FIELD_KEYS.date] || "";
         nextValues[COMMON_FIELD_KEYS.amount] = r.values[COMMON_FIELD_KEYS.amount] || "";
         nextValues[COMMON_FIELD_KEYS.description] = r.values[COMMON_FIELD_KEYS.description] || "";
@@ -568,10 +700,22 @@ const ExpenseEdit = ({
     );
   };
 
-  const addFilesToRow = (rowId: string, files: FileList | null) => {
-    if (!files || !files.length) return;
-    const list = Array.from(files);
-    setRows((prev) => prev.map((r) => (r.id === rowId ? { ...r, newFiles: [...r.newFiles, ...list] } : r)));
+  // when selecting a new file we are in "replace" mode
+  const setRowNewFile = (rowId: string, file: File | null) => {
+    setRows((prev) =>
+      prev.map((r) => {
+        if (r.id !== rowId) return r;
+
+        const existingNames = r.attachments.map((a) => a.FileName);
+
+        return {
+          ...r,
+          newFile: file,
+          removedFileNames: file ? existingNames : r.removedFileNames,
+          attachments: file ? [] : r.attachments,
+        };
+      })
+    );
   };
 
   const removeExistingAttachment = (rowId: string, fileName: string) => {
@@ -587,94 +731,212 @@ const ExpenseEdit = ({
     );
   };
 
-  const removeNewFile = (rowId: string, idx: number) => {
-    setRows((prev) =>
-      prev.map((r) => {
-        if (r.id !== rowId) return r;
-        const next = [...r.newFiles];
-        next.splice(idx, 1);
-        return { ...r, newFiles: next };
-      })
-    );
-  };
-
   const [isSaving, setIsSaving] = React.useState(false);
   const [isUpdating, setIsUpdating] = React.useState(false);
 
-  /** Save everything (items + attachments + TotalAmount) */
+
   const saveChanges = async () => {
     if (!header) return;
     if (!canEdit) return;
 
     const claimList = sp.web.lists.getByTitle(claimListTitle);
     const empList = sp.web.lists.getByTitle(empListTitle);
+
     const resolveClaimField = await buildClaimFieldResolver(claimList);
+    const common = commonClaimFieldsRef.current;
+    if (!common) throw new Error("Claim field mapping not loaded.");
 
-    for (const row of rows) {
-      const categoryKey = (row.categoryKey || "").trim();
-      const config = categoryConfigurationByKey[categoryKey] || categoryConfigurationByKeyCI[normalizeKey(categoryKey)];
-      const dynamicFields = config?.fields || [];
+    const submissionTitle = String(header.Title || "").trim();
 
-      const subOpts = getSubOptions(categoryKey);
-      const hasSubcategory = subOpts.length > 0;
+    // Update header
+    const resolveEmpField = await buildWritableFieldResolver(empList);
+    const empPayload: any = {};
 
-      const amountRaw = (row.values[COMMON_FIELD_KEYS.amount] ?? "").trim();
-      const dateRaw = (row.values[COMMON_FIELD_KEYS.date] ?? "").trim();
-      const descRaw = (row.values[COMMON_FIELD_KEYS.description] ?? "").trim();
-      const subRaw = (row.values[COMMON_FIELD_KEYS.subcategory] ?? "").trim();
+    const setEmp = (displayTitle: string, value: any) => {
+      if (value === undefined || value === null || String(value).trim() === "") return;
+      const info = resolveEmpField(displayTitle);
+      if (!info) return;
+      empPayload[info.internalName] = coerceValueForField(info.typeAsString, value);
+    };
 
-      const payload: any = {
-        Category: categoryKey || null,
-        SubCategory: hasSubcategory ? (subRaw || null) : null,
-        Date: dateRaw ? new Date(dateRaw) : null,
-        Amount: amountRaw === "" ? null : parseMoney(amountRaw),
-        Description: descRaw || null,
-      };
+    setEmp("Name", employeeValues.name);
+    setEmp("Department", employeeValues.department);
+    setEmp("Designation", employeeValues.designation);
+    setEmp("Email", employeeValues.email);
+    setEmp("Manager", employeeValues.manager);
+    setEmp("Director", employeeValues.director);
+    setEmp("TotalAmount", totalAmount.toFixed(2));
 
-      for (const f of dynamicFields) {
-        const target = resolveClaimField(f);
-        if (!target) continue;
+    const phoneText = (employeeValues.phone || "").replace(/,/g, "").trim();
+    if (phoneText) {
+      const phoneNumber = Number(phoneText);
+      if (Number.isFinite(phoneNumber)) setEmp("PhoneNumber", phoneNumber);
+      else setEmp("PhoneNumber", phoneText);
+    }
 
-        const internal = target.internal;
-        const type = (target.typeAsString || "").toLowerCase();
-        const vRaw = (row.values[f.id] ?? "").trim();
+    await empList.items.getById(header.Id).update(empPayload);
 
-        if (!vRaw) {
-          payload[internal] = null;
-          continue;
+    // delete removed line items
+    const deletedIds = Array.from(new Set(deletedSpItemIdsRef.current));
+    for (const id of deletedIds) {
+      try {
+        await claimList.items.getById(id).delete();
+      } catch {
+        // ignore
+      }
+    }
+    deletedSpItemIdsRef.current = [];
+
+    const rowErrors: string[] = [];
+    const newIdsByRowId: Record<string, number> = {};
+
+    // add/update rows
+    for (let idx = 0; idx < rows.length; idx++) {
+      const row = rows[idx];
+
+      try {
+        const categoryKey = (row.categoryKey || "").trim();
+
+        const config = categoryConfigurationByKey[categoryKey] || categoryConfigurationByKeyCI[normalizeKey(categoryKey)];
+        const dynamicFields = config?.fields || [];
+
+        const subOpts = getSubOptions(categoryKey);
+        const hasSubcategory = subOpts.length > 0;
+
+        const amountRaw = (row.values[COMMON_FIELD_KEYS.amount] ?? "").trim();
+        const dateRaw = (row.values[COMMON_FIELD_KEYS.date] ?? "").trim(); 
+        const descRaw = (row.values[COMMON_FIELD_KEYS.description] ?? "").trim();
+        const subRaw = (row.values[COMMON_FIELD_KEYS.subcategory] ?? "").trim();
+
+        // ✅ Mandatory only these:
+        if (!categoryKey) throw new Error("Category is required.");
+        if (hasSubcategory && !subRaw) throw new Error("Subcategory is required.");
+        if (!amountRaw) throw new Error("Amount is required.");
+        if (!descRaw) throw new Error("Description is required.");
+
+        const amtNumber = parseMoney(amountRaw);
+        if (!Number.isFinite(amtNumber) || amtNumber < 1) throw new Error("Amount must be minimum 1.");
+
+        const payload: any = { Title: submissionTitle };
+
+        payload[common.category.internalName] = categoryKey;
+        if (common.subCategory) payload[common.subCategory.internalName] = hasSubcategory ? subRaw : null;
+
+        // ✅ Date is NOT mandatory now
+        if (dateRaw) {
+          const dt = dateOnlyToSPDate(dateRaw);
+          if (!dt) throw new Error("Invalid date.");
+          payload[common.date.internalName] = dt;
+        } else {
+          payload[common.date.internalName] = null;
         }
 
-        if (type.includes("datetime")) payload[internal] = new Date(vRaw);
-        else if (type.includes("number") || type.includes("currency") || type.includes("integer")) payload[internal] = parseMoney(vRaw);
-        else payload[internal] = String(vRaw);
-      }
+        payload[common.amount.internalName] = amountIsNumericColumn ? amtNumber : amtNumber.toFixed(2);
+        payload[common.description.internalName] = descRaw;
 
-      await claimList.items.getById(row.spItemId).update(payload);
+        // dynamic fields (optional)
+        for (const f of dynamicFields) {
+          const target = resolveClaimField(f);
+          if (!target) continue;
 
-      const itemRef = claimList.items.getById(row.spItemId);
+          const internal = target.internal;
+          const type = (target.typeAsString || "").toLowerCase();
+          const vRaw = (row.values[f.id] ?? "").trim();
 
-      for (const name of row.removedFileNames) {
-        try {
-          await itemRef.attachmentFiles.getByName(name).delete();
-        } catch { }
-      }
+          if (!vRaw) {
+            payload[internal] = null;
+            continue;
+          }
 
-      for (const file of row.newFiles) {
-        try {
-          await itemRef.attachmentFiles.add(file.name, file);
-        } catch {
+          if (type.includes("datetime")) payload[internal] = dateOnlyToSPDate(vRaw);
+          else if (type.includes("number") || type.includes("currency") || type.includes("integer")) payload[internal] = parseMoney(vRaw);
+          else payload[internal] = vRaw;
+        }
+
+        // update if exists, else add
+        let itemId: number | null = row.spItemId && row.spItemId > 0 ? row.spItemId : null;
+
+        if (itemId) {
+          await claimList.items.getById(itemId).update(payload);
+        } else {
+          const addResult = await claimList.items.add(payload);
+
+          itemId = addResult?.data?.Id ?? addResult?.data?.ID ?? null;
+
+          if (!itemId && addResult?.item) {
+            try {
+              const info: any = await addResult.item.select("Id")();
+              itemId = info?.Id ?? info?.ID ?? null;
+            } catch {
+              // ignore
+            }
+          }
+
+          if (!itemId) {
+            try {
+              const found = await claimList.items
+                .filter(`Title eq '${submissionTitle.replace(/'/g, "''")}'`)
+                .select("Id")
+                .orderBy("Id", false)
+                .top(1)();
+              if (found?.length) itemId = found[0].Id ?? found[0].ID ?? null;
+            } catch {
+              // ignore
+            }
+          }
+
+          if (!itemId) throw new Error("Failed to determine created item ID");
+          newIdsByRowId[row.id] = itemId;
+        }
+
+        // delete removed attachments
+        const removeNames = Array.from(
+          new Set((row.removedFileNames || []).map((x) => String(x).trim()).filter(Boolean))
+        );
+        for (const fileName of removeNames) {
           try {
-            await itemRef.attachmentFiles.add(`${Date.now()}_${file.name}`, file);
-          } catch { }
+            await claimList.items.getById(itemId!).attachmentFiles.getByName(fileName).delete();
+          } catch {
+            // ignore
+          }
         }
+
+        // add new attachment (replace mode)
+        if (row.newFile) {
+          try {
+            const safeName = row.newFile.name.replace(/[\\/:*?"<>|#%]+/g, "_");
+            const buffer = await row.newFile.arrayBuffer();
+            await claimList.items.getById(itemId!).attachmentFiles.add(safeName, buffer);
+          } catch (attachmentError: any) {
+            rowErrors.push(`Row ${idx + 1} (Attachment): ${attachmentError?.message || "Failed"}`);
+          }
+        }
+      } catch (e: any) {
+        rowErrors.push(`Row ${idx + 1}: ${e?.message || "Failed"}`);
       }
     }
 
-    // TotalAmount is text -> save as string
-    await empList.items.getById(header.Id).update({ TotalAmount: totalAmount.toFixed(2) });
+    // Update new rows with SP IDs in state (prevents duplicates)
+    const newRowKeys = Object.keys(newIdsByRowId);
+    if (newRowKeys.length) {
+      setRows((prev) =>
+        prev.map((r) => {
+          const newId = newIdsByRowId[r.id];
+          if (!newId) return r;
+          return {
+            ...r,
+            spItemId: newId,
+            id: createRowId(newId),
+            removedFileNames: [],
+            newFile: null,
+          };
+        })
+      );
+    }
+
+    if (rowErrors.length) throw new Error(rowErrors.join("\n"));
   };
 
-  /** Normal Save (only for NOT send-back), keeps alert + reload */
   const onSave = async () => {
     if (!header || !canEdit) return;
     try {
@@ -689,7 +951,6 @@ const ExpenseEdit = ({
     }
   };
 
-  /** ✅ Update for Send Back: save + status Pending - <stage> + dashboard */
   const onUpdateSendBack = async () => {
     if (!header || !canEdit) return;
     try {
@@ -709,7 +970,6 @@ const ExpenseEdit = ({
     }
   };
 
-  /** Draft Submit (kept as your existing logic) */
   const [isSubmitting, setIsSubmitting] = React.useState(false);
 
   const onSubmit = async () => {
@@ -719,13 +979,13 @@ const ExpenseEdit = ({
     try {
       setIsSubmitting(true);
 
+      await saveChanges();
+
       const oldTitle = String(header.Title || "").trim();
-      const pendingBase = getPendingBaseFromDraftTitle(oldTitle);
-      if (!pendingBase) throw new Error("Cannot generate Pending Claim ID from this Draft Title.");
 
       const empList = sp.web.lists.getByTitle(empListTitle);
       const claimList = sp.web.lists.getByTitle(claimListTitle);
-      const newTitle = await getNextPendingTitle(empList, pendingBase);
+      const newTitle = await getNextPendingTitleGlobal(empList, oldTitle);
 
       const safeOldTitle = escapeOData(oldTitle);
       const lineItems: any[] = await claimList.items.filter(`Title eq '${safeOldTitle}'`).select("Id").top(5000)();
@@ -780,14 +1040,13 @@ const ExpenseEdit = ({
           <div className="bg-white border border-slate-200 rounded-xl p-6 text-slate-600">No data found.</div>
         ) : (
           <>
-            {/* Employee */}
             <div className="bg-white border border-slate-200 rounded-xl p-4 mb-5">
               <div className="flex items-center gap-2 mb-4">
                 <Icon iconName="Contact" className="text-indigo-600" />
                 <div className="text-sm font-semibold text-slate-800">Employee Details</div>
               </div>
 
-              <EmpDetails context={context} value={employeeValues} onChange={setEmployeeValues} controlClassName={inputClass} />
+              <EmpViewDetails context={context} empListTitle={empListTitle} itemId={header.Id} />
 
               <div className="mt-4 flex flex-wrap items-center justify-between gap-3 bg-slate-50 border border-slate-200 rounded-lg p-3">
                 <div>
@@ -803,7 +1062,6 @@ const ExpenseEdit = ({
               </div>
             </div>
 
-            {/* Line items */}
             <div className="bg-white border border-slate-200 rounded-xl p-4">
               <div className="flex items-center justify-between gap-3 flex-wrap mb-4">
                 <div className="flex items-center gap-2">
@@ -811,7 +1069,6 @@ const ExpenseEdit = ({
                   <div className="text-sm font-semibold text-slate-800">Expense Line Items</div>
                 </div>
 
-                {/* ✅ For Send Back: DO NOT show Save/Cancel */}
                 {canEdit && !isSendBack && (
                   <div className="flex gap-2">
                     <button
@@ -838,25 +1095,54 @@ const ExpenseEdit = ({
               <div className="space-y-4">
                 {rows.map((row, index) => {
                   const categoryKey = (row.categoryKey || "").trim();
+
                   const config = categoryConfigurationByKey[categoryKey] || categoryConfigurationByKeyCI[normalizeKey(categoryKey)];
                   const dynamicFields = config?.fields || [];
 
                   const subOptions = getSubOptions(categoryKey);
                   const hasSubcategory = subOptions.length > 0;
+                  const isLastRow = index === rows.length - 1;
 
                   return (
                     <div key={row.id} className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-                      <div className="bg-slate-50 border-b border-slate-200 px-4 py-2.5 flex items-center gap-2">
-                        <span className="h-6 w-6 rounded bg-indigo-600 text-white flex items-center justify-center text-xs font-bold">
-                          {index + 1}
-                        </span>
-                        <span className="text-sm font-semibold text-slate-800">Line Item</span>
+                      <div className="bg-slate-50 border-b border-slate-200 px-4 py-2.5 flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <span className="h-6 w-6 rounded bg-indigo-600 text-white flex items-center justify-center text-xs font-bold">
+                            {index + 1}
+                          </span>
+                          <span className="text-sm font-semibold text-slate-800">Line Item</span>
+                        </div>
+
+                        {canEdit && (
+                          <div className="flex items-center gap-2">
+                            {isLastRow && (
+                              <button
+                                type="button"
+                                onClick={addRow}
+                                disabled={isSaving || isUpdating}
+                                className="h-7 px-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-medium rounded flex items-center gap-1 transition-colors disabled:opacity-50"
+                              >
+                                <Icon iconName="Add" className="text-[10px]" /> Add
+                              </button>
+                            )}
+
+                            <button
+                              type="button"
+                              onClick={() => removeRow(row.id)}
+                              disabled={rows.length === 1 || isSaving || isUpdating}
+                              className="h-7 px-2.5 bg-white hover:bg-rose-50 text-slate-600 hover:text-rose-600 text-xs font-medium rounded border border-slate-300 hover:border-rose-300 flex items-center gap-1 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                              title={row.spItemId > 0 ? "Remove (will delete on Save)" : "Remove"}
+                            >
+                              <Icon iconName="Delete" className="text-[10px]" />
+                            </button>
+                          </div>
+                        )}
                       </div>
 
                       <div className="p-4">
                         <div className="flex flex-wrap gap-3 mb-3">
                           <div className="flex-1 min-w-[160px]">
-                            <label className={labelClass}>Category</label>
+                            <label className={labelClass}>Category *</label>
                             <div className="relative">
                               <select
                                 value={categoryKey}
@@ -880,7 +1166,7 @@ const ExpenseEdit = ({
 
                           {hasSubcategory && (
                             <div className="flex-1 min-w-[160px]">
-                              <label className={labelClass}>Subcategory</label>
+                              <label className={labelClass}>Subcategory *</label>
                               <div className="relative">
                                 <select
                                   value={row.values[COMMON_FIELD_KEYS.subcategory] || ""}
@@ -915,11 +1201,9 @@ const ExpenseEdit = ({
                           </div>
 
                           <div className="flex-1 min-w-[120px]">
-                            <label className={labelClass}>Amount (₹)</label>
+                            <label className={labelClass}>Amount (₹) *</label>
                             <input
-                              type="number"
-                              step="any"
-                              min="0"
+                              type="text"
                               value={row.values[COMMON_FIELD_KEYS.amount] || ""}
                               onChange={(e) => setRowField(row.id, COMMON_FIELD_KEYS.amount, e.target.value)}
                               disabled={!canEdit || isSaving || isUpdating}
@@ -930,7 +1214,7 @@ const ExpenseEdit = ({
                           <div className="flex-1 min-w-[260px]">
                             <label className={labelClass}>Attachments</label>
                             <div className={`${inputClass} h-auto min-h-[36px] py-2 bg-slate-50`}>
-                              {row.attachments.length ? (
+                             
                                 <div className="flex flex-col gap-1">
                                   {row.attachments.map((a) => (
                                     <div key={a.ServerRelativeUrl} className="flex items-center justify-between gap-2">
@@ -954,27 +1238,31 @@ const ExpenseEdit = ({
                                     </div>
                                   ))}
                                 </div>
-                              ) : (
-                                <span className="text-slate-500 text-xs">No attachments</span>
-                              )}
 
                               {canEdit && (
                                 <div className="mt-2">
-                                  <input type="file" multiple onChange={(e) => addFilesToRow(row.id, e.target.files)} className="text-xs" />
-                                  {row.newFiles.length > 0 && (
-                                    <div className="mt-2 space-y-1">
-                                      {row.newFiles.map((f, idx) => (
-                                        <div key={`${f.name}_${idx}`} className="flex items-center justify-between gap-2">
-                                          <span className="text-xs text-slate-700 truncate">{f.name}</span>
-                                          <button
-                                            type="button"
-                                            onClick={() => removeNewFile(row.id, idx)}
-                                            className="text-xs px-2 py-1 rounded border border-slate-300 text-slate-700 bg-white"
-                                          >
-                                            Remove
-                                          </button>
-                                        </div>
-                                      ))}
+                                  <input
+                                    type="file"
+                                    onChange={(e) => {
+                                      const file = e.currentTarget.files?.[0] ?? null;
+                                      setRowNewFile(row.id, file);
+                                      e.currentTarget.value = "";
+                                    }}
+                                    className="text-xs"
+                                  />
+
+                                  {row.newFile && (
+                                    <div className="mt-2">
+                                      <div className="flex items-center justify-between gap-2">
+                                        <span className="text-xs text-slate-700 truncate">{row.newFile.name}</span>
+                                        <button
+                                          type="button"
+                                          onClick={() => setRowNewFile(row.id, null)}
+                                          className="text-xs px-2 py-1 rounded border border-slate-300 text-slate-700 bg-white"
+                                        >
+                                          Remove
+                                        </button>
+                                      </div>
                                     </div>
                                   )}
                                 </div>
@@ -1008,7 +1296,7 @@ const ExpenseEdit = ({
                           ))}
 
                           <div className="flex-[2] min-w-[260px]">
-                            <label className={labelClass}>Description</label>
+                            <label className={labelClass}>Description *</label>
                             <textarea
                               rows={2}
                               className={textareaClass}
@@ -1027,7 +1315,6 @@ const ExpenseEdit = ({
               </div>
             </div>
 
-            {/* Bottom buttons */}
             <div className="flex justify-center mt-6 gap-3">
               <button
                 type="button"
@@ -1038,7 +1325,6 @@ const ExpenseEdit = ({
                 Back
               </button>
 
-              {/* Draft => Submit */}
               {isDraft && canEdit && (
                 <button
                   type="button"
@@ -1051,7 +1337,6 @@ const ExpenseEdit = ({
                 </button>
               )}
 
-              {/* ✅ Send Back => Update only, and go direct dashboard */}
               {isSendBack && canEdit && (
                 <button
                   type="button"
