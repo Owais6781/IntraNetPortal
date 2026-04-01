@@ -16,6 +16,7 @@ export type EmployeeValues = {
   email: string;
   manager: string;
   director: string;
+  hr: string; 
 };
 
 type Props = {
@@ -27,45 +28,70 @@ type Props = {
   isSubmitting?: boolean;
 };
 
-const EmpDetails: React.FC<Props> = ({
-  context,
-  value,
-  onChange,
-  enabled = true,
-  isSubmitting = false,
-}) => {
+const EmpDetails: React.FC<Props> = ({context,value,onChange}) => {
   const sp = React.useMemo(() => spfi().using(SPFx(context)), [context]);
 
-  // ✅ Toggle state for show/hide
   const [isExpanded, setIsExpanded] = React.useState(true);
 
   React.useEffect(() => {
+    let mounted = true;
+
     const loadEmployee = async () => {
       try {
-        const userEmail = context.pageContext.user.email;
-        console.log("Logged in user email:", userEmail);
+        const userEmail = (context.pageContext.user.email || "").trim();
+        if (!userEmail) return;
 
-        const items = await sp.web.lists
-          .getByTitle("EmployeeDirectory")
-          .items.filter(`Email/EMail eq '${userEmail}'`)
-          .select(
-            "Title",
-            "Designation",
-            "Department",
-            "ContactNumber",
-            "Email/Title",
-            "Email/EMail",
-            "Manager/Title",
-            "Director/Title"
-          )
-          .expand("Email", "Manager", "Director")();
+        const safeEmail = userEmail.replace(/'/g, "''");
 
-        if (!items || items.length === 0) {
-          console.error("Employee record NOT FOUND for:", userEmail);
-          return;
+        let items: any[] = [];
+        try {
+          items = await sp.web.lists
+            .getByTitle("EmployeeDirectory")
+            .items.filter(`Email/EMail eq '${safeEmail}'`)
+            .select(
+              "Title",
+              "Designation",
+              "Department",
+              "ContactNumber",
+              "Email/Title",
+              "Email/EMail",
+              "Manager/Title",
+              "Director/Title",
+              "HR/Title",
+              "HR/EMail"
+            )
+            .expand("Email", "Manager", "Director", "HR")();
+        } catch {
+          // ✅ Fallback if HR column does not exist
+          items = await sp.web.lists
+            .getByTitle("EmployeeDirectory")
+            .items.filter(`Email/EMail eq '${safeEmail}'`)
+            .select(
+              "Title",
+              "Designation",
+              "Department",
+              "ContactNumber",
+              "Email/Title",
+              "Email/EMail",
+              "Manager/Title",
+              "Director/Title"
+            )
+            .expand("Email", "Manager", "Director")();
         }
 
+        if (!items || items.length === 0) return;
         const emp: any = items[0];
+
+        const directorText = Array.isArray(emp.Director)
+          ? emp.Director.map((p: any) => p?.Title).filter(Boolean).join(", ")
+          : emp.Director?.Title || "";
+
+        // HR can be single person (object) or multi (array)
+        const hrText = Array.isArray(emp.HR)
+          ? emp.HR.map((p: any) => p?.Title || p?.EMail).filter(Boolean).join(", ")
+          : emp.HR?.Title || emp.HR?.EMail || "";
+
+        if (!mounted) return;
 
         onChange({
           empId: emp.Title || "",
@@ -75,168 +101,114 @@ const EmpDetails: React.FC<Props> = ({
           phone: emp.ContactNumber || "",
           email: emp.Email?.EMail || "",
           manager: emp.Manager?.Title || "",
-          director: Array.isArray(emp.Director)
-            ? emp.Director.map((p: any) => p.Title).join(", ")
-            : emp.Director?.Title || "",
+          director: directorText,
+          hr: hrText, // ✅ NEW
         });
       } catch (error) {
+        // keep your existing behavior (log only)
+        // eslint-disable-next-line no-console
         console.error("Error loading employee details:", error);
       }
     };
 
     void loadEmployee();
-  }, [sp, context, onChange]);
+  }, [sp, context]);
 
-  // ✅ Toggle handler
-  const handleToggle = () => {
-    setIsExpanded((prev) => !prev);
-  };
+  const handleToggle = () => setIsExpanded((prev) => !prev);
 
   return (
     <div className="w-full">
-      {/* Employee Details Card */}
       <div className="bg-white rounded-xl border border-slate-200 shadow-md overflow-hidden">
-        {/* Card Header - Compact */}
         <div className="bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 px-4 py-2">
           <div className="flex items-center justify-between">
-            {/* Left: Icon + Title */}
             <div className="flex items-center gap-2">
               <div className="w-6 h-6 bg-white/20 backdrop-blur-sm rounded-md flex items-center justify-center">
                 <Icon iconName="Contact" className="text-white text-xs" />
               </div>
               <div>
-                <h2 className="text-white font-semibold text-xs">
-                  Employee Information
-                </h2>
+                <h2 className="text-white font-semibold text-xs">Employee Information</h2>
               </div>
             </div>
 
-            {/* Right: Toggle Button */}
             <button
               type="button"
               onClick={handleToggle}
               className="flex items-center gap-1 px-2 py-1 bg-white/20 hover:bg-white/30 backdrop-blur-sm rounded-md text-white text-[10px] font-semibold transition-all duration-200"
               title={isExpanded ? "Hide Details" : "Show Details"}
             >
-              <Icon
-                iconName={isExpanded ? "ChevronUp" : "ChevronDown"}
-                className="text-xs"
-              />
+              <Icon iconName={isExpanded ? "ChevronUp" : "ChevronDown"} className="text-xs" />
               <span>{isExpanded ? "Hide" : "Show"}</span>
             </button>
           </div>
         </div>
 
-        {/* Card Body - Collapsible */}
         {isExpanded && (
           <div className="px-4 py-2">
-            {/* Row 1: Employee ID + Department */}
             <div className="flex flex-wrap">
-              {/* Employee ID */}
               <div className="flex-1 min-w-[220px] flex items-center gap-3 px-3 py-2 border-b border-slate-200">
                 <div className="w-24 shrink-0">
-                  <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wide">
-                    Employee ID
-                  </span>
+                  <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wide">Employee ID</span>
                 </div>
-                <div className="flex-1 text-xs font-semibold text-slate-800 truncate">
-                  {value.empId || "-"}
-                </div>
+                <div className="flex-1 text-xs font-semibold text-slate-800 truncate">{value.empId || "-"}</div>
               </div>
 
-              {/* Department */}
               <div className="flex-1 min-w-[220px] flex items-center gap-3 px-3 py-2 border-b border-slate-200">
                 <div className="w-24 shrink-0">
-                  <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wide">
-                    Department
-                  </span>
+                  <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wide">Department</span>
                 </div>
-                <div className="flex-1 text-xs font-semibold text-slate-800 truncate">
-                  {value.department || "-"}
-                </div>
+                <div className="flex-1 text-xs font-semibold text-slate-800 truncate">{value.department || "-"}</div>
               </div>
             </div>
 
-            {/* Row 2: Emp Name + Designation */}
             <div className="flex flex-wrap">
-              {/* Name */}
               <div className="flex-1 min-w-[220px] flex items-center gap-3 px-3 py-2 border-b border-slate-200">
                 <div className="w-24 shrink-0">
-                  <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wide">
-                    Emp Name
-                  </span>
+                  <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wide">Emp Name</span>
                 </div>
-                <div className="flex-1 text-xs font-semibold text-slate-800 truncate">
-                  {value.name || "-"}
-                </div>
+                <div className="flex-1 text-xs font-semibold text-slate-800 truncate">{value.name || "-"}</div>
               </div>
 
-              {/* Designation */}
               <div className="flex-1 min-w-[220px] flex items-center gap-3 px-3 py-2 border-b border-slate-200">
                 <div className="w-24 shrink-0">
-                  <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wide">
-                    Designation
-                  </span>
+                  <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wide">Designation</span>
                 </div>
-                <div className="flex-1 text-xs font-semibold text-slate-800 truncate">
-                  {value.designation || "-"}
-                </div>
+                <div className="flex-1 text-xs font-semibold text-slate-800 truncate">{value.designation || "-"}</div>
               </div>
             </div>
 
-            {/* Row 3: Phone + Manager */}
             <div className="flex flex-wrap">
-              {/* Phone */}
               <div className="flex-1 min-w-[220px] flex items-center gap-3 px-3 py-2 border-b border-slate-200">
                 <div className="w-24 shrink-0">
-                  <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wide">
-                    Phone
-                  </span>
+                  <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wide">Phone</span>
                 </div>
-                <div className="flex-1 text-xs font-semibold text-slate-800 truncate">
-                  {value.phone || "-"}
-                </div>
+                <div className="flex-1 text-xs font-semibold text-slate-800 truncate">{value.phone || "-"}</div>
               </div>
 
-              {/* Manager */}
               <div className="flex-1 min-w-[220px] flex items-center gap-3 px-3 py-2 border-b border-slate-200">
                 <div className="w-24 shrink-0">
-                  <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wide">
-                    Manager
-                  </span>
+                  <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wide">Manager</span>
                 </div>
-                <div className="flex-1 text-xs font-semibold text-slate-800 truncate">
-                  {value.manager || "-"}
-                </div>
+                <div className="flex-1 text-xs font-semibold text-slate-800 truncate">{value.manager || "-"}</div>
               </div>
             </div>
 
-            {/* Row 4: Email + Director */}
             <div className="flex flex-wrap">
-              {/* Email */}
               <div className="flex-1 min-w-[220px] flex items-center gap-3 px-3 py-2">
                 <div className="w-24 shrink-0">
-                  <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wide">
-                    Email
-                  </span>
+                  <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wide">Email</span>
                 </div>
-                <div className="flex-1 text-xs font-semibold text-slate-800 truncate">
-                  {value.email || "-"}
-                </div>
+                <div className="flex-1 text-xs font-semibold text-slate-800 truncate">{value.email || "-"}</div>
               </div>
 
-              {/* Director */}
               <div className="flex-1 min-w-[220px] flex items-center gap-3 px-3 py-2">
                 <div className="w-24 shrink-0">
-                  <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wide">
-                    Director
-                  </span>
+                  <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wide">Director</span>
                 </div>
-                <div className="flex-1 text-xs font-semibold text-slate-800 truncate">
-                  {value.director || "-"}
-                </div>
+                <div className="flex-1 text-xs font-semibold text-slate-800 truncate">{value.director || "-"}</div>
               </div>
             </div>
+
+            {/* ✅ HR is stored but not shown (UI unchanged) */}
           </div>
         )}
       </div>
@@ -245,20 +217,3 @@ const EmpDetails: React.FC<Props> = ({
 };
 
 export default EmpDetails;
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
