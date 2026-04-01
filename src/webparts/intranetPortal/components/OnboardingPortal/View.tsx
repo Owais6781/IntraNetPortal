@@ -966,7 +966,6 @@ import "@pnp/sp/webs";
 import "@pnp/sp/lists";
 import "@pnp/sp/items";
 import "@pnp/sp/attachments";
-//  import "./ViewForm.css";
 import "./View.css";
 
 
