@@ -15,11 +15,12 @@ import { WebPartContext } from "@microsoft/sp-webpart-base";
 import "bootstrap/dist/css/bootstrap.min.css";
 import RecruitmentPortal from "./RecruitmentPortal/RecruitmentPortal";
 import OnboardingPortal from "./OnboardingPortal/OnboardingPortal";
+ import ViewForm from "./OnboardingPortal/View";
 import ExpenseDashboard from "./ExpenseClaim/Dashboard";
 import ExpenseClaim from "./ExpenseClaim/ExpenseClaim";
 import ExpenseView from "./ExpenseClaim/ExpenseView";
 import ExpenseEdit from "./ExpenseClaim/ExpenseEdit";
-import ViewForm from "./OnboardingPortal/View";
+
 import MeetingRoomDashboard from "./MeetingRoom/MeetingRoomDashboard";
 import BookRoom from "./MeetingRoom/BookRoom";
 import AdminPage from "./MeetingRoom/AdminPage";
